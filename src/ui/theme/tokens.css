@@ -1,0 +1,106 @@
+/* Design tokens: docs/design.md §2. Components use only these, never raw hex. */
+
+:root {
+  /* §2.1 colour, light */
+  --bg: #fbf7ef;
+  --surface: #ffffff;
+  --surface-sunken: #f3ecdd;
+  --line: #e4daca;
+  --ink: #1b2b3a;
+  --ink-muted: #51606e;
+  --primary: #0b6e6d;
+  --on-primary: #ffffff;
+  --primary-soft: #d5efee;
+  --var-bg: #d5efee;
+  --var-ink: #0a5251;
+  --var-line: #0b6e6d;
+  --const-bg: #fce9cc;
+  --const-ink: #7a4410;
+  --const-line: #c9832a;
+  --help-bg: #e9f4e4;
+  --help-ink: #2f5e24;
+  --turtle: #5e9e4c;
+  --turtle-dark: #3f7432;
+  --penguin: #1e3448;
+  --beak: #f28c38;
+  --star: #f5b301;
+  --shell: #f4a98a;
+  --coral: #c2562b;
+  --success: #237a3a;
+  --success-soft: #e3f4e7;
+  --amber: #9a4a06;
+  --amber-soft: #fdebd3;
+  --parent-bg: #f4f6f8;
+  --parent-nav: #1e3448;
+
+  /* §2.2 typography */
+  --font-ui: 'Nunito Variable', 'Nunito', system-ui, sans-serif;
+  --font-math: 'KaTeX_Main', 'Times New Roman', serif;
+
+  /* §2.3 spacing, radius, elevation */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --radius-sm: 10px;
+  --radius-key: 14px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+  --shadow-press: inset 0 -6px 0 rgba(0, 0, 0, 0.08);
+  --shadow-lift: 0 12px 24px rgba(27, 43, 58, 0.16);
+
+  /* §2.4 motion */
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --dur-celebrate: 1200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* §5 / §10 */
+  --target-min: 48px;
+  --focus-ring: 3px solid var(--primary);
+  --focus-offset: 3px;
+}
+
+/* Dark values are defined now; the dark-mode switch itself is SHOULD, v1.1 (design.md §2.1). */
+:root[data-theme='dark'] {
+  --bg: #0f1b24;
+  --surface: #172733;
+  --surface-sunken: #1e3240;
+  --line: #2c4456;
+  --ink: #e8f1f5;
+  --ink-muted: #a6b8c6;
+  --primary: #5ccbc7;
+  --on-primary: #0f1b24;
+  --primary-soft: #123c3f;
+  --var-bg: #123c3f;
+  --var-ink: #a8e6e3;
+  --var-line: #5ccbc7;
+  --const-bg: #3d2a14;
+  --const-ink: #f6d3a1;
+  --const-line: #d9a05b;
+  --help-bg: #18301a;
+  --help-ink: #bfe3b1;
+  --coral: #f08a61;
+  --success: #7bd88f;
+  --success-soft: #15321c;
+  --amber: #f4b26a;
+  --amber-soft: #3a2610;
+  --parent-bg: #0b141b;
+  --parent-nav: #0b141b;
+}
+
+/* R-NF-3: reduced motion collapses every duration to a short fade. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-base: 120ms;
+    --dur-slow: 120ms;
+    --dur-celebrate: 120ms;
+  }
+}
