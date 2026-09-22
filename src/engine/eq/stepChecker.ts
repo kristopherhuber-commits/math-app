@@ -203,7 +203,13 @@ function findSignSlip(
   pText: string,
   nText: string,
   v: string,
-): { term: string; span?: Span } | null {
+): { params: Params; span?: Span } | null {
+  // Balance view (R-EQ-PED-3): a term c moved across means "take c away from both sides"
+  // when c > 0, and "add |c| to both sides" when c < 0.
+  const balance = (coef: Rational, isVar: boolean) => ({
+    op: coef.n > 0n ? 'subtract' : 'add',
+    amount: termMagnitude(coef, isVar, v),
+  });
   // Prefer naming the culprit as it appears in N (so it can be underlined).
   const inN = allTerms(n).filter((u) => pm(linSub(n.d, linScale(movedLeft(u), { n: 2n, d: 1n })), p.d));
   if (inN.length > 0) {
@@ -212,10 +218,28 @@ function findSignSlip(
       allTerms(p).some((t) => t.isVar === u.isVar && eq(absR(t.coef), absR(u.coef)) && t.side !== u.side),
     );
     const u = crossed ?? inN[0]!;
-    return { term: termLabel(u, n, nText, v), span: u.span };
+    // A crossed term kept the sign it had before crossing, so u.coef is the original term.
+    const cameFrom = crossed ? (u.side === 'L' ? 'R' : 'L') : u.side;
+    return {
+      params: {
+        term: termLabel(u, n, nText, v),
+        from: cameFrom === 'L' ? 'left' : 'right',
+        // A term that stayed put but changed sign gets no balance reminder.
+        ...(crossed ? balance(u.coef, u.isVar) : { op: '', amount: '' }),
+      },
+      span: u.span,
+    };
   }
   const inP = allTerms(p).find((t) => pm(n.d, linSub(p.d, linScale(movedLeft(t), { n: 2n, d: 1n }))));
-  return inP ? { term: termLabel(inP, p, pText, v) } : null;
+  return inP
+    ? {
+        params: {
+          term: termLabel(inP, p, pText, v),
+          from: inP.side === 'L' ? 'left' : 'right',
+          ...balance(inP.coef, inP.isVar),
+        },
+      }
+    : null;
 }
 
 /** EQ-D5, generalised the same way as EQ-D4: D(N) = ±(D(P) ∓ t) for one term t of P. */
@@ -426,7 +450,7 @@ function diagnose(
     // EQ-D4: sign of one transposed term (approved rule).
     if (isSeparated(n)) {
       const slip = findSignSlip(p, n, pText, nText, v);
-      if (slip) return reject('EQ-D4', { term: slip.term }, slip.span);
+      if (slip) return reject('EQ-D4', slip.params, slip.span);
     }
     // EQ-D5: a term lost or duplicated.
     if (findLostOrExtra(p, n)) return reject('EQ-D5');
@@ -456,7 +480,8 @@ function diagnose(
   if (groupingParens(p) > 0 && groupingParens(n) < groupingParens(p)) {
     const leftChanged = !linEq(n.left.lin, p.left.lin);
     const rightChanged = !linEq(n.right.lin, p.right.lin);
-    if ((leftChanged || rightChanged) && !isSeparated(n) && k === null) {
+    // "One side's Lin changed": the other side must still match, or this isn't an expansion slip.
+    if (leftChanged !== rightChanged && !isSeparated(n) && k === null) {
       const pSide =
         leftChanged && p.left.groupingParens > 0
           ? pEq.left

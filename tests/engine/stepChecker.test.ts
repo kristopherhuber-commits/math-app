@@ -41,13 +41,13 @@ describe('§7.5 acceptance examples', () => {
     it('3a + a = 23 − 3 → EQ-D4 (sign of a)', () => {
       const r = check(P, '3a + a = 23 - 3');
       expect(outcome(r)).toBe('EQ-D4');
-      expect(!r.accepted && r.params.term).toBe('a');
+      expect(!r.accepted && r.params).toEqual({ term: 'a', from: 'right', op: 'subtract', amount: 'a' });
       expect(!r.accepted && r.span).toEqual({ start: 5, end: 6 });
     });
     it('3a − a = 23 + 3 → EQ-D4 (sign of 3)', () => {
       const r = check(P, '3a - a = 23 + 3');
       expect(outcome(r)).toBe('EQ-D4');
-      expect(!r.accepted && r.params.term).toBe('3');
+      expect(!r.accepted && r.params).toEqual({ term: '3', from: 'left', op: 'subtract', amount: '3' });
     });
     it('2a = 20 → skip rule (R-EQ-CHK-3)', () => expect(outcome(check(P, '2a = 20'))).toBe('R-EQ-CHK-3'));
     it('3a = a + 20 → EQ-D11 (equivalent, but not separated)', () =>
@@ -226,6 +226,7 @@ const diagnostics: Record<string, { pos: Case[]; neg: Case[] }> = {
     neg: [
       ['3(y - 2) = y + 8', '3y - 6 = y + 8'],
       ['3(y - 2) = y + 8', '3(y - 2) = y + 8'],
+      ['5(w + 8) = 2w - 1', '1 + 1 = 5'],
     ],
   },
   'EQ-D10': {

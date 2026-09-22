@@ -55,7 +55,7 @@ export function exprToLatex(e: Expr): string {
         return `-\\frac{${exprToLatex(stripParen(e.left.arg))}}{${exprToLatex(stripParen(e.right))}}`;
       return `\\frac{${exprToLatex(stripParen(e.left))}}{${exprToLatex(stripParen(e.right))}}`;
     case 'paren':
-      return `\\left(${exprToLatex(e.inner)}\\right)`;
+      return `(${exprToLatex(e.inner)})`;
   }
 }
 

@@ -1,0 +1,411 @@
+/* Component styles. Tokens only (design.md §2); no raw colours here. */
+
+.screen {
+  min-height: 100vh;
+}
+
+/* ---------- type roles (§2.2) ---------- */
+.display {
+  font-size: 40px;
+  line-height: 48px;
+  font-weight: 900;
+  margin: 0 0 var(--space-2);
+}
+.title {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 900;
+  margin: 0 0 var(--space-4);
+}
+.prompt {
+  font-size: 26px;
+  line-height: 34px;
+  font-weight: 800;
+  margin: var(--space-4) 0;
+}
+.label {
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 800;
+}
+.overline {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: var(--space-3);
+}
+.math-md {
+  font-size: 30px;
+  line-height: 40px;
+}
+
+/* ---------- buttons (§5) ---------- */
+.btn {
+  min-height: 56px;
+  min-width: var(--target-min);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  font-size: 20px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: var(--shadow-press);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(2px);
+}
+.btn:disabled {
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+  cursor: default;
+}
+.btn-small {
+  min-height: var(--target-min);
+  font-size: 18px;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.btn-outline {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.btn-help {
+  background: var(--help-bg);
+  border-color: var(--turtle);
+  color: var(--help-ink);
+  min-width: 200px;
+}
+.btn-help.pulsing {
+  animation: help-glow 2s var(--ease-standard) infinite;
+}
+@keyframes help-glow {
+  50% {
+    box-shadow: 0 0 0 6px var(--help-bg);
+  }
+}
+
+/* ---------- layout ---------- */
+.topbar {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: 0 var(--space-5);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-title {
+  font-size: 20px;
+  font-weight: 900;
+}
+.topbar-progress {
+  margin-left: auto;
+  color: var(--ink-muted);
+}
+
+.card {
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.practice {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 388px;
+  gap: var(--space-5);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+  align-items: start;
+}
+
+.home {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-5);
+}
+.home-intro {
+  color: var(--ink-muted);
+  margin: 0 0 var(--space-6);
+}
+
+.chip {
+  display: inline-block;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--var-ink);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-6);
+  gap: var(--space-4);
+}
+.actions.end {
+  justify-content: flex-end;
+}
+
+/* ---------- home level picker ---------- */
+.level-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+.level-option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+  min-height: 112px;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+}
+.level-option:hover {
+  border-color: var(--primary);
+}
+.level-option.selected {
+  background: var(--primary-soft);
+  border: 4px solid var(--primary);
+}
+.level-name {
+  font-size: 20px;
+  font-weight: 900;
+}
+.level-example {
+  font-size: 20px;
+  color: var(--ink-muted);
+}
+
+/* ---------- step lines (§5 StepLine) ---------- */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.step-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: 64px;
+  padding: var(--space-2) var(--space-5);
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  animation: line-in var(--dur-slow) var(--ease-standard);
+}
+.step-line.solved {
+  background: var(--success-soft);
+}
+.step-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink-muted);
+  text-align: right;
+}
+.step-line.accepted .step-label {
+  color: var(--success);
+}
+@keyframes line-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.current-line {
+  display: block;
+  margin-top: var(--space-3);
+}
+.line-input {
+  width: 100%;
+  min-height: 64px;
+  padding: var(--space-2) var(--space-5);
+  border: 3px solid var(--primary);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-family: var(--font-math);
+  font-weight: 400;
+}
+.line-input:focus-visible {
+  outline-offset: 2px;
+}
+
+/* ---------- feedback (§5 StepFeedback, ErrorMark) ---------- */
+.live {
+  margin-top: var(--space-4);
+}
+.step-feedback,
+.solved-box,
+.hint-panel {
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  animation: line-in var(--dur-base) var(--ease-standard);
+}
+.step-feedback {
+  background: var(--help-bg);
+  border: 2px solid var(--turtle);
+  color: var(--help-ink);
+}
+.solved-box {
+  background: var(--success-soft);
+  border: 2px solid var(--success);
+  color: var(--ink);
+}
+.feedback-title {
+  font-size: 19px;
+  font-weight: 900;
+  margin: 0;
+}
+.feedback-detail {
+  font-size: 17px;
+  font-weight: 700;
+  margin: var(--space-1) 0 0;
+}
+.feedback-line {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-math);
+  font-weight: 400;
+  color: var(--ink);
+}
+.error-mark {
+  color: var(--amber);
+  text-decoration: underline wavy var(--amber);
+  text-underline-offset: 6px;
+}
+
+/* ---------- hint panel (§5 HintDrawer; shown inline in M1) ---------- */
+.hint-panel {
+  margin-top: var(--space-4);
+  background: var(--help-bg);
+  border: 2px solid var(--turtle);
+  color: var(--help-ink);
+}
+.hint-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ladder {
+  display: flex;
+  gap: var(--space-2);
+}
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--turtle);
+}
+.dot.on {
+  background: var(--turtle);
+}
+.hint-body {
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-4);
+  margin: var(--space-3) 0;
+}
+.hint-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
+
+/* ---------- keypad (§5 MathKeypad) ---------- */
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(var(--target-min), 80px));
+  gap: var(--space-2);
+}
+.key {
+  height: 64px;
+  border-radius: var(--radius-key);
+  border: 2px solid var(--line);
+  font-family: var(--font-math);
+  font-size: 30px;
+  cursor: pointer;
+  box-shadow: var(--shadow-press);
+  touch-action: manipulation;
+}
+.key:active:not(:disabled) {
+  transform: translateY(2px);
+}
+.key-digit {
+  background: var(--bg);
+}
+.key-op {
+  background: var(--surface-sunken);
+}
+.key-var {
+  background: var(--var-bg);
+  color: var(--var-ink);
+  border-color: var(--var-line);
+}
+.keypad-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.keypad-actions .btn {
+  padding: 0 var(--space-3);
+}
+.keypad-note {
+  font-size: 15px;
+  color: var(--ink-muted);
+  text-align: center;
+  margin: var(--space-4) 0 0;
+}
+
+/* ---------- tablet portrait (§3.1) ---------- */
+@media (max-width: 959px) {
+  .practice {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-4);
+  }
+  .card {
+    padding: var(--space-5);
+  }
+  .keypad-grid {
+    grid-template-columns: repeat(4, minmax(var(--target-min), 1fr));
+  }
+  .prompt {
+    font-size: 24px;
+  }
+  .level-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-line,
+  .step-feedback,
+  .solved-box,
+  .hint-panel {
+    animation: none;
+  }
+  .btn-help.pulsing {
+    animation: none;
+    box-shadow: 0 0 0 4px var(--turtle);
+  }
+}
