@@ -1,6 +1,6 @@
 # M4 report: sessions, adaptive levels, rewards
 
-Status: **done** (2026-09-23). Deployed to https://kristopherhuber-commits.github.io/math-app/; see §6 for the live check.
+Status: **done** (2026-09-23). Deployed to https://kristopherhuber-commits.github.io/math-app/; the live check passed after the deploy (installable; from the new Home tiles, an equation and a repeating-decimal question both work offline).
 
 ## 1. What was built
 
