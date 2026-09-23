@@ -2,13 +2,13 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-23 · Current state: **M0–M4 done and deployed. Next: M5 (parent area), when the parent says go.**
+Last updated: 2026-09-23 · Current state: **M0–M5 done and deployed. Next: M6 (polish), when the parent says go.**
 
 ---
 
 ## 1. How to work on this project
 
-- **Read first:** `docs/requirements.md`, `docs/design.md`, then this file. Milestone reports with full detail: `docs/milestones/M1-report.md` (M0 + M1), `docs/milestones/M2-report.md`, `docs/milestones/M3-report.md`, `docs/milestones/M4-report.md`.
+- **Read first:** `docs/requirements.md`, `docs/design.md`, then this file. Milestone reports with full detail: `docs/milestones/M1-report.md` (M0 + M1), `docs/milestones/M2-report.md`, `docs/milestones/M3-report.md`, `docs/milestones/M4-report.md`, `docs/milestones/M5-report.md`.
 - **Precedence:** `requirements.md` > `design.md` > mockups > anything else, except the approved rules and deviations in §4. Report any other conflict; implement the higher-precedence source.
 - **Process per milestone:** plan in plan mode with open questions → parent approves → build one milestone → stop and report (template in §9) as `docs/milestones/M<n>-report.md` → update this file → commit → push (deploys) → run the live check.
 - **Public repo.** Never commit names, ages, gender, locations or local user paths of the parent or the learner. Say "the parent" and "the learner".
@@ -36,7 +36,7 @@ npm run e2e        # Playwright against the production build (first run: npx pla
 $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwright test e2e/zz-live.spec.ts
 ```
 
-`?topic=NC|RD|FDP|PC|EQ&level=N&seed=S` opens a specific question at a fixed level; `?level=N&seed=S` alone opens EQ (tests, bug reports; these change no levels or rewards). `?assign=EQ:10,PC:5@2&order=mixed&title=…` queues an assignment until the M5 builder. `$env:SHOTS='<folder>'; npx playwright test e2e/zz-screens.spec.ts` takes screenshots of every screen.
+`?topic=NC|RD|FDP|PC|EQ&level=N&seed=S` opens a specific question at a fixed level; `?level=N&seed=S` alone opens EQ (tests, bug reports; these change no levels or rewards, skip the first-run setup, and are left out of the dashboard). Assignments are created in the parent area (Home › Parent › PIN); the `?assign=` link was removed in M5. `$env:SHOTS='<folder>'; npx playwright test e2e/zz-screens.spec.ts` takes screenshots of every screen, parent area included.
 
 ## 3. Status log
 
@@ -47,7 +47,8 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | **M2 Tile builder, balance scale, walkthrough** | Done. Tile builder at L1–2 (drag by mouse, touch, keyboard; SignPicker; Simplify/Solve with number pad); BalanceScale (full / short after 10 correct signs / two frames under reduced motion); H3 walkthrough UI for typed and tiles; Shelly the turtle. Both M1 deviations removed. After the parent's review: level 6 accepts a correct final answer from any line (§4). 242 unit/property tests, 30 e2e (+4 on-demand skipped), engine 95.1 % lines, 202.5 KB gz JS. Report: `docs/milestones/M2-report.md`. |
 | 2026-09-23 | **M3 Number topics** | Done. NC, RD, FDP and PC generators L1–5 with misconception distractors (R-ANS-3 checked on 1000 seeds per level); hints H1/H2; H3 walkthroughs with mini-questions, column subtraction, long division and the sets map; multiple-choice and select-all screens; Home topic picker. 377 unit/property tests, 50 e2e (+6 on-demand skipped), engine 96.9 % lines, 216.7 KB gz JS. Report: `docs/milestones/M3-report.md`. |
 | 2026-09-23 | **M4 Sessions, adaptive levels, rewards** | Done. Assignments (from a link until M5), grouped and mixed order, resume; adaptive levels (R-ADP-1…6); stars, shells, streak, 12 badges; Pip the penguin and celebrations; Home with the assignment card and locked free practice; assignment summary; Dexie schema v2. 489 unit/property tests, 60 e2e (+8 on-demand skipped), engine 97.1 % lines, 229.7 KB gz JS. Report: `docs/milestones/M4-report.md`. |
-| — | M5–M6 | Not started. |
+| 2026-09-23 | **M5 Parent area** | Done. First-run setup (PIN, then naming Shelly and Pip); PIN gate with reset and auto-lock; assignment builder and queue (replaces the link); progress dashboard; missed-question review; settings; export / import / reset; the error list; free practice defaults to `always`; Dexie schema v3. 556 unit/property tests, 86 e2e (+10 on-demand skipped), engine 97.2 % lines, 244.3 KB gz JS. Report: `docs/milestones/M5-report.md`. |
+| — | M6 | Not started. |
 
 ## 4. Parent decisions, questions and answers
 
@@ -77,6 +78,12 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | M4: starting level per topic | **EQ 3, the others 1** (`config.adaptive.startLevel`). |
 | 2026-09-23 | M4: R-HELP-6 (same topic and level after a walkthrough) against a demotion that walkthrough triggers, and mixed order | **Same topic and level next; the demotion applies from the question after.** Mixed order pulls that topic forward; if its item is finished, move on. |
 | 2026-09-23 | M4: does the learner still pick a level on Home? | **No: topic tiles only, at the adaptive level.** `?topic=&level=` links still open a fixed level for the parent and tests, without changing levels or rewards. |
+| 2026-09-23 | M5 input | **Assignments are created in the parent area, not by a link.** Free practice is **always** available by default (R-SES-6 `always`); the setting stays in the parent area. |
+| 2026-09-23 | M5 plan | Approved as proposed, with the four answers below. |
+| 2026-09-23 | M5: the `?assign=` link | **Removed** from the app. E2E tests write assignments into IndexedDB (`e2e/helpers.ts`); the R-TEST-5 flow uses the builder. `?topic=&level=` links stay. |
+| 2026-09-23 | M5: what does "Reset all progress" clear? | **Answers, levels, shells, streak, badges and all assignments.** The PIN, names, settings and the error list stay. |
+| 2026-09-23 | M5: first-run setup | **Required before Home.** Existing progress is kept. |
+| 2026-09-23 | M5: "Save & make active" while another is active | **That one goes back to the front of the queue**, progress kept. |
 
 ## 5. Assumptions in force (spec silent; reversible)
 
@@ -141,6 +148,20 @@ From M4 (details in `docs/milestones/M4-report.md` §3):
 52. The learner's level picker is gone; its level examples stay in `strings.ts` for M5's level lock.
 53. A walkthrough ends with its 1 ★ celebration under the steps.
 
+From M5 (details in `docs/milestones/M5-report.md` §3):
+54. `?topic=&level=` links skip the first-run setup; their attempts are marked `fixed` and left out of the dashboard and review.
+55. PIN reset: 21–99 × 11–19, a new one after a miss; no lockout after wrong PINs. The parent area re-locks after 10 min idle and on leaving; changing the PIN in Settings doesn't ask for the old one.
+56. Names are 1–16 characters, blank → default; the turtle's name also shows in the hint panel.
+57. "Add to queue" with nothing active makes it active.
+58. Editing a started assignment: stored items stay in place with their topic; counts ≥ done; started items keep their level lock and can't be removed; new items append; the order is fixed.
+59. Re-queued assignments lose their activation time; deleting keeps the answers; Mark complete shows no summary.
+60. Dashboard: finished, non-fixed answers; time per question capped at 10 min; trend = clean % per day; hints by highest tier; Worth a look needs 6 answers per topic, the diagnostic rule looks back 7 × 24 h.
+61. Missed rule uses `wrongTries`, or for older attempts the wrong answers (two EQ rejections = one).
+62. Import brings the file's PIN and settings; a file without settings keeps this device's. The error list is exported and imported.
+63. The reduce-motion setting ends CSS animations at once and uses the OS reduced-motion paths. Sound is stored for M6.
+64. New tokens `--on-parent-nav`, `--on-parent-nav-muted`, `--parent-nav-active`.
+65. Dashboard charts are hand-drawn SVG with hover titles; the numbers are also in text.
+
 ## 6. Spec conflicts found and how they were resolved
 
 1. (M1) §7.4 rule order would make `x = 8` from `x/4 = 2` a CLEAR_FRACTIONS; §7.5 says SOLVE. Implemented §7.5: a `v = q` line is never CLEAR_FRACTIONS.
@@ -154,6 +175,9 @@ From M4 (details in `docs/milestones/M4-report.md` §3):
 9. (M4) R-HELP-6 against a demotion triggered by the walkthrough and against mixed order. The parent decided: same topic and level next, demotion after (§4).
 10. (M4) R-ADP-2 needs 5 attempts to promote; R-ADP-3 sets no minimum to demote. Implemented as written.
 11. (M4) Mockup 09 always shows "Free practice ›"; with the `never` policy (R-SES-6) only "Home" is shown.
+12. (M5) R-SES-6 default `afterAssignment`, design.md §7.1 and mockup 01 (locked tiles) vs the parent's `always` default. The parent decided (§4).
+13. (M5) Requirements §9.1 lacks `Assignment.order` and `Attempt.fixed`; both are optional fields (v2, v3).
+14. (M5) Mockup 11 has no editing state; the builder becomes "Edit assignment" from a queue card.
 
 ## 7. Approved deviations and rules in force
 
@@ -164,15 +188,20 @@ From M4 (details in `docs/milestones/M4-report.md` §3):
 ```
 src/engine/            pure TS (R-ARCH-1)
   rational.ts rng.ts config.ts (TopicId, TOPICS, adaptive start levels, rewards)
-  adaptive.ts scoring.ts session.ts      R-ADP window; stars, streak, badges; assignment link, order, seeds
+  adaptive.ts scoring.ts session.ts      R-ADP window; stars, streak, badges; builder draft + edit rules, order, seeds
+  parent.ts review.ts                    PIN challenge, dashboard stats, Worth a look, missed rule; regenerate a question
   eq/parse.ts linear.ts stepChecker.ts format.ts evaluate.ts tiles.ts
   topics/eq/generator.ts hints.ts        (eqHint H1/H2, eqWalkthrough H3 + WalkOp)
   numbers/decimal.ts display.ts          long division, DecimalRep (R-RD-2/3); Shown: LaTeX + text + speech
   topics/content.ts mc.ts walk.ts        HintContent; option builder (R-ANS-3); NumWalkStep, miniQuestion
   topics/rd|fdp|pc/ generator distractors hints     multiple choice; nc/ generator checker hints
-src/data/db.ts attempts.ts progress.ts   Dexie schema v2 + upgrade; attempt save; finishAttempt, assignments, Home, summary
+src/data/db.ts attempts.ts progress.ts   Dexie schema v3 + upgrades; attempt save; finishAttempt, Home, summary
+  settings.ts assignments.ts stats.ts    settings + PIN hash; the queue; dashboard and missed loaders
+  backup.ts errors.ts                    export / import / reset; the error list (R-NF-5)
 src/ui/
-  App.tsx                                routes: Home, Session (assignment | free | fixed level), summary; ?assign= link
+  App.tsx settings.tsx                   routes: setup, Home, Session (assignment | free | fixed level), summary, parent; settings context
+  screens/Setup.tsx                      first run: PIN, then naming
+  parent/ ParentArea PinPad Reorder Assignments Progress Missed SettingsPage DataPage   (parent.css)
   screens/Session.tsx                    chooses each question, mounts the practice screen, applies what it earns
   screens/Home.tsx AssignmentSummary.tsx EquationPractice.tsx TileEquation.tsx McPractice.tsx NcPractice.tsx
   practice/question.tsx                  QuestionProps, useReportAttempt, CelebrationSlot
@@ -183,29 +212,24 @@ src/ui/
   strings.ts (numText, misconceptionLine, rewardStrings)  theme/tokens.css tokens.ts global.css
   ui.css tiles.css numbers.css rewards.css
 tests/engine/*  tests/ui/*  tests/data/* Vitest + fast-check (+ fake-indexeddb)
-e2e/assignment equation offline tiles walkthrough topics   Playwright (desktop + tablet-touch); zz-live, zz-screens on demand
+e2e/assignment equation offline parent tiles walkthrough topics + helpers.ts   Playwright (desktop + tablet-touch); zz-live, zz-screens on demand
 ```
 
-`?assign=EQ:10,PC:5@2&order=mixed&title=…` queues an assignment (until M5's builder).
 
 ## 9. Milestone report template (from the original handoff)
 
 1. What was built, against requirement IDs. 2. Test results: counts, `src/engine` coverage, anything skipped and why. 3. Assumptions. 4. Conflicts between requirements, design and mockups. 5. Approved deviations still in force and which milestone removes each. 6. PowerShell commands to run it, and confirmation that the hosted URL was redeployed and still installs and works offline. 7. What to build next, and anything wrong with the plan.
 
-## 10. Next: M5 parent area (only after the parent says go)
+## 10. Next: M6 polish (only after the parent says go)
 
-Scope and done-when: requirements §12 (PIN, assignment builder, dashboard, missed-question review, settings, export/import; R-TEST-5 parent flow green). Notes for the plan:
+Scope and done-when: requirements §12 (shells + accessories R-RWD-4, animations, a11y pass, offline test, performance budget; R-TEST-6, R-TEST-7, R-NF-1/2 met). Notes for the plan:
 
-- The assignment builder replaces the `?assign=` link. `addAssignmentFromLink` in `src/data/progress.ts` already queues an assignment (active if none is, `position`, `seed`, `order`); the builder needs edit, reorder, delete and "mark complete early" (R-PAR-2).
-- Settings the app already reads from Dexie with config defaults: `freePractice`, `order`, `levelBounds`, `reduceMotion` (`practiceSettings`), `naturalIncludesZero`, `currency` (`numberSettings`), `fullBalanceAnim`. `mascotNames` isn't read yet (R-RWD-7).
-- The dashboard (R-PAR-3) can use `Attempt.wrongTries` (average tries), `maxHint`, `clean`, `startedAt` / `finishedAt`; missed-question review (R-PAR-4) regenerates from `generatorId`, `seed`, `params` and replays `tries` (rejected lines carry their diagnostic codes).
-- Export / import (R-PAR-6): export files carry `schemaVersion` 2; importing a v1 file runs `upgradeAssignmentToV2` (exported from `db.ts`).
-- The error list (R-NF-5): errors are only logged to the console so far.
-
-Open items, parked while the app is used only in a desktop browser (§4): the tablet-portrait keypad for typed EQ (M6), and the M2 touch-drag fix on the real tablet.
-
-After M5:
-- **M6, polish:** shells on the beach and accessories (R-RWD-4), sounds, animations, axe accessibility pass (R-TEST-6), an offline test that completes a question (R-TEST-7), performance budgets (R-NF-1/2), the portrait keypad.
+- Sounds: `Settings.sound` is stored and toggled in the parent area, but nothing plays yet (design.md §8).
+- Shells: `Rewards.shells` counts; the beach shows none yet; `Rewards.accessories` is unused.
+- R-TEST-7: `e2e/offline.spec.ts` reloads offline but doesn't complete a question; `zz-live` does on the hosted site.
+- R-TEST-6: run axe on the parent pages too.
+- The tablet-portrait keypad (M1 open item) and the M2 touch-drag check on the real tablet stay open while the app is used only in a desktop browser (§4).
+- After the M5 deploy, the installed app shows the first-run setup once (no PIN yet); progress is kept.
 
 ## 11. Reference materials
 
