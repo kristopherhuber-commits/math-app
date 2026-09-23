@@ -596,3 +596,130 @@
   flex-direction: column;
   gap: var(--space-1);
 }
+
+/* ---------- progress dashboard (R-PAR-3, mockup 10) ---------- */
+.daily {
+  margin-bottom: var(--space-5);
+}
+.daily-bars {
+  display: block;
+  width: 100%;
+  height: 80px;
+}
+.daily-bars .bar {
+  fill: var(--primary);
+}
+.daily-bars .bar-zero {
+  fill: var(--line);
+}
+.daily-bars .hit {
+  fill: transparent;
+}
+.daily-bars g:hover .bar {
+  fill: var(--var-ink);
+}
+.topic-grid-parent {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-5);
+}
+.topic-level {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.level-pips {
+  display: inline-flex;
+  gap: 4px;
+}
+.pip {
+  width: 18px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--surface-sunken);
+}
+.pip.on {
+  background: var(--primary);
+}
+.topic-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-3) 0 var(--space-2);
+}
+.topic-headline > div {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+.big-number {
+  font-size: 36px;
+  line-height: 40px;
+  font-weight: 900;
+}
+.sparkline {
+  width: 160px;
+  height: 48px;
+}
+.sparkline polyline {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+/* Every day's point is a hover target; only the latest is drawn. */
+.sparkline circle {
+  fill: transparent;
+}
+.sparkline circle.end {
+  fill: var(--primary);
+  stroke: var(--surface);
+  stroke-width: 2;
+}
+.topic-facts {
+  margin: 0 0 var(--space-3);
+}
+.topic-card > .label {
+  display: block;
+  margin: 0 0 var(--space-2);
+}
+.hint-bar {
+  display: flex;
+  gap: 2px;
+  height: 16px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface-sunken);
+}
+.hint-seg.t1 {
+  background: var(--help-bg);
+  border: 1px solid var(--turtle);
+}
+.hint-seg.t2 {
+  background: var(--turtle);
+}
+.hint-seg.t3 {
+  background: var(--turtle-dark);
+}
+.hint-split {
+  margin: var(--space-2) 0 0;
+  font-weight: 800;
+}
+.attention {
+  background: var(--amber-soft);
+  border-color: var(--const-line);
+}
+.attention h2 {
+  color: var(--amber);
+}
+.attention-note p {
+  margin: 0 0 var(--space-1);
+  font-weight: 700;
+}
+.attention-note + .attention-note {
+  margin-top: var(--space-3);
+}
+.attention .link-btn {
+  padding: 0;
+}

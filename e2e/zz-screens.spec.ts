@@ -4,7 +4,9 @@ import { generatePc } from '../src/engine/topics/pc/generator';
 import { generateEq } from '../src/engine/topics/eq/generator';
 import { eqWalkthrough } from '../src/engine/topics/eq/hints';
 import { questionSeed } from '../src/engine/session';
-import { assignment, openHome, PIN } from './helpers';
+import { assignment, attemptRow, openHome, PIN } from './helpers';
+import { mulberry32 } from '../src/engine/rng';
+import { TOPICS } from '../src/engine/config';
 
 const OUT = process.env.SHOTS ?? '';
 
@@ -148,6 +150,8 @@ test('parent screens', async ({ page }, info) => {
       assignment('FDP:6', { seed: 2, title: 'Fractions review', status: 'queued', position: 1 }),
       assignment('EQ:8', { seed: 3, title: 'Weekend equations', status: 'queued', position: 2 }),
     ],
+    attempts: sampleAttempts(),
+    topicStates: TOPICS.map((topic, i) => ({ profileId: 'default', topic, level: 1 + (i % 3), window: [] })),
   });
   await page.getByRole('button', { name: 'Parent', exact: true }).click();
   await shot('pin');
@@ -161,6 +165,35 @@ test('parent screens', async ({ page }, info) => {
   await shot('builder');
   for (const p of ['Progress', 'Missed questions', 'Settings', 'Data']) {
     await page.getByRole('navigation').getByRole('button', { name: p }).click();
+    await page.waitForTimeout(400);
     await shot(p.toLowerCase().replace(' ', '-'));
   }
 });
+
+/** Thirty days of made-up answers for the dashboard screenshots (seeded, so every run is the same). */
+function sampleAttempts() {
+  const rng = mulberry32(2026);
+  const rows = [];
+  for (let d = 29; d >= 0; d--) {
+    if (rng.next() < 0.2) continue;
+    for (let k = rng.int(2, 8); k > 0; k--) {
+      const t = new Date(Date.now() - d * 86_400_000 - k * 600_000);
+      const hint = rng.pick([0, 0, 0, 0, 1, 1, 2, 3] as const);
+      const eq = rng.next() < 0.4;
+      rows.push(
+        attemptRow({
+          topic: eq ? 'EQ' : rng.pick(['NC', 'RD', 'FDP', 'PC'] as const),
+          finishedAt: t.toISOString(),
+          maxHint: hint,
+          clean: hint <= 1 && rng.next() < 0.8,
+          wrongTries: hint >= 2 ? 1 : 0,
+          tries:
+            eq && hint >= 2
+              ? [{ at: t.toISOString(), answer: 'x', verdict: 'stepRejected', diagnostic: 'EQ-D4' }]
+              : [],
+        }),
+      );
+    }
+  }
+  return rows;
+}

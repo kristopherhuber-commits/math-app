@@ -1,12 +1,7 @@
-import type { TopicId } from '../../engine/config';
+import type { MissedFilter } from '../../data/stats';
 import { parentStrings } from '../strings';
 
-export interface MissedFilter {
-  topic?: TopicId;
-  from?: string;
-  to?: string;
-  code?: string;
-}
+export type { MissedFilter };
 
 export function Missed(props: { filter: MissedFilter; onFilter: (f: MissedFilter) => void }) {
   void props;

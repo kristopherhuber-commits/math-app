@@ -75,7 +75,7 @@ export function assignment(
  */
 export async function openHome(
   page: Page,
-  rows: { assignments?: object[]; topicStates?: object[]; settings?: object } = {},
+  rows: { assignments?: object[]; topicStates?: object[]; attempts?: object[]; settings?: object } = {},
 ): Promise<void> {
   await page.goto('./');
   await expect(page.getByRole('heading', { name: 'Hello, grown-up!' })).toBeVisible();
@@ -83,7 +83,31 @@ export async function openHome(
     settings: [{ profileId: 'default', pinHash: pinHash(), ...rows.settings }],
     ...(rows.assignments ? { assignments: rows.assignments } : {}),
     ...(rows.topicStates ? { topicStates: rows.topicStates } : {}),
+    ...(rows.attempts ? { attempts: rows.attempts } : {}),
   });
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Hi there!' })).toBeVisible();
+}
+
+let attemptN = 0;
+
+/** A finished attempt row (3 minutes, clean 3 ★ unless overridden). */
+export function attemptRow(o: Record<string, unknown> & { topic: TopicId; finishedAt: string }) {
+  const finished = Date.parse(o.finishedAt);
+  return {
+    id: `att-${++attemptN}-${finished}`,
+    profileId: 'default',
+    level: 1,
+    generatorId: 'test',
+    seed: 1,
+    params: {},
+    startedAt: new Date(finished - 3 * 60_000).toISOString(),
+    tries: [],
+    maxHint: 0,
+    stars: 3,
+    clean: true,
+    wrongTries: 0,
+    countedAt: o.finishedAt,
+    ...o,
+  };
 }

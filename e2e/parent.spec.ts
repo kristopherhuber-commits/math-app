@@ -2,7 +2,7 @@
 // the PIN gate and reset, the assignment builder and queue, settings, dashboard, missed-question
 // review, and data export / import / reset. Runs on desktop (mouse) and tablet (touch).
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { assignment, openHome, PIN } from './helpers';
+import { assignment, attemptRow, openHome, PIN } from './helpers';
 
 async function press(target: Locator, touch: boolean) {
   if (touch) await target.tap();
@@ -316,4 +316,52 @@ test('settings: reduce motion marks the page for the CSS (R-PAR-5, R-NF-3)', asy
   await expect(page.locator('html')).toHaveAttribute('data-reduce-motion');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-reduce-motion');
+});
+
+/** Six EQ answers today: three clean, three that ended in a walkthrough with sign errors (EQ-D4). */
+function eqDay() {
+  const now = Date.now();
+  return Array.from({ length: 6 }, (_, i) => {
+    const finishedAt = new Date(now - (6 - i) * 5 * 60_000).toISOString();
+    const walk = i % 2 === 1;
+    return attemptRow({
+      topic: 'EQ',
+      level: 3,
+      finishedAt,
+      ...(walk
+        ? {
+            maxHint: 3,
+            clean: false,
+            stars: 1,
+            wrongTries: 1,
+            tries: [
+              { at: finishedAt, answer: 'x', verdict: 'stepRejected', diagnostic: 'EQ-D4' },
+              { at: finishedAt, answer: 'x', verdict: 'stepRejected', diagnostic: 'EQ-D4' },
+            ],
+          }
+        : {}),
+    });
+  });
+}
+
+test('the dashboard: level, clean solves, hints, minutes, and what is worth a look (R-PAR-3)', async ({
+  page,
+  hasTouch,
+}) => {
+  await openHome(page, {
+    attempts: eqDay(),
+    topicStates: [{ profileId: 'default', topic: 'EQ', level: 4, window: [] }],
+  });
+  await unlock(page, hasTouch);
+  await press(page.getByRole('navigation').getByRole('button', { name: 'Progress' }), hasTouch);
+  const eq = page.getByRole('region', { name: 'Equations' });
+  await expect(eq).toContainText('Level 4 of 6');
+  await expect(eq).toContainText('50%');
+  await expect(eq).toContainText('6 questions · 1.5 tries on average · 18 min');
+  await expect(eq).toContainText('H1 0 · H2 0 · H3 3');
+  await expect(page.getByRole('region', { name: 'Price changes' })).toContainText('No answers yet');
+  const worth = page.getByRole('region', { name: 'Worth a look' });
+  await expect(worth).toContainText('Equations: needed a walkthrough 3 of the last 6.');
+  await expect(worth).toContainText('Equations: sign errors when moving a term (EQ-D4) × 6 this week.');
+  await expect(page.getByRole('img', { name: 'Minutes per day' })).toBeVisible();
 });

@@ -122,6 +122,8 @@ export const config = {
     maxAttemptMinutes: 10,
     /** R-PAR-3: the dashboard's window. */
     dashboardDays: 30,
+    /** design.md §7.10 "Worth a look": H3 in ≥ half of a topic's last 6; an EQ diagnostic ≥ 5× in 7 days. */
+    worth: { recentAttempts: 6, walkthroughShare: 0.5, diagnosticCount: 5, diagnosticDays: 7 },
     /** R-NF-5: the error list keeps the newest entries. */
     errorLogMax: 200,
     /** R-RWD-7: mascot names. */
