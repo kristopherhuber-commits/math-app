@@ -1,6 +1,6 @@
 // EQ hints (§7.6, R-HELP-5): built from this problem's numbers, letter and terms.
 import { describe, expect, it } from 'vitest';
-import { eqHint, eqWalkthrough } from '../../src/engine/topics/eq/hints';
+import { eqHint, eqWalkthrough, walkOpText } from '../../src/engine/topics/eq/hints';
 
 const M = '−';
 
@@ -44,6 +44,37 @@ describe('§7.6 hints for 3a + 3 = a + 23', () => {
       right: '10 + 23',
       rightValue: '33',
     });
+  });
+});
+
+describe('H3 on the balance scale (R-EQ-PED-1)', () => {
+  const P = '3a + 3 = a + 23';
+  it('Separate takes 3 and a from both sides; Solve divides both sides by 2', () => {
+    const steps = eqWalkthrough(P, 'a');
+    expect(steps.map((s) => s.before)).toEqual([P, `3a ${M} a = 23 ${M} 3`, '2a = 20', P]);
+    expect(walkOpText(steps[0]!.op!, 'a')).toBe(`${M} 3 ${M} a`);
+    expect(steps[1]!.op).toBeNull();
+    expect(walkOpText(steps[2]!.op!, 'a')).toBe('÷ 2');
+    expect(steps[3]!.op).toBeNull();
+  });
+  it('a negative divisor is bracketed: ÷ (−3)', () => {
+    const steps = eqWalkthrough(`7 ${M} 3z = 13`, 'z');
+    expect(walkOpText(steps.find((s) => s.kind === 'SOLVE')!.op!, 'z')).toBe(`÷ (${M}3)`);
+  });
+  it('clearing fractions multiplies both sides', () => {
+    const steps = eqWalkthrough('x/4 + 1 = 3', 'x');
+    expect(steps[0]!.kind).toBe('CLEAR_FRACTIONS');
+    expect(walkOpText(steps[0]!.op!, 'x')).toBe('× 4');
+  });
+  it('starts from the learner’s last line and checks against the original', () => {
+    const steps = eqWalkthrough(`3a ${M} a = 23 ${M} 3`, 'a', P);
+    expect(steps.map((s) => s.kind)).toEqual(['SIMPLIFY', 'SOLVE', 'CHECK']);
+    expect(steps.at(-1)!.line).toBe(P);
+    expect(steps.at(-1)!.explain.params).toMatchObject({ left: '3·10 + 3', rightValue: '33' });
+  });
+  it('keeps the unknown on the right when the learner put it there', () => {
+    const steps = eqWalkthrough(`3 ${M} 23 = a ${M} 3a`, 'a', P);
+    expect(steps.map((s) => s.line)).toEqual([`${M}20 = ${M}2a`, '10 = a', P]);
   });
 });
 

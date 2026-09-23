@@ -7,7 +7,8 @@ import { eqWalkthrough } from '../../src/engine/topics/eq/hints';
 import { evaluate } from '../../src/engine/eq/evaluate';
 import { parseEquation, type Expr } from '../../src/engine/eq/parse';
 import { checkStep } from '../../src/engine/eq/stepChecker';
-import { add, eq, isInteger, rat, sub, type Rational } from '../../src/engine/rational';
+import { add, div, eq, formatRational, isInteger, rat, sub, type Rational } from '../../src/engine/rational';
+import { linearize, linEq, linScale, type Lin } from '../../src/engine/eq/linear';
 import { config } from '../../src/engine/config';
 
 const RUNS = 1000;
@@ -128,7 +129,64 @@ describe.each([1, 2, 3, 4, 5, 6])('EQ level %i generator', (level) => {
       { numRuns: 300 },
     );
   });
+
+  it('walkthrough from any mid-solution line still replays and checks the original', () => {
+    fc.assert(
+      fc.property(seedArb, (seed) => {
+        const q = generateEq(level, seed);
+        const full = eqWalkthrough(q.text, q.variable).filter((x) => x.kind !== 'CHECK');
+        for (const start of full.slice(0, -1)) {
+          const steps = eqWalkthrough(start.line, q.variable, q.text);
+          let prev = start.line;
+          for (const s of steps.filter((x) => x.kind !== 'CHECK')) {
+            expect(s.before).toBe(prev);
+            const r = checkStep(prev, s.line, { variable: q.variable, level, allowSkipping: false });
+            expect(r.accepted, `${prev} → ${s.line}`).toBe(true);
+            prev = s.line;
+          }
+          const check = steps.at(-1)!;
+          expect(check.line).toBe(q.text);
+          expect(check.explain.params.value).toBe(formatRational(q.solution));
+        }
+      }),
+      { numRuns: 300 },
+    );
+  });
+
+  it('each walkthrough op, applied to both sides of the line before, gives the line after', () => {
+    fc.assert(
+      fc.property(seedArb, (seed) => {
+        const q = generateEq(level, seed);
+        for (const s of eqWalkthrough(q.text, q.variable)) {
+          if (!s.op) continue;
+          const before = linOf(s.before, q.variable);
+          const after = linOf(s.line, q.variable);
+          const op = s.op;
+          const apply = (x: Lin): Lin => {
+            if (op.kind === 'mul') return linScale(x, op.by);
+            if (op.kind === 'div') return linScale(x, div(rat(1), op.by));
+            return op.terms.reduce<Lin>(
+              (acc, t) =>
+                t.isVar ? { a: add(acc.a, t.coef), b: acc.b } : { a: acc.a, b: add(acc.b, t.coef) },
+              x,
+            );
+          };
+          expect(linEq(apply(before.left.lin), after.left.lin), `${s.before} → ${s.line} (left)`).toBe(true);
+          expect(linEq(apply(before.right.lin), after.right.lin), `${s.before} → ${s.line} (right)`).toBe(
+            true,
+          );
+        }
+      }),
+      { numRuns: RUNS },
+    );
+  });
 });
+
+function linOf(text: string, v: string) {
+  const r = parseEquation(text, v);
+  if (!r.ok) throw new Error(`does not parse: ${text}`);
+  return linearize(r.eq);
+}
 
 describe('level coverage', () => {
   it('level 6 includes negative fraction solutions', () => {

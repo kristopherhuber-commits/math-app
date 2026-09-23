@@ -172,14 +172,36 @@ export function eqHint(line: string, v: string, tier: 1 | 2): HintContent {
 
 export type WalkKind = 'EXPAND' | 'CLEAR_FRACTIONS' | 'SEPARATE' | 'SIMPLIFY' | 'SOLVE' | 'CHECK';
 
+type Simple = { coef: Rational; isVar: boolean };
+
+/**
+ * What the step does to both sides of the balance (R-EQ-PED-1, §7.6 "on the balance scale"):
+ * add the same terms to both pans, or multiply / divide both pans by the same number.
+ */
+export type WalkOp =
+  { kind: 'add'; terms: Simple[] } | { kind: 'mul'; by: Rational } | { kind: 'div'; by: Rational };
+
 export interface WalkStep {
   kind: WalkKind;
+  /** The line before this step (for CHECK: the original equation). */
+  before: string;
   /** The line after this step (for CHECK: the original equation). */
   line: string;
+  /** The both-sides operation, when the step is one (EXPAND, SIMPLIFY and CHECK have none). */
+  op: WalkOp | null;
   explain: HintContent;
 }
 
-type Simple = { coef: Rational; isVar: boolean };
+/** The operation as shown on each pan: `− a − 3`, `× 4`, `÷ 2`, `÷ (−3)`. */
+export function walkOpText(op: WalkOp, v: string): string {
+  if (op.kind === 'add')
+    return op.terms
+      .map((t) => `${sign(t.coef) < 0 ? MINUS : '+'} ${termMagnitude(t.coef, t.isVar, v)}`)
+      .join(' ');
+  const n = formatRational(op.by);
+  const shown = sign(op.by) < 0 || !isInteger(op.by) ? `(${n})` : n;
+  return `${op.kind === 'mul' ? '×' : '÷'} ${shown}`;
+}
 
 function eqText(l: Simple[], r: Simple[], v: string): string {
   return `${sideText(l, v)} = ${sideText(r, v)}`;
@@ -216,17 +238,23 @@ function substituted(e: Expr, value: Rational): string {
   return go(e);
 }
 
-/** The worked solution of this problem, one step per tap, ending with the substitution check. */
-export function eqWalkthrough(original: string, v: string): WalkStep[] {
+/**
+ * The worked solution of this problem, one step per tap, ending with the substitution check
+ * (§7.6). It starts from `from`, the learner's last accepted line, and checks against `original`.
+ */
+export function eqWalkthrough(from: string, v: string, original: string = from): WalkStep[] {
   const steps: WalkStep[] = [];
-  let { e } = lin(original);
+  let { e } = lin(from);
   let terms = { l: e.left.terms as Simple[], r: e.right.terms as Simple[] };
-  let line: string;
+  let line = from;
+  const push = (kind: WalkKind, next: string, op: WalkOp | null, explain: HintContent) => {
+    steps.push({ kind, before: line, line: next, op, explain });
+    line = next;
+    e = lin(line).e;
+  };
 
   if (groupingParens(e) > 0) {
-    line = eqText(terms.l, terms.r, v);
-    steps.push({ kind: 'EXPAND', line, explain: { id: 'eq.walk.expand', params: {} } });
-    e = lin(line).e;
+    push('EXPAND', eqText(terms.l, terms.r, v), null, { id: 'eq.walk.expand', params: {} });
   }
   if (!isSeparated(e) && hasFractions(e)) {
     const m = rat(denominatorLcm(e));
@@ -234,17 +262,20 @@ export function eqWalkthrough(original: string, v: string): WalkStep[] {
       l: terms.l.map((t) => ({ ...t, coef: mul(t.coef, m) })),
       r: terms.r.map((t) => ({ ...t, coef: mul(t.coef, m) })),
     };
-    line = eqText(terms.l, terms.r, v);
-    steps.push({
-      kind: 'CLEAR_FRACTIONS',
-      line,
-      explain: { id: 'eq.walk.clear', params: { m: formatRational(m) } },
-    });
-    e = lin(line).e;
+    push(
+      'CLEAR_FRACTIONS',
+      eqText(terms.l, terms.r, v),
+      { kind: 'mul', by: m },
+      {
+        id: 'eq.walk.clear',
+        params: { m: formatRational(m) },
+      },
+    );
   }
   if (!isSeparated(e)) {
     const vs = varSideOf(e);
-    const moved = movesFor(e).map((t) => spokenTerm(t, v));
+    const movedTerms = movesFor(e);
+    const moved = movedTerms.map((t) => spokenTerm(t, v));
     const stay = (side: Simple[], isVar: boolean) => side.filter((t) => t.isVar === isVar);
     const cross = (side: Simple[], isVar: boolean) =>
       side.filter((t) => t.isVar === isVar).map((t) => ({ ...t, coef: neg(t.coef) }));
@@ -257,13 +288,15 @@ export function eqWalkthrough(original: string, v: string): WalkStep[] {
         ? [...stay(terms.r, false), ...cross(terms.l, false)]
         : [...stay(terms.l, false), ...cross(terms.r, false)];
     terms = vs === 'L' ? { l: varSideTerms, r: constSideTerms } : { l: constSideTerms, r: varSideTerms };
-    line = eqText(terms.l, terms.r, v);
-    steps.push({
-      kind: 'SEPARATE',
-      line,
-      explain: { id: 'eq.walk.separate', params: { variable: v, moved: moved.join(', ') } },
+    // Moving a term across = adding its opposite to both sides (the balance view).
+    const op: WalkOp = {
+      kind: 'add',
+      terms: movedTerms.map((t) => ({ coef: neg(t.coef), isVar: t.isVar })),
+    };
+    push('SEPARATE', eqText(terms.l, terms.r, v), op, {
+      id: 'eq.walk.separate',
+      params: { variable: v, moved: moved.join(', ') },
     });
-    e = lin(line).e;
   }
   if (!simplifiedForm(e)) {
     const sum = (xs: Simple[]) => xs.reduce((s, t) => add(s, t.coef), ZERO);
@@ -275,26 +308,28 @@ export function eqWalkthrough(original: string, v: string): WalkStep[] {
       terms.r.length && terms.r[0]!.isVar
         ? [{ coef: sum(terms.r), isVar: true }]
         : [{ coef: sum(terms.r), isVar: false }];
-    line = eqText(l, r, v);
-    steps.push({ kind: 'SIMPLIFY', line, explain: { id: 'eq.walk.simplify', params: { variable: v } } });
-    e = lin(line).e;
+    push('SIMPLIFY', eqText(l, r, v), null, { id: 'eq.walk.simplify', params: { variable: v } });
   }
   const s = simplifiedForm(e)!;
   const answer = div(s.d, s.c);
   if (!eq(s.c, rat(1))) {
-    line = `${v} = ${valueText(answer)}`;
-    steps.push({
-      kind: 'SOLVE',
-      line,
-      explain: isInteger(s.c)
+    const integer = isInteger(s.c);
+    push(
+      'SOLVE',
+      // Keep the side the unknown is on, so the balance pans still match (10 = a is fine, §7.4).
+      s.varSide === 'L' ? `${v} = ${valueText(answer)}` : `${valueText(answer)} = ${v}`,
+      integer ? { kind: 'div', by: s.c } : { kind: 'mul', by: div(rat(1), s.c) },
+      integer
         ? { id: 'eq.walk.solve.divide', params: { c: formatRational(s.c) } }
         : { id: 'eq.walk.solve.multiply', params: { m: formatRational(div(rat(1), s.c)) } },
-    });
+    );
   }
   const o = lin(original);
   steps.push({
     kind: 'CHECK',
+    before: original,
     line: original,
+    op: null,
     explain: {
       id: 'eq.walk.check',
       params: {
