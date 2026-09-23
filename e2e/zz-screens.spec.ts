@@ -40,6 +40,11 @@ test('number topic screens', async ({ page }, info) => {
     await page.goto(`./?topic=${topic}&level=${level}&seed=${seed}`);
     await shot(`${topic}${level}`);
   }
+  // The longest option text: RD level 5, F→D over 7 (block of 6, shown 3 times).
+  let s7 = 0;
+  while (generateRd(5, s7).params.shape !== 'f2d7') s7++;
+  await page.goto(`./?topic=RD&level=5&seed=${s7}`);
+  await shot('RD5-sevenths');
   // Wrong answers, the hint and the walkthrough with a mini-question (RD level 3, seed 7).
   const q = generateRd(3, 7);
   const wrong = q.options.findIndex((o) => o.code !== 'correct');

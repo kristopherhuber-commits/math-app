@@ -65,6 +65,8 @@ export function McPractice({ topic, level, seed, currency, onHome }: Props) {
   }, []);
 
   const title = topicStrings.name[topic];
+  // Long repeating decimals need wider cards (see .mc-grid.wide).
+  const wide = q.options.some((o) => (o.shown.text.split(' = ')[0] ?? '').length > 11);
   const next = () => dispatch({ type: 'next', seed: newSeed() });
 
   return (
@@ -96,7 +98,7 @@ export function McPractice({ topic, level, seed, currency, onHome }: Props) {
               </p>
             )}
 
-            <div className="mc-grid" role="radiogroup" aria-labelledby="prompt">
+            <div className={`mc-grid ${wide ? 'wide' : ''}`} role="radiogroup" aria-labelledby="prompt">
               {q.options.map((o, i) => {
                 const justTried = s.feedback !== null && s.tried.at(-1) === o.id;
                 return (

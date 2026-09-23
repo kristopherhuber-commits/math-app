@@ -163,7 +163,7 @@
   font-size: 38px;
 }
 .mc-option.two-line .math-lg {
-  font-size: 24px;
+  font-size: 19px;
 }
 .shown-second {
   font-size: 0.85em;
@@ -472,7 +472,7 @@
     display: none;
   }
   .mc-option.two-line .math-lg {
-    font-size: 20px;
+    font-size: 17px;
   }
 }
 @media (max-width: 959px) {
@@ -509,4 +509,19 @@
   from {
     opacity: 0.4;
   }
+}
+
+/* Options with long repeating decimals (1/7 shows 18 digits, R-DISP-3): two wide columns, the 5th
+   spanning both, so every option fits its card. */
+.mc-grid.wide {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.mc-grid.wide > :nth-child(5) {
+  grid-column: 1 / -1;
+}
+.mc-grid.wide .mc-option {
+  min-height: 112px;
+}
+.mc-grid.wide .mc-option.two-line .math-lg {
+  font-size: 24px;
 }
