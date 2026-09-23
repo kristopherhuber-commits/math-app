@@ -2,13 +2,13 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-23 · Current state: **M0, M1, M2 done and deployed; the M2 build session is closed. Next session: M3.**
+Last updated: 2026-09-23 · Current state: **M0, M1, M2, M3 done and deployed. Next: M4, when the parent says go.**
 
 ---
 
 ## 1. How to work on this project
 
-- **Read first:** `docs/requirements.md`, `docs/design.md`, then this file. Milestone reports with full detail: `docs/milestones/M1-report.md` (M0 + M1), `docs/milestones/M2-report.md`.
+- **Read first:** `docs/requirements.md`, `docs/design.md`, then this file. Milestone reports with full detail: `docs/milestones/M1-report.md` (M0 + M1), `docs/milestones/M2-report.md`, `docs/milestones/M3-report.md`.
 - **Precedence:** `requirements.md` > `design.md` > mockups > anything else, except the approved rules and deviations in §4. Report any other conflict; implement the higher-precedence source.
 - **Process per milestone:** plan in plan mode with open questions → parent approves → build one milestone → stop and report (template in §9) as `docs/milestones/M<n>-report.md` → update this file → commit → push (deploys) → run the live check.
 - **Public repo.** Never commit names, ages, gender, locations or local user paths of the parent or the learner. Say "the parent" and "the learner".
@@ -36,7 +36,7 @@ npm run e2e        # Playwright against the production build (first run: npx pla
 $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwright test e2e/zz-live.spec.ts
 ```
 
-`?level=N&seed=S` opens a specific EQ question (tests, bug reports).
+`?topic=NC|RD|FDP|PC|EQ&level=N&seed=S` opens a specific question; `?level=N&seed=S` alone opens EQ (tests, bug reports). `$env:SHOTS='<folder>'; npx playwright test e2e/zz-screens.spec.ts` takes screenshots of every screen.
 
 ## 3. Status log
 
@@ -45,7 +45,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-22 | **M0 Scaffold** | Done. Vite + React + TS PWA, tooling, tokens (light + dark values), Dexie schema v1, Pages deploy, installable and offline on the hosted URL. |
 | 2026-09-22 | **M1 Engine + typed EQ** | Done. `Rational`, seeded PRNG, config; parser → linear form → step checker with EQ-D1…D11; generators L1–6; hints H1/H2/H3 content; typed-step UI at all levels; attempts saved after every step. 195 unit/property tests, 14 e2e, engine 94.6 % lines. Report: `docs/milestones/M1-report.md`. |
 | 2026-09-23 | **M2 Tile builder, balance scale, walkthrough** | Done. Tile builder at L1–2 (drag by mouse, touch, keyboard; SignPicker; Simplify/Solve with number pad); BalanceScale (full / short after 10 correct signs / two frames under reduced motion); H3 walkthrough UI for typed and tiles; Shelly the turtle. Both M1 deviations removed. After the parent's review: level 6 accepts a correct final answer from any line (§4). 242 unit/property tests, 30 e2e (+4 on-demand skipped), engine 95.1 % lines, 202.5 KB gz JS. Report: `docs/milestones/M2-report.md`. |
-| — | M3 Number topics | Not started; waits for the parent. |
+| 2026-09-23 | **M3 Number topics** | Done. NC, RD, FDP and PC generators L1–5 with misconception distractors (R-ANS-3 checked on 1000 seeds per level); hints H1/H2; H3 walkthroughs with mini-questions, column subtraction, long division and the sets map; multiple-choice and select-all screens; Home topic picker. 377 unit/property tests, 50 e2e (+6 on-demand skipped), engine 96.9 % lines, 216.7 KB gz JS. Report: `docs/milestones/M3-report.md`. |
 | — | M4–M6 | Not started. |
 
 ## 4. Parent decisions, questions and answers
@@ -64,6 +64,11 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | After trying M2: at level 6 the learner may be doing the steps in her head | **Approved rule:** at EQ level 6, a correct final answer `v = q` entered on any line ends the question (label "Solved ✓ (straight to the answer)"; the solve can still be clean). How q is written is still checked (R-EQ-CHK-5 lowest terms, R-EQ-CHK-6 exact). A wrong value, and every line that is not a final answer, is checked as before. Levels 1–5 still require every step. Implemented in `checkStep` via `config.eq.finalAnswerAnyTimeLevels = [6]`. This overrides R-EQ-CHK-3 at level 6; `requirements.md` is unchanged. |
 | 2026-09-23 | Reference list in design.md | Approved: design.md header now lists the original brief, the build brief, milestone reports and `progress.md`. |
 | 2026-09-23 | M2 build session | Closed by the parent. M3 starts in a new session. |
+| 2026-09-23 | M3 plan | Approved as proposed. |
+| 2026-09-23 | M3: repeating percents, `33.3…%` (R-FDP-3) or the block shown 3 times (R-DISP-3)? | **R-DISP-3**: `33.333…%`, with `33.\overline{3}%` beside it from FDP level 4. The R-FDP-3 example is logged as a conflict. |
+| 2026-09-23 | M3: how do answer options show repeating decimals? | **Both forms, stacked** (`0.181818…` over `= 0.\overline{18}`), so no option is ever ellipsis-only. |
+| 2026-09-23 | M1 open item: tablet-portrait keypad (typed EQ) | **Deferred to M6** (polish). |
+| 2026-09-23 | M2 open item: the touch-drag fix on the real tablet | **Not tried yet**; stays open. |
 
 ## 5. Assumptions in force (spec silent; reversible)
 
@@ -96,6 +101,21 @@ From M2 (details in `docs/milestones/M2-report.md` §3):
 24. "Show me step by step" is offered at H1 and H2; a wrong try at H2 makes it pulse; it never starts by itself; a started walkthrough ends only by finishing.
 25. `fullBalanceAnim` default `false` (= shorten after 10 correct signs); parent toggle in M5.
 
+From M3 (details in `docs/milestones/M3-report.md` §3):
+26. Home is free practice (topic tiles, then levels) until M4 brings assignments and adaptive levels.
+27. MC and NC: one wrong Check = one wrong try. The first gets "Not quite." only; from the second, the next hint tier opens and Help pulses. Clean solve as in EQ.
+28. Walkthrough mini-question misses aren't scored or recorded.
+29. Irrational patterns: only the spec's two families (one more 0 each time; the counting numbers in a row), either sign, each with its rule as a caption.
+30. Level ranges the spec leaves open are in `config.ts` (`rd`, `fdp`, `pc`, `nc`). Examples: RD L3 whole part 1–9; PC prices $5–$200; FDP level pools from the §6.3 table; NC integers ≤ 50. Level 5 of each topic mixes 1–4.
+31. F→D distractor codes RD-F1…F5 (the spec lists them without codes). RD-M4 cuts after one block; RD-M6 duplicates it for pure repeats and is dropped.
+32. PC-M6 and PC-M7 have the same value; the code follows the spec's examples (M6 discount, M7 increase).
+33. FDP levels 1–3 never offer a repeating option. All fraction options are in lowest terms.
+34. Fillers are near misses (`FILLER`, no misconception line).
+35. NC: outlines appear from the second wrong Check and clear when the card is toggled or at the next Check. On a card, Space ticks and Enter checks.
+36. `naturalIncludesZero` and `currency` are read from Dexie with the config defaults (toggles in M5).
+37. The PC level 3 walkthrough adapts R-PC-3: "does not get back" for equal and opposite percents, "gets back exactly" when the changes cancel (up 25%, down 20%), otherwise "the percents don't just add up".
+38. Options whose first line is longer than 11 characters (e.g. sevenths) use two wide columns, the 5th spanning both. The sets-map preview shows only at ≥ 1200 px.
+
 ## 6. Spec conflicts found and how they were resolved
 
 1. (M1) §7.4 rule order would make `x = 8` from `x/4 = 2` a CLEAR_FRACTIONS; §7.5 says SOLVE. Implemented §7.5: a `v = q` line is never CLEAR_FRACTIONS.
@@ -103,6 +123,9 @@ From M2 (details in `docs/milestones/M2-report.md` §3):
 3. (M2) Mockup 05 shows constant tiles without `+`; R-EQ-TILE-1 has `+3`, `+23`. Followed the requirement.
 4. (M2) design.md §6.2 ends Solve with a celebration; celebrations are M4. The substitution-check box stands in until then.
 5. (M2) The hint note "Walkthrough = 1 star, and that's OK!" (design.md §5) is shown before stars exist (M4).
+6. (M3) R-FDP-3 writes `33.3…%`; R-DISP-3 wants the block 3 times. The parent chose R-DISP-3 (`33.333…%`).
+7. (M3) Mockup 02 shows 5 options in one row. Long repeating options (sevenths) don't fit, so those questions use two wide columns.
+8. (M3) The PC-M2 line in design.md §9 ("What's the new price?") would mislead on a reverse question. There it reads "What was the price before?".
 
 ## 7. Approved deviations and rules in force
 
@@ -115,34 +138,41 @@ src/engine/            pure TS (R-ARCH-1)
   rational.ts rng.ts config.ts
   eq/parse.ts linear.ts stepChecker.ts format.ts evaluate.ts tiles.ts
   topics/eq/generator.ts hints.ts        (eqHint H1/H2, eqWalkthrough H3 + WalkOp)
-src/data/db.ts attempts.ts               Dexie schema v1; attempt save; stored sign count
+  numbers/decimal.ts display.ts          long division, DecimalRep (R-RD-2/3); Shown: LaTeX + text + speech
+  topics/content.ts mc.ts walk.ts        HintContent; option builder (R-ANS-3); NumWalkStep, miniQuestion
+  topics/rd|fdp|pc/ generator distractors hints     multiple choice; nc/ generator checker hints
+src/data/db.ts attempts.ts               Dexie schema v1; attempt save; stored sign count; number settings
 src/ui/
-  App.tsx                                routing: L1–2 → TileEquation, L3–6 → EquationPractice
-  practice/help.ts practiceReducer.ts tileReducer.ts
-  screens/Home.tsx EquationPractice.tsx TileEquation.tsx
-  components/ Math Keypad NumberPad TileBoard StepRail HintPanel Walkthrough BalanceScale ErrorBoundary
+  App.tsx                                routing by topic: NC → NcPractice, RD/FDP/PC → McPractice, EQ as before
+  practice/help.ts practiceReducer.ts tileReducer.ts mcReducer.ts ncReducer.ts
+  screens/Home.tsx EquationPractice.tsx TileEquation.tsx McPractice.tsx NcPractice.tsx
+  components/ Math(Tex) Keypad NumberPad TileBoard StepRail HintPanel Walkthrough(WalkShell) BalanceScale
+              Numbers(MathHero McOption FeedbackToast) SetsMap NumberWalkthrough TopBar ErrorBoundary
   mascots/Turtle.tsx   hooks/useReducedMotion.ts
-  strings.ts  theme/tokens.css tokens.ts global.css  ui.css tiles.css
+  strings.ts (numText, misconceptionLine)  theme/tokens.css tokens.ts global.css  ui.css tiles.css numbers.css
 tests/engine/*  tests/ui/*               Vitest + fast-check
-e2e/equation offline tiles walkthrough   Playwright (desktop + tablet-touch); zz-live, zz-screens on demand
+e2e/equation offline tiles walkthrough topics   Playwright (desktop + tablet-touch); zz-live, zz-screens on demand
 ```
 
 ## 9. Milestone report template (from the original handoff)
 
 1. What was built, against requirement IDs. 2. Test results: counts, `src/engine` coverage, anything skipped and why. 3. Assumptions. 4. Conflicts between requirements, design and mockups. 5. Approved deviations still in force and which milestone removes each. 6. PowerShell commands to run it, and confirmation that the hosted URL was redeployed and still installs and works offline. 7. What to build next, and anything wrong with the plan.
 
-## 10. Next: M3 number topics (only after the parent says go)
+## 10. Next: M4 sessions, adaptive levels, rewards (only after the parent says go)
 
-Scope and done-when: requirements §12 (NC, RD, FDP, PC generators, distractors, hints, walkthroughs; MC and select-all UIs; R-TEST-2 green for all topics). Notes carried from the original handoff:
+Scope and done-when: requirements §12 (assignments, adaptive levels, stars, streaks, badges, penguin celebrations; R-TEST-4 green; an assignment completes with its summary). Notes for the plan:
 
-- Multiple-choice generators return five options with misconception codes. Property tests add: five distinct options, exactly one correct, and **no distractor equal in value to the correct answer** (R-ANS-3): offering `420/99` as "wrong" when `140/33` is right would be a lie.
-- Independent checks: evaluate a repeating decimal's digits and compare against the fraction.
-- Worked examples that must hold: `4.2424… = 140/33` · `0.41666… = 5/12` · `2.31818… = 51/22` · `$50 up 20% then down 20% = $48.00` · `$60 after 25% off → original $80.00`.
-- Display: repeating decimals show the block at least three times before the ellipsis, with the caption naming the block, and bar notation from the levels where the spec introduces it (R-DISP-3). Money always has two decimals (R-DISP-5). An irrational patterned decimal always carries its rule as a caption (R-DISP-4).
-- The `Walkthrough` component needs inline mini-questions (3 choice chips gating Next, R-HELP-4) and aligned column arithmetic (design.md §5, mockup 07).
-- Keyboard: `1–5` choose an MC option, `Space` toggles a set card (design.md §10).
+- Every practice screen already records what M4 needs.
+  - `Attempt.maxHint`, `clean` (R-ADP-1), `tries` with verdicts and codes, and `finishedAt`.
+  - Where the wrong-try count lives: EQ counts two rejections as one wrong try; MC and NC count every wrong Check. The count is in the reducers' `wrongTries`, not stored separately.
+  - Stars (R-RWD-1) can be computed from `wrongTries` and `maxHint` at `onSolved`.
+- `AttemptSummary` in `db.ts` is still a placeholder (M1 assumption 8). The adaptive window (R-ADP-2…4) needs its real shape, and possibly a schema bump (R-DATA-1).
+- Home's topic and level picker is the stand-in for free practice. With assignments it becomes the R-SES-6 free-practice area (topic tiles locked until the assignment is done).
+- The celebration replaces the "Yes! That's it." box (MC, NC) and the solved box with the substitution check (EQ). Pip never appears in help (R-HELP-7).
+- The TopBar gets the stars, shells and progress bar (design.md §5).
+- Badges need "first delayed repeating decimal" (RD `params.shape === 'delayed'`) and "first successive-change problem" (PC `kind === 'successive'`); both are in `Attempt.params`.
 
-Open items to raise in the M3 plan: the M1 tablet-portrait keypad layout (typed mode); confirm the touch-drag fix (§ M2 report 7) on the real tablet.
+Open items: the tablet-portrait keypad for typed EQ (M6); the M2 touch-drag fix on the real tablet (not tried yet).
 
 ## 11. Reference materials
 
