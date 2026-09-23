@@ -1,6 +1,6 @@
 # M5 report: parent area
 
-Status: **done** (2026-09-23). Deployed to https://kristopherhuber-commits.github.io/math-app/; live check result in §6.
+Status: **done** (2026-09-23). Deployed to https://kristopherhuber-commits.github.io/math-app/; the live check passed after the deploy (first-run setup by keyboard, installable, an equation and a repeating-decimal question work offline).
 
 ## 1. What was built
 
@@ -88,7 +88,7 @@ $env:SHOTS="$env:TEMP\shots"; npx playwright test e2e/zz-screens.spec.ts   # scr
 
 Try it: open the app, set a PIN, name the friends, then **Parent** (bottom right of Home) to build an assignment.
 
-Live check: see progress.md §3.
+Live check (after the deploy): passed on desktop and tablet-touch.
 
 ## 7. Next, and concerns
 
