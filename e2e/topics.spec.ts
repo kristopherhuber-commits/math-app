@@ -50,6 +50,8 @@ for (const [topic, level, seed, gen] of [
 test('RD: keyboard only, 1–5 then Enter (design.md §10)', async ({ page }) => {
   const q = generateRd(2, 13);
   await page.goto('./?topic=RD&level=2&seed=13');
+  // The key handler is attached once the question is on screen.
+  await expect(page.locator('.mc-option')).toHaveCount(5);
   await page.keyboard.press(`${correctIndex(q) + 1}`);
   await expect(page.locator('.mc-option.selected')).toHaveCount(1);
   await page.keyboard.press('Enter');

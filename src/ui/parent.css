@@ -868,3 +868,13 @@
   font-size: 13px;
   white-space: pre-wrap;
 }
+@media (min-width: 1200px) {
+  .missed-list {
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  .replay {
+    position: sticky;
+    top: var(--space-5);
+  }
+}
