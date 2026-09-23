@@ -115,6 +115,7 @@ export const strings = {
     back: '‹ Back',
     finish: 'Done',
     progress: 'Walkthrough progress',
+    answerFirst: 'Answer the mini question to continue',
   },
   errorFallback: "Oops, let's try another one.",
 };

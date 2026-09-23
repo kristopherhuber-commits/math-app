@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import { config } from '../../engine/config';
 import { newSeed } from '../../engine/rng';
 import { allPlaced, boardText, newBoard, sideTerms, type BalanceView } from '../../engine/eq/tiles';
-import { eqWalkthrough, type WalkKind } from '../../engine/topics/eq/hints';
+import { eqHint, eqWalkthrough, type WalkKind } from '../../engine/topics/eq/hints';
 import { fullBalanceAnimSetting, saveAttempt, storedCorrectSigns } from '../../data/attempts';
 import { BalanceScale, type BalanceMode } from '../components/BalanceScale';
 import { HintPanel } from '../components/HintPanel';
@@ -14,7 +14,7 @@ import { TileBoard, tileFace } from '../components/TileBoard';
 import { Walkthrough } from '../components/Walkthrough';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { Turtle } from '../mascots/Turtle';
-import { feedbackText, strings } from '../strings';
+import { feedbackText, hintText, strings } from '../strings';
 import { startTiles, tileReducer, type TilePhase, type TileState } from '../practice/tileReducer';
 
 interface Props {
@@ -322,9 +322,8 @@ export function TileEquation({ level, seed, onHome }: Props) {
 
             {s.hintOpen && s.hintTier > 0 && !s.solved && (
               <HintPanel
-                line={lastLine}
-                variable={v}
                 tier={s.hintTier as 1 | 2}
+                body={<Rich text={hintText(eqHint(lastLine, v, s.hintTier as 1 | 2))} />}
                 walkOffered={s.walkOffered}
                 onMore={() => dispatch({ type: 'moreHint' })}
                 onClose={() => dispatch({ type: 'closeHint' })}

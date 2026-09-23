@@ -29,6 +29,8 @@ export const config = {
     /** Levels that use the tile builder (R-ANS-5). */
     tileLevels: [1, 2] as readonly number[],
   },
+  /** Multiple choice and select-all (R-HELP-1/2): the wrong try that first offers a hint. */
+  mc: { wrongTriesBeforeHint: 2 },
   /** Levels per topic (requirements §6–7). */
   levels: { NC: 5, RD: 5, FDP: 5, PC: 5, EQ: 6 },
   /** RD (§6.2). Ranges the spec leaves open are M3 assumptions. */

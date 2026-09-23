@@ -1,14 +1,13 @@
 // Hint panel (design.md §5 HintDrawer, shown inside the question card): Shelly, "Hint n of 3",
-// ladder dots, the hint for the learner's current line, and "Show me step by step" (H3).
-import { eqHint } from '../../engine/topics/eq/hints';
+// ladder dots, the hint for this problem, and "Show me step by step" (H3). The caller renders the
+// hint body, so every topic shares the panel.
+import type { ReactNode } from 'react';
 import { Turtle } from '../mascots/Turtle';
-import { hintText, strings } from '../strings';
-import { Rich } from './Math';
+import { strings } from '../strings';
 
 interface Props {
-  line: string;
-  variable: string;
   tier: 1 | 2;
+  body: ReactNode;
   /** A wrong try at H2: the walkthrough button is highlighted (never started for the learner). */
   walkOffered: boolean;
   onMore: () => void;
@@ -16,8 +15,7 @@ interface Props {
   onShowMe: () => void;
 }
 
-export function HintPanel({ line, variable, tier, walkOffered, onMore, onClose, onShowMe }: Props) {
-  const hint = eqHint(line, variable, tier);
+export function HintPanel({ tier, body, walkOffered, onMore, onClose, onShowMe }: Props) {
   return (
     <aside className="hint-panel" aria-label={strings.hint.title(tier)}>
       <div className="hint-header">
@@ -31,9 +29,7 @@ export function HintPanel({ line, variable, tier, walkOffered, onMore, onClose, 
           ))}
         </span>
       </div>
-      <p className="hint-body">
-        <Rich text={hintText(hint)} />
-      </p>
+      <p className="hint-body">{body}</p>
       <div className="hint-actions">
         {tier < 2 && (
           <button type="button" className="btn btn-help btn-small" onClick={onMore}>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef } from 'react';
 import { newSeed } from '../../engine/rng';
-import { eqWalkthrough } from '../../engine/topics/eq/hints';
+import { eqHint, eqWalkthrough } from '../../engine/topics/eq/hints';
 import { saveAttempt } from '../../data/attempts';
 import { MathLine, Rich } from '../components/Math';
 import { Keypad, type KeypadKey } from '../components/Keypad';
@@ -8,7 +8,7 @@ import { HintPanel } from '../components/HintPanel';
 import { Walkthrough } from '../components/Walkthrough';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { Turtle } from '../mascots/Turtle';
-import { feedbackText, strings } from '../strings';
+import { feedbackText, hintText, strings } from '../strings';
 import { practiceReducer, startPractice } from '../practice/practiceReducer';
 
 interface Props {
@@ -192,9 +192,8 @@ export function EquationPractice({ level, seed, onHome }: Props) {
 
             {s.hintOpen && s.hintTier > 0 && !s.solved && (
               <HintPanel
-                line={lastLine}
-                variable={v}
                 tier={s.hintTier as 1 | 2}
+                body={<Rich text={hintText(eqHint(lastLine, v, s.hintTier as 1 | 2))} />}
                 walkOffered={s.walkOffered}
                 onMore={() => dispatch({ type: 'moreHint' })}
                 onClose={() => dispatch({ type: 'closeHint' })}
