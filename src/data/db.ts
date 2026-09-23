@@ -1,6 +1,7 @@
 // Dexie schema (docs/requirements.md §9.1, R-ARCH-5, R-DATA-1).
 // Every schema change bumps SCHEMA_VERSION and adds a new db.version(n) block with an upgrade.
 // v2 (M4): Attempt.wrongTries / itemIndex / countedAt, Assignment.activatedAt / seed.
+// v3 (M5): the `errors` store (R-NF-5) and Attempt.fixed.
 import Dexie, { type EntityTable } from 'dexie';
 import type { TopicId } from '../engine/config';
 import type { AttemptSummary } from '../engine/adaptive';
@@ -9,7 +10,7 @@ import { newSeed } from '../engine/rng';
 
 export type { TopicId, AttemptSummary, AssignmentItem };
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export interface Profile {
   id: 'default';
@@ -87,6 +88,8 @@ export interface Attempt {
   wrongTries?: number;
   /** v2: set once levels, rewards and assignment progress have taken this attempt into account. */
   countedAt?: string;
+  /** v3: a fixed-level question from a `?topic=&level=` link (parent and tests); left out of the dashboard. */
+  fixed?: true;
 }
 
 export interface Rewards {
@@ -96,6 +99,15 @@ export interface Rewards {
   lastStreakDate?: string;
   badges: { id: string; at: string }[];
   accessories: string[];
+}
+
+/** v3: an unexpected error, for the parent area's error list (R-NF-5). */
+export interface ErrorEntry {
+  id?: number;
+  at: string;
+  where: string;
+  message: string;
+  stack?: string;
 }
 
 export interface Meta {
@@ -112,6 +124,8 @@ const STORES = {
   rewards: 'profileId',
   meta: 'key',
 };
+
+const STORES_V3 = { ...STORES, errors: '++id, at' };
 
 /**
  * v1 → v2 for one assignment: an active one counts as active since it was created; every
@@ -133,6 +147,7 @@ export class MathDb extends Dexie {
   attempts!: EntityTable<Attempt, 'id'>;
   rewards!: EntityTable<Rewards, 'profileId'>;
   meta!: EntityTable<Meta, 'key'>;
+  errors!: EntityTable<ErrorEntry, 'id'>;
 
   constructor(name = 'turtle-penguin-math') {
     super(name);
@@ -151,6 +166,11 @@ export class MathDb extends Dexie {
             Object.assign(a, upgradeAssignmentToV2(a));
           });
         await tx.table('meta').put({ key: 'schemaVersion', value: 2 });
+      });
+    this.version(3)
+      .stores(STORES_V3)
+      .upgrade(async (tx) => {
+        await tx.table('meta').put({ key: 'schemaVersion', value: 3 });
       });
     this.on('populate', (tx) => {
       void tx.table('meta').put({ key: 'schemaVersion', value: SCHEMA_VERSION });

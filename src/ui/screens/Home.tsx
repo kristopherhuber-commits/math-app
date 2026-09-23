@@ -3,6 +3,7 @@
 // free-practice topic tiles, locked until the assignment is done (R-SES-6). No percentages.
 import { useEffect, useRef, useState } from 'react';
 import { TOPICS, type TopicId } from '../../engine/config';
+import { logError } from '../../data/errors';
 import { homeSnapshot, type HomeSnapshot } from '../../data/progress';
 import { MathText } from '../components/Math';
 import { ShellIcon } from '../components/TopBar';
@@ -121,7 +122,7 @@ export function Home({
     void homeSnapshot()
       .then(setSnap)
       .catch((e: unknown) => {
-        console.error('homeSnapshot failed', e);
+        void logError('homeSnapshot', e);
         setSnap({ shells: 0, streak: 0, freeOpen: true });
       });
   }, []);

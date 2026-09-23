@@ -2,6 +2,7 @@
 // rejected ones with their diagnostic codes).
 import { config } from '../engine/config';
 import { db, type Attempt, type TryRecord } from './db';
+import { logError } from './errors';
 
 export const PROFILE_ID = 'default';
 
@@ -28,7 +29,7 @@ export async function saveAttempt(a: Attempt): Promise<void> {
     await db.attempts.put(a);
   } catch (e) {
     // R-NF-5: never surface storage errors to the learner.
-    console.error('saveAttempt failed', e);
+    void logError('saveAttempt', e);
   }
 }
 
@@ -44,7 +45,7 @@ export async function storedCorrectSigns(): Promise<number> {
       0,
     );
   } catch (e) {
-    console.error('storedCorrectSigns failed', e);
+    void logError('storedCorrectSigns', e);
     return 0;
   }
 }

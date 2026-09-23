@@ -112,6 +112,21 @@ export const config = {
     /** R-RWD-7 */
     mascotNames: { turtle: 'Shelly', penguin: 'Pip' },
   },
+  /** Parent area (R-PAR, R-NF-5). Values the spec leaves open are M5 assumptions. */
+  parent: {
+    /** R-PAR-1: a 4-digit PIN. */
+    pinLength: 4,
+    /** The parent area locks again after this long without input (mockup 10). */
+    autoLockMinutes: 10,
+    /** R-PAR-3: time spent counts at most this much per question (a question left open isn't time spent). */
+    maxAttemptMinutes: 10,
+    /** R-PAR-3: the dashboard's window. */
+    dashboardDays: 30,
+    /** R-NF-5: the error list keeps the newest entries. */
+    errorLogMax: 200,
+    /** R-RWD-7: mascot names. */
+    maxNameLength: 16,
+  },
   /** R-RWD-2/3/5 */
   rewards: {
     /** Streak lengths that get the full-screen celebration; after the last, every `streakEvery`. */

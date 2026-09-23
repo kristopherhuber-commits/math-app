@@ -1,7 +1,8 @@
 import { Component, type ReactNode } from 'react';
+import { logError } from '../../data/errors';
 import { strings } from '../strings';
 
-// R-NF-5: the learner never sees a stack. The error is logged for the parent area (M5).
+// R-NF-5: the learner never sees a stack. The error goes to the parent area's error list.
 export class ErrorBoundary extends Component<
   { children: ReactNode; onReset: () => void },
   { failed: boolean }
@@ -13,7 +14,7 @@ export class ErrorBoundary extends Component<
   }
 
   override componentDidCatch(error: unknown) {
-    console.error(error);
+    void logError('screen', error);
   }
 
   override render() {

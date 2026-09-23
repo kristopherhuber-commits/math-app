@@ -1,6 +1,7 @@
 // Assignment summary (R-SES-7, design.md §7.9, mockup 09): stars earned by topic, as counts and never
 // percentages, badges earned during the assignment, and Pip's celebration.
 import { useEffect, useRef, useState } from 'react';
+import { logError } from '../../data/errors';
 import { assignmentSummary, type Summary } from '../../data/progress';
 import { StarIcon } from '../components/TopBar';
 import { Penguin } from '../mascots/Penguin';
@@ -24,7 +25,7 @@ export function AssignmentSummary({
     void assignmentSummary(id)
       .then((r) => (r ? setSummary(r) : onHome()))
       .catch((e: unknown) => {
-        console.error('assignmentSummary failed', e);
+        void logError('assignmentSummary', e);
         onHome();
       });
   }, [id, onHome]);

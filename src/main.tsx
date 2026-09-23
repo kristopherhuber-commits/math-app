@@ -5,8 +5,10 @@ import '@fontsource-variable/nunito';
 import 'katex/dist/katex.min.css';
 import './ui/theme/tokens.css';
 import './ui/theme/global.css';
+import { installGlobalErrorLog } from './data/errors';
 import { App } from './ui/App';
 
+installGlobalErrorLog();
 registerSW({ immediate: true });
 
 createRoot(document.getElementById('root')!).render(

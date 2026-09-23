@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { TopicId } from '../../engine/config';
 import { newSeed } from '../../engine/rng';
 import { saveAttempt } from '../../data/attempts';
+import { logError } from '../../data/errors';
 import type { Attempt } from '../../data/db';
 import {
   assignmentProgress,
@@ -144,7 +145,9 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
     (a: Attempt): Attempt =>
       kind.kind === 'assignment' && cur?.itemIndex !== undefined
         ? { ...a, assignmentId: kind.id, itemIndex: cur.itemIndex }
-        : a,
+        : kind.kind === 'fixed'
+          ? { ...a, fixed: true }
+          : a,
     [kind, cur],
   );
 
@@ -158,7 +161,7 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
       pending.current = finishAttempt(tag(a), { adaptive: cur.adaptive, rewarded: cur.rewarded }).catch(
         (e: unknown) => {
           // R-NF-5: never surface storage errors to the learner.
-          console.error('finishAttempt failed', e);
+          void logError('finishAttempt', e);
           return fallback;
         },
       );
