@@ -3,8 +3,8 @@ import 'fake-indexeddb/auto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { db, type Attempt } from '../../src/data/db';
 import { newAttempt } from '../../src/data/attempts';
+import { createAssignment } from '../../src/data/assignments';
 import {
-  addAssignmentFromLink,
   assignmentProgress,
   assignmentSummary,
   finishAttempt,
@@ -14,7 +14,7 @@ import {
   type FinishContext,
 } from '../../src/data/progress';
 import { saveSettings } from '../../src/data/settings';
-import type { AssignmentLink } from '../../src/engine/session';
+import type { AssignmentDraft } from '../../src/engine/session';
 import type { TopicId } from '../../src/engine/config';
 
 const ADAPTIVE: FinishContext = { adaptive: true, rewarded: true };
@@ -42,12 +42,17 @@ async function answerNext(assignmentId: string, o: Partial<Attempt> = {}) {
   return { q, events: await finishAttempt(attempt, { adaptive: q.adaptive, rewarded: true }) };
 }
 
-const link = (assign: string, extra: Partial<AssignmentLink> = {}): AssignmentLink => ({
+/** An assignment from a spec like 'EQ:1,PC:1,RD:1@4' (`@n` locks the level), added to the queue. */
+const add = (assign: string, extra: Partial<AssignmentDraft> = {}) =>
+  createAssignment(draft(assign, extra), false);
+
+const draft = (assign: string, extra: Partial<AssignmentDraft> = {}): AssignmentDraft => ({
   items: assign.split(',').map((p) => {
     const [t, c, lock] = p.split(/[:@]/);
     return { topic: t as TopicId, count: Number(c), ...(lock ? { levelLock: Number(lock) } : {}) };
   }),
   seed: 3,
+  order: 'grouped',
   ...extra,
 });
 
@@ -63,8 +68,8 @@ afterEach(() => {
 
 describe('assignments (R-SES-1…3)', () => {
   it('the first is active, later ones queue in order (R-SES-2)', async () => {
-    const a = await addAssignmentFromLink(link('EQ:2', { title: 'Mon' }));
-    const b = await addAssignmentFromLink(link('PC:1'));
+    const a = await add('EQ:2', { title: 'Mon' });
+    const b = await add('PC:1');
     expect(a).toMatchObject({ status: 'active', position: 0, title: 'Mon', order: 'grouped', seed: 3 });
     expect(a.activatedAt).toBeDefined();
     expect(b).toMatchObject({ status: 'queued', position: 1 });
@@ -72,7 +77,7 @@ describe('assignments (R-SES-1…3)', () => {
   });
 
   it('levels: EQ starts at 3, number topics at 1; a lock wins and is not adaptive (R-SES-3)', async () => {
-    const a = await addAssignmentFromLink(link('EQ:1,PC:1,RD:1@4'));
+    const a = await add('EQ:1,PC:1,RD:1@4');
     expect(await nextAssignmentQuestion(a)).toMatchObject({
       topic: 'EQ',
       level: 3,
@@ -86,7 +91,7 @@ describe('assignments (R-SES-1…3)', () => {
   });
 
   it('resume (R-SES-5): an unfinished attempt changes nothing; the same question comes back', async () => {
-    const a = await addAssignmentFromLink(link('PC:3', { order: 'mixed' }));
+    const a = await add('PC:3', { order: 'mixed' });
     await answerNext(a.id);
     const before = await nextAssignmentQuestion(a);
     await db.attempts.put({ ...finished('PC', 1), finishedAt: undefined, assignmentId: a.id, itemIndex: 0 });
@@ -95,7 +100,7 @@ describe('assignments (R-SES-1…3)', () => {
   });
 
   it('after a walkthrough, the next question is the same item and level (R-HELP-6)', async () => {
-    const a = await addAssignmentFromLink(link('EQ:2,PC:2', { order: 'mixed', seed: 1 }));
+    const a = await add('EQ:2,PC:2', { order: 'mixed', seed: 1 });
     const { q } = await answerNext(a.id, { maxHint: 3, stars: 1, clean: false });
     expect(await nextAssignmentQuestion(a)).toMatchObject({ itemIndex: q.itemIndex, level: q.level });
   });
@@ -160,8 +165,8 @@ describe('finishAttempt', () => {
 
 describe('assignment completion (R-SES-2, R-SES-7)', () => {
   it('finishing the last question completes it, activates the next, and reports it', async () => {
-    const a = await addAssignmentFromLink(link('PC:1,RD:1', { title: 'Test' }));
-    const b = await addAssignmentFromLink(link('EQ:1'));
+    const a = await add('PC:1,RD:1', { title: 'Test' });
+    const b = await add('EQ:1');
     expect((await homeSnapshot()).freeOpen).toBe(true); // `always`, the default (R-SES-6, parent decision)
     await saveSettings({ freePractice: 'afterAssignment' });
     expect((await homeSnapshot()).freeOpen).toBe(false);
@@ -188,7 +193,7 @@ describe('assignment completion (R-SES-2, R-SES-7)', () => {
   });
 
   it('first perfect assignment, then free practice opens (R-RWD-3, R-SES-6)', async () => {
-    const a = await addAssignmentFromLink(link('NC:2'));
+    const a = await add('NC:2');
     await answerNext(a.id);
     const { events } = await answerNext(a.id);
     expect(events.badges).toContain('perfect-assignment');
@@ -198,7 +203,7 @@ describe('assignment completion (R-SES-2, R-SES-7)', () => {
 
 describe('streak (R-RWD-2)', () => {
   it('grows by day with assignment answers, breaks on a missed assignment day, milestone at 3', async () => {
-    const a = await addAssignmentFromLink(link('PC:20'));
+    const a = await add('PC:20');
     const day = async (d: number) => {
       vi.setSystemTime(new Date(2026, 8, d, 16, 0));
       return (await answerNext(a.id)).events.streak;

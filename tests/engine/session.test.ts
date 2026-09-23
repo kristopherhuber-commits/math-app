@@ -1,24 +1,35 @@
-// R-SES-1…5, R-HELP-6: the assignment link, question order, and resume.
+// R-SES-1…5, R-HELP-6, R-PAR-2: the builder's draft and edit rules, question order, and resume.
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import {
+  cleanDraft,
+  editAllowed,
   itemProgress,
   nextSlot,
-  parseAssignmentLink,
   questionSeed,
+  type AssignmentDraft,
   type AssignmentItem,
   type Order,
 } from '../../src/engine/session';
 
-describe('parseAssignmentLink (R-SES-1)', () => {
-  it('reads items, level locks, order, title, due date and seed', () => {
+const draft = (o: Partial<AssignmentDraft> = {}): AssignmentDraft => ({
+  items: [{ topic: 'EQ', count: 10 }],
+  order: 'grouped',
+  ...o,
+});
+
+describe('cleanDraft (R-SES-1, R-PAR-2)', () => {
+  it('keeps items, level locks, order, due date and seed; trims the title', () => {
     expect(
-      parseAssignmentLink({
-        assign: 'EQ:10,pc:5@2',
+      cleanDraft({
+        items: [
+          { topic: 'EQ', count: 10 },
+          { topic: 'PC', count: 5, levelLock: 2 },
+        ],
         order: 'mixed',
-        title: ' Monday practice ',
-        due: '2026-09-30',
-        seed: '7',
+        title: '  Monday   practice ',
+        dueDate: '2026-09-30',
+        seed: 7,
       }),
     ).toEqual({
       items: [
@@ -32,30 +43,55 @@ describe('parseAssignmentLink (R-SES-1)', () => {
     });
   });
 
-  it('only items are required', () => {
-    expect(parseAssignmentLink({ assign: 'RD:3' })).toEqual({ items: [{ topic: 'RD', count: 3 }] });
+  it('drops an empty title and shortens a long one', () => {
+    expect(cleanDraft(draft({ title: '   ' }))).toEqual(draft());
+    expect(cleanDraft(draft({ title: 'x'.repeat(80) }))?.title).toHaveLength(60);
   });
 
   it.each([
-    [{}],
-    [{ assign: '' }],
-    [{ assign: 'XY:3' }],
-    [{ assign: 'EQ:0' }],
-    [{ assign: 'EQ:101' }],
-    [{ assign: 'EQ:3@7' }],
-    [{ assign: 'PC:3@6' }],
-    [{ assign: 'EQ:3@0' }],
-    [{ assign: 'EQ3' }],
-    [{ assign: 'EQ:3,,PC:2' }],
-    [{ assign: 'EQ:3', order: 'random' }],
-    [{ assign: 'EQ:3', due: 'tomorrow' }],
-    [{ assign: 'EQ:3', seed: '-1' }],
-  ])('rejects %o', (q) => {
-    expect(parseAssignmentLink(q)).toBeNull();
+    ['no items', draft({ items: [] })],
+    ['an unknown topic', draft({ items: [{ topic: 'XY' as never, count: 3 }] })],
+    ['a count of 0', draft({ items: [{ topic: 'EQ', count: 0 }] })],
+    ['a count of 101', draft({ items: [{ topic: 'EQ', count: 101 }] })],
+    ['a fractional count', draft({ items: [{ topic: 'EQ', count: 2.5 }] })],
+    ['EQ locked at 7', draft({ items: [{ topic: 'EQ', count: 3, levelLock: 7 }] })],
+    ['PC locked at 6', draft({ items: [{ topic: 'PC', count: 3, levelLock: 6 }] })],
+    ['a lock of 0', draft({ items: [{ topic: 'EQ', count: 3, levelLock: 0 }] })],
+    ['an unknown order', draft({ order: 'random' as never })],
+    ['a due date in words', draft({ dueDate: 'tomorrow' })],
+    ['31 February', draft({ dueDate: '2026-02-31' })],
+  ])('rejects %s', (_, d) => {
+    expect(cleanDraft(d)).toBeNull();
+  });
+});
+
+describe('editAllowed (R-PAR-2)', () => {
+  const before: AssignmentItem[] = [
+    { topic: 'EQ', count: 5 },
+    { topic: 'PC', count: 3, levelLock: 2 },
+    { topic: 'RD', count: 2 },
+  ];
+
+  it('before any question is done, anything goes', () => {
+    expect(editAllowed(before, [0, 0, 0], [{ topic: 'NC', count: 1 }])).toBe(true);
   });
 
-  it('shortens a long title', () => {
-    expect(parseAssignmentLink({ assign: 'EQ:1', title: 'x'.repeat(80) })?.title).toHaveLength(60);
+  it('once started: counts change (not below what is done), new items append', () => {
+    const done = [2, 0, 0];
+    expect(editAllowed(before, done, [{ topic: 'EQ', count: 2 }, before[1]!, before[2]!])).toBe(true);
+    expect(editAllowed(before, done, [...before, { topic: 'NC', count: 4 }])).toBe(true);
+    // An item not started yet may change its level lock.
+    expect(editAllowed(before, done, [before[0]!, { topic: 'PC', count: 3 }, before[2]!])).toBe(true);
+  });
+
+  it.each([
+    ['below what is done', [{ topic: 'EQ', count: 1 }, before[1]!, before[2]!]],
+    ['an item removed', [before[0]!, before[1]!]],
+    ['items reordered', [before[1]!, before[0]!, before[2]!]],
+    ['a topic changed', [{ topic: 'NC', count: 5 }, before[1]!, before[2]!]],
+    ['a started item locked', [{ topic: 'EQ', count: 5, levelLock: 4 }, before[1]!, before[2]!]],
+  ] as [string, AssignmentItem[]][])('once started, refuses %s', (_, after) => {
+    expect(editAllowed(before, [2, 0, 0], after)).toBe(false);
   });
 });
 

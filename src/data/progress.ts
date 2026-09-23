@@ -12,8 +12,7 @@ import {
   type BadgeId,
   type Stars,
 } from '../engine/scoring';
-import { itemProgress, nextSlot, type AssignmentLink, type Order } from '../engine/session';
-import { newSeed } from '../engine/rng';
+import { itemProgress, nextSlot } from '../engine/session';
 import { db, PROFILE_ID, type Assignment, type Attempt, type Rewards, type Settings } from './db';
 import { loadSettings } from './settings';
 
@@ -60,31 +59,6 @@ export async function topicLevel(topic: TopicId): Promise<number> {
 
 export async function activeAssignment(): Promise<Assignment | undefined> {
   return db.assignments.where('status').equals('active').first();
-}
-
-/** Queue an assignment from the parent's link; it is active at once if none is (R-SES-2). */
-export async function addAssignmentFromLink(link: AssignmentLink): Promise<Assignment> {
-  const order: Order = link.order ?? (await practiceSettings()).order;
-  return db.transaction('rw', db.assignments, async () => {
-    const all = await db.assignments.toArray();
-    const active = all.some((a) => a.status === 'active');
-    const now = new Date().toISOString();
-    const a: Assignment = {
-      id: crypto.randomUUID(),
-      profileId: PROFILE_ID,
-      items: link.items,
-      status: active ? 'queued' : 'active',
-      createdAt: now,
-      position: all.reduce((m, x) => Math.max(m, x.position + 1), 0),
-      seed: link.seed ?? newSeed(),
-      order,
-      ...(link.title ? { title: link.title } : {}),
-      ...(link.dueDate ? { dueDate: link.dueDate } : {}),
-      ...(active ? {} : { activatedAt: now }),
-    };
-    await db.assignments.add(a);
-    return a;
-  });
 }
 
 const finishedFor = async (assignmentId: string): Promise<Attempt[]> =>

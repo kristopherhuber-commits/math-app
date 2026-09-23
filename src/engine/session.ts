@@ -1,5 +1,5 @@
-// Assignments (requirements §4, R-SES-1…5): the parent's link, question order, and which question
-// comes next. Pure and deterministic, so a reload resumes at the same question (R-SES-5).
+// Assignments (requirements §4, R-SES-1…5, R-PAR-2): the builder's draft and its edit rules, question
+// order, and which question comes next. Pure and deterministic, so a reload resumes at the same question (R-SES-5).
 import { config, TOPICS, type TopicId } from './config';
 import { mulberry32 } from './rng';
 
@@ -11,57 +11,75 @@ export interface AssignmentItem {
 
 export type Order = 'grouped' | 'mixed';
 
-export interface AssignmentLink {
+/** What the parent's builder produces (R-SES-1, R-SES-4, R-PAR-2). */
+export interface AssignmentDraft {
   items: AssignmentItem[];
   title?: string;
-  order?: Order;
+  order: Order;
+  /** 'YYYY-MM-DD' */
   dueDate?: string;
   seed?: number;
 }
 
 export const MAX_ITEM_COUNT = 100;
-const MAX_TITLE = 60;
+export const MAX_TITLE = 60;
+
+const validItem = (it: AssignmentItem): boolean =>
+  TOPICS.includes(it.topic) &&
+  Number.isInteger(it.count) &&
+  it.count >= 1 &&
+  it.count <= MAX_ITEM_COUNT &&
+  (it.levelLock === undefined ||
+    (Number.isInteger(it.levelLock) && it.levelLock >= 1 && it.levelLock <= config.levels[it.topic]));
 
 /**
- * Until the parent area's builder (M5), an assignment arrives as a link:
- * `?assign=EQ:10,PC:5@2&order=mixed&title=Monday&due=2026-09-30&seed=7` (`@n` locks the level).
- * Returns null when `assign` is missing or anything in it is invalid, so a typo never half-works.
+ * A builder draft, cleaned (title trimmed and shortened, empty title dropped), or null when anything
+ * is invalid: no items, an unknown topic, a count outside 1…100, a level lock outside the topic's
+ * levels, an unknown order, or a due date that isn't a real 'YYYY-MM-DD' day.
  */
-export function parseAssignmentLink(q: Readonly<Record<string, string | undefined>>): AssignmentLink | null {
-  const spec = q.assign?.trim();
-  if (!spec) return null;
-  const items: AssignmentItem[] = [];
-  for (const part of spec.split(',')) {
-    const m = /^([A-Za-z]+):(\d+)(?:@(\d+))?$/.exec(part.trim());
+export function cleanDraft(d: AssignmentDraft): AssignmentDraft | null {
+  if (d.items.length === 0 || !d.items.every(validItem)) return null;
+  if (d.order !== 'grouped' && d.order !== 'mixed') return null;
+  const out: AssignmentDraft = {
+    items: d.items.map((it) => ({
+      topic: it.topic,
+      count: it.count,
+      ...(it.levelLock !== undefined ? { levelLock: it.levelLock } : {}),
+    })),
+    order: d.order,
+  };
+  const title = d.title?.trim().replace(/\s+/g, ' ').slice(0, MAX_TITLE).trim();
+  if (title) out.title = title;
+  if (d.dueDate) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d.dueDate);
     if (!m) return null;
-    const topic = m[1]!.toUpperCase() as TopicId;
-    const count = Number(m[2]);
-    if (!TOPICS.includes(topic) || count < 1 || count > MAX_ITEM_COUNT) return null;
-    const item: AssignmentItem = { topic, count };
-    if (m[3] !== undefined) {
-      const lock = Number(m[3]);
-      if (lock < 1 || lock > config.levels[topic]) return null;
-      item.levelLock = lock;
-    }
-    items.push(item);
+    const [y, mo, day] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const t = new Date(Date.UTC(y, mo - 1, day));
+    if (t.getUTCFullYear() !== y || t.getUTCMonth() !== mo - 1 || t.getUTCDate() !== day) return null;
+    out.dueDate = d.dueDate;
   }
+  if (d.seed !== undefined) out.seed = d.seed >>> 0;
+  return out;
+}
 
-  const link: AssignmentLink = { items };
-  const title = q.title?.trim();
-  if (title) link.title = title.slice(0, MAX_TITLE);
-  if (q.order !== undefined) {
-    if (q.order !== 'grouped' && q.order !== 'mixed') return null;
-    link.order = q.order;
-  }
-  if (q.due !== undefined) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(q.due)) return null;
-    link.dueDate = q.due;
-  }
-  if (q.seed !== undefined) {
-    if (!/^\d+$/.test(q.seed)) return null;
-    link.seed = Number(q.seed) >>> 0;
-  }
-  return link;
+/**
+ * R-PAR-2, editing an assignment that has started (some item has finished questions; attempts
+ * point at their item by index): the existing items stay, in place, with the same topic; a started
+ * item keeps its level lock and can't go below what's done; new items are appended. Before any
+ * question is done, anything goes.
+ */
+export function editAllowed(
+  before: readonly AssignmentItem[],
+  done: readonly number[],
+  after: readonly AssignmentItem[],
+): boolean {
+  if (done.every((d) => d === 0)) return true;
+  if (after.length < before.length) return false;
+  return before.every((b, i) => {
+    const a = after[i]!;
+    const d = done[i] ?? 0;
+    return a.topic === b.topic && a.count >= Math.max(1, d) && (d === 0 || a.levelLock === b.levelLock);
+  });
 }
 
 /** The seed of the assignment's question number `index` (0-based). */
