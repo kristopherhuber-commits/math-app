@@ -8,6 +8,10 @@ export const config = {
     minAttemptsToPromote: 5,
     /** R-ADP-3 */
     demoteThreshold: 3,
+    /** R-ADP-3: "a second wrong answer" = this many wrong tries. */
+    demoteWrongTries: 2,
+    /** Starting level per topic (parent decision, M4): EQ starts at typed steps. */
+    startLevel: { NC: 1, RD: 1, FDP: 1, PC: 1, EQ: 3 },
   },
   eq: {
     levels: 6,
@@ -108,8 +112,21 @@ export const config = {
     /** R-RWD-7 */
     mascotNames: { turtle: 'Shelly', penguin: 'Pip' },
   },
+  /** R-RWD-2/3/5 */
+  rewards: {
+    /** Streak lengths that get the full-screen celebration; after the last, every `streakEvery`. */
+    streakMilestones: [3, 5, 7, 10, 14, 21, 30] as readonly number[],
+    streakEvery: 10,
+    /** Streak badges (R-RWD-3). */
+    streakBadges: [7, 30] as readonly number[],
+    /** "10 EQ questions without H3", in a row. */
+    eqRunWithoutWalkthrough: 10,
+  },
   /** R-NF-1 */
   stepCheckerBudgetMs: 20,
 } as const;
+
+export type TopicId = keyof typeof config.levels;
+export const TOPICS: readonly TopicId[] = ['NC', 'RD', 'FDP', 'PC', 'EQ'];
 
 export type VariableLetter = (typeof config.variables)[number];
