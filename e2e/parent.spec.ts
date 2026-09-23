@@ -2,7 +2,7 @@
 // the PIN gate and reset, the assignment builder and queue, settings, dashboard, missed-question
 // review, and data export / import / reset. Runs on desktop (mouse) and tablet (touch).
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { openHome, PIN } from './helpers';
+import { assignment, openHome, PIN } from './helpers';
 
 async function press(target: Locator, touch: boolean) {
   if (touch) await target.tap();
@@ -119,4 +119,134 @@ test('the parent area locks itself after 10 minutes without input', async ({ pag
   await expect(page.getByRole('navigation', { name: 'Parent area' })).toBeVisible();
   await page.clock.fastForward('02:00');
   await expect(page.getByRole('group', { name: 'PIN pad' })).toBeVisible();
+});
+
+test('R-TEST-5: the parent builds an assignment and the learner starts it (R-PAR-2, R-SES-1/3/4)', async ({
+  page,
+  hasTouch,
+}) => {
+  await openHome(page);
+  await expect(page.getByText('No assignment right now.')).toBeVisible();
+  // Free practice is open by default (R-SES-6, parent decision).
+  await expect(page.getByRole('button', { name: 'Equations', exact: true })).toBeEnabled();
+  await unlock(page, hasTouch);
+  await expect(page.getByRole('heading', { name: 'New assignment' })).toBeVisible();
+
+  await page.getByLabel('Title (optional)').fill('Tuesday practice');
+  const which = page.getByRole('group', { name: 'Which topic?' });
+  await press(page.getByRole('button', { name: '+ Add topic' }), hasTouch);
+  await press(which.getByRole('button', { name: 'Equations' }), hasTouch);
+  // Count: 5 by default, down to 2.
+  for (let i = 0; i < 3; i++)
+    await press(page.getByRole('button', { name: 'Fewer Equations questions' }), hasTouch);
+  await expect(page.getByRole('group', { name: 'Equations: number of questions' })).toContainText('2');
+  await press(page.getByRole('button', { name: '+ Add topic' }), hasTouch);
+  await press(which.getByRole('button', { name: 'Price changes' }), hasTouch);
+  for (let i = 0; i < 4; i++)
+    await press(page.getByRole('button', { name: 'Fewer Price changes questions' }), hasTouch);
+  // Level lock: tap the item, pick Level 2.
+  const pcItem = page.locator('.item-name', { hasText: 'Price changes' });
+  await press(pcItem, hasTouch);
+  await press(
+    page.getByRole('group', { name: 'Price changes: level' }).getByRole('button', { name: /^Level 2/ }),
+    hasTouch,
+  );
+  await expect(pcItem).toContainText('Level 2 (locked)');
+  await expect(page.locator('.item-name', { hasText: 'Equations' })).toContainText('Adaptive');
+  await page.getByLabel('Due (optional)').fill('2026-10-02');
+  await press(page.getByRole('button', { name: 'Save & make active' }), hasTouch);
+
+  const queue = page.getByRole('region', { name: 'Queue' });
+  await expect(queue.locator('.queue-card.active')).toContainText('Tuesday practice');
+  await expect(queue.locator('.queue-card.active')).toContainText('Active · 0 / 3 · due 2026-10-02');
+  await expect(page.getByLabel('Title (optional)')).toHaveValue('');
+
+  await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
+  await expect(page.getByRole('heading', { name: 'Tuesday practice' })).toBeVisible();
+  await expect(page.locator('.assignment-item')).toHaveText([/Equations\s*0 \/ 2/, /Price changes\s*0 \/ 1/]);
+  await press(page.getByRole('button', { name: 'Start ›' }), hasTouch);
+  await expect(page.getByText('Equations · Level 3')).toBeVisible();
+  await expect(page.getByText('Question 1 of 2')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Your next line' })).toBeVisible();
+});
+
+test('the queue: add to queue, reorder by keyboard, make active, mark complete, delete, edit (R-PAR-2, R-SES-2)', async ({
+  page,
+}) => {
+  await openHome(page);
+  await unlock(page, false);
+  const add = async (title: string, topic: string) => {
+    await page.getByLabel('Title (optional)').fill(title);
+    await page.getByRole('button', { name: '+ Add topic' }).click();
+    await page.getByRole('group', { name: 'Which topic?' }).getByRole('button', { name: topic }).click();
+    await page.getByRole('button', { name: 'Add to queue' }).click();
+    await expect(page.locator('.queue-card', { hasText: title })).toBeVisible();
+  };
+  await add('Alpha', 'Number sets');
+  await add('Bravo', 'Repeating decimals');
+  await add('Charlie', 'Price changes');
+  const queue = page.getByRole('region', { name: 'Queue' });
+  const queued = queue.locator('.queue-card:not(.active) strong');
+  await expect(queue.locator('.queue-card.active')).toContainText('Alpha');
+  await expect(queued).toHaveText(['Bravo', 'Charlie']);
+
+  // Keyboard reorder: Charlie up.
+  await page.getByRole('button', { name: /^Reorder Charlie/ }).focus();
+  await page.keyboard.press('ArrowUp');
+  await expect(queued).toHaveText(['Charlie', 'Bravo']);
+  await expect(page.getByRole('button', { name: /^Reorder Charlie/ })).toBeFocused();
+
+  // Make Bravo active: Alpha goes back to the front of the queue.
+  await queue
+    .locator('.queue-card', { hasText: 'Bravo' })
+    .getByRole('button', { name: 'Make active' })
+    .click();
+  await expect(queue.locator('.queue-card.active')).toContainText('Bravo');
+  await expect(queued).toHaveText(['Alpha', 'Charlie']);
+
+  // Mark Bravo complete early: Alpha takes over.
+  await queue.locator('.queue-card.active').getByRole('button', { name: 'Mark complete' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Yes' }).click();
+  await expect(queue.locator('.queue-card.active')).toContainText('Alpha');
+  await expect(page.locator('.done-list')).toContainText('Bravo');
+
+  // Delete Charlie (asked first; No keeps it).
+  const charlie = queue.locator('.queue-card', { hasText: 'Charlie' });
+  await charlie.getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'No' }).click();
+  await charlie.getByRole('button', { name: 'Delete' }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Yes' }).click();
+  await expect(queue.locator('.queue-card', { hasText: 'Charlie' })).toHaveCount(0);
+
+  // Edit Alpha: rename and one more question.
+  await queue.locator('.queue-card.active').getByRole('button', { name: 'Edit Alpha' }).click();
+  await expect(page.getByRole('heading', { name: 'Edit assignment' })).toBeVisible();
+  await page.getByLabel('Title (optional)').fill('Alpha two');
+  await page.getByRole('button', { name: 'More Number sets questions' }).click();
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(queue.locator('.queue-card.active')).toContainText('Alpha two');
+  await expect(queue.locator('.queue-card.active')).toContainText('0 / 6');
+});
+
+test('the queue reorders by mouse drag', async ({ page }) => {
+  await openHome(page, {
+    assignments: [
+      assignment('NC:1', { seed: 1, title: 'One' }),
+      assignment('RD:1', { seed: 2, title: 'Two', status: 'queued', position: 1 }),
+      assignment('PC:1', { seed: 3, title: 'Three', status: 'queued', position: 2 }),
+    ],
+  });
+  await unlock(page, false);
+  const queue = page.getByRole('region', { name: 'Queue' });
+  const queued = queue.locator('.queue-card:not(.active) strong');
+  await expect(queued).toHaveText(['Two', 'Three']);
+  const handle = page.getByRole('button', { name: /^Reorder Three/ });
+  await handle.scrollIntoViewIfNeeded();
+  const h = (await handle.boundingBox())!;
+  const t = (await queue.locator('.queue-card', { hasText: 'Two' }).boundingBox())!;
+  await page.mouse.move(h.x + h.width / 2, h.y + h.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(h.x + h.width / 2, t.y + 4, { steps: 8 });
+  await page.mouse.up();
+  await expect(queued).toHaveText(['Three', 'Two']);
 });

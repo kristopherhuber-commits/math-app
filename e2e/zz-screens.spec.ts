@@ -4,7 +4,7 @@ import { generatePc } from '../src/engine/topics/pc/generator';
 import { generateEq } from '../src/engine/topics/eq/generator';
 import { eqWalkthrough } from '../src/engine/topics/eq/hints';
 import { questionSeed } from '../src/engine/session';
-import { assignment, openHome } from './helpers';
+import { assignment, openHome, PIN } from './helpers';
 
 const OUT = process.env.SHOTS ?? '';
 
@@ -136,4 +136,31 @@ test('session and reward screens', async ({ page }, info) => {
   await shot('home-after', 300);
   await page.setViewportSize({ width: 768, height: 1024 });
   await shot('home-portrait', 300);
+});
+
+test('parent screens', async ({ page }, info) => {
+  const tag = info.project.name;
+  const shot = (name: string) =>
+    page.screenshot({ path: `${OUT}/${tag}-parent-${name}.png`, fullPage: true });
+  await openHome(page, {
+    assignments: [
+      assignment('EQ:10,PC:5@4,RD:5', { seed: 1, title: 'Monday practice' }),
+      assignment('FDP:6', { seed: 2, title: 'Fractions review', status: 'queued', position: 1 }),
+      assignment('EQ:8', { seed: 3, title: 'Weekend equations', status: 'queued', position: 2 }),
+    ],
+  });
+  await page.getByRole('button', { name: 'Parent', exact: true }).click();
+  await shot('pin');
+  await page.keyboard.type(PIN);
+  await page.getByLabel('Title (optional)').fill('Tuesday practice');
+  for (const t of ['Equations', 'Price changes', 'Repeating decimals']) {
+    await page.getByRole('button', { name: '+ Add topic' }).click();
+    await page.getByRole('group', { name: 'Which topic?' }).getByRole('button', { name: t }).click();
+  }
+  await page.locator('.item-name', { hasText: 'Price changes' }).click();
+  await shot('builder');
+  for (const p of ['Progress', 'Missed questions', 'Settings', 'Data']) {
+    await page.getByRole('navigation').getByRole('button', { name: p }).click();
+    await shot(p.toLowerCase().replace(' ', '-'));
+  }
 });

@@ -858,6 +858,7 @@ export const parentStrings = {
     dueOn: (d: string) => `due ${d}`,
     untitled: 'Untitled assignment',
     edit: (t: string) => `Edit ${t}`,
+    editButton: 'Edit',
     makeActive: 'Make active',
     completeEarly: 'Mark complete',
     delete: 'Delete',
