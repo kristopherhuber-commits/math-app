@@ -51,7 +51,11 @@ export function normalizeInput(s: string): string {
   return s.replace(/-/g, '−').replace(/\*/g, '×');
 }
 
-export function startPractice(level: number, seed: number): PracticeState {
+export function startPractice(
+  level: number,
+  seed: number,
+  allowSkipping: boolean = config.eq.allowSkippingDefault,
+): PracticeState {
   const question = generateEq(level, seed);
   return {
     level,
@@ -61,7 +65,7 @@ export function startPractice(level: number, seed: number): PracticeState {
     feedback: null,
     ...freshHelp,
     solved: false,
-    allowSkipping: config.eq.allowSkippingDefault,
+    allowSkipping,
     attempt: newAttempt({
       topic: 'EQ',
       level,

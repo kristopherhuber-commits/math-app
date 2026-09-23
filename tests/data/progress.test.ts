@@ -13,6 +13,7 @@ import {
   topicLevel,
   type FinishContext,
 } from '../../src/data/progress';
+import { saveSettings } from '../../src/data/settings';
 import type { AssignmentLink } from '../../src/engine/session';
 import type { TopicId } from '../../src/engine/config';
 
@@ -161,6 +162,8 @@ describe('assignment completion (R-SES-2, R-SES-7)', () => {
   it('finishing the last question completes it, activates the next, and reports it', async () => {
     const a = await addAssignmentFromLink(link('PC:1,RD:1', { title: 'Test' }));
     const b = await addAssignmentFromLink(link('EQ:1'));
+    expect((await homeSnapshot()).freeOpen).toBe(true); // `always`, the default (R-SES-6, parent decision)
+    await saveSettings({ freePractice: 'afterAssignment' });
     expect((await homeSnapshot()).freeOpen).toBe(false);
     const first = await answerNext(a.id, { stars: 2, clean: false, wrongTries: 1 });
     expect(first.events.assignmentDone).toBeUndefined();

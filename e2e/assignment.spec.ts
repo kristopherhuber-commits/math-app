@@ -40,7 +40,8 @@ test('an assignment from the link, through every question, to its summary (R-SES
     /Equations\s*0 \/ 1/,
   ]);
   await expect(page.getByText('0 of 4 done')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Price changes, locked' })).toBeDisabled();
+  // Free practice is always open by default (R-SES-6, parent decision M5).
+  await expect(page.getByRole('button', { name: 'Price changes', exact: true })).toBeEnabled();
 
   await press(page.getByRole('button', { name: 'Start ›' }), hasTouch);
 

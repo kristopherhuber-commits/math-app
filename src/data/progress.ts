@@ -1,14 +1,7 @@
 // Sessions, adaptive levels and rewards over Dexie (R-SES-1…7, R-ADP-1…6, R-RWD-1…3). The rules are
 // in the engine (adaptive.ts, scoring.ts, session.ts); this module loads and stores their state.
 import { config, TOPICS, type TopicId } from '../engine/config';
-import {
-  adapt,
-  clampLevel,
-  defaultBounds,
-  initialState,
-  summarize,
-  type LevelBounds,
-} from '../engine/adaptive';
+import { adapt, clampLevel, initialState, summarize } from '../engine/adaptive';
 import {
   currentStreak,
   eqRunWithoutWalkthrough,
@@ -21,8 +14,8 @@ import {
 } from '../engine/scoring';
 import { itemProgress, nextSlot, type AssignmentLink, type Order } from '../engine/session';
 import { newSeed } from '../engine/rng';
-import { db, type Assignment, type Attempt, type Rewards, type Settings } from './db';
-import { PROFILE_ID } from './attempts';
+import { db, PROFILE_ID, type Assignment, type Attempt, type Rewards, type Settings } from './db';
+import { loadSettings } from './settings';
 
 /** A local calendar day, 'YYYY-MM-DD' (streaks follow the learner's days, R-RWD-2). */
 export function localDay(d: Date | string = new Date()): string {
@@ -33,15 +26,14 @@ export function localDay(d: Date | string = new Date()): string {
 
 type PracticeSettings = Pick<Settings, 'freePractice' | 'order' | 'levelBounds' | 'reduceMotion'>;
 
-/** Parent settings, with the config defaults until the parent area exists (M5). */
+/** The parent settings a session needs (R-PAR-5), over the config defaults. */
 export async function practiceSettings(): Promise<PracticeSettings> {
-  const s = await db.settings.get(PROFILE_ID);
-  const bounds = Object.fromEntries(TOPICS.map((t) => [t, defaultBounds(t)])) as Record<TopicId, LevelBounds>;
+  const s = await loadSettings();
   return {
-    freePractice: s?.freePractice ?? config.settings.freePractice,
-    order: s?.order ?? config.settings.order,
-    levelBounds: { ...bounds, ...s?.levelBounds },
-    reduceMotion: s?.reduceMotion ?? false,
+    freePractice: s.freePractice,
+    order: s.order,
+    levelBounds: s.levelBounds,
+    reduceMotion: s.reduceMotion,
   };
 }
 

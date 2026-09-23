@@ -103,8 +103,8 @@ export const config = {
   settings: {
     /** R-SES-4 */
     order: 'grouped' as const,
-    /** R-SES-6 */
-    freePractice: 'afterAssignment' as const,
+    /** R-SES-6. `always` by the parent's decision (M5); the spec's default is `afterAssignment`. */
+    freePractice: 'always' as 'always' | 'afterAssignment' | 'never',
     /** §6.1 */
     naturalIncludesZero: false,
     /** R-PC-4 */

@@ -9,9 +9,13 @@ import { Turtle } from '../mascots/Turtle';
 import { feedbackText, hintText, strings } from '../strings';
 import { practiceReducer, startPractice } from '../practice/practiceReducer';
 import { CelebrationSlot, useReportAttempt, type QuestionProps } from '../practice/question';
+import { useSettings } from '../settings';
 
 export function EquationPractice({ level, seed, onSave, onSolved, onNext }: QuestionProps) {
-  const [s, dispatch] = useReducer(practiceReducer, undefined, () => startPractice(level, seed));
+  const { allowSkipping } = useSettings();
+  const [s, dispatch] = useReducer(practiceReducer, undefined, () =>
+    startPractice(level, seed, allowSkipping),
+  );
   const inputRef = useRef<HTMLInputElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const reduced = useReducedMotion();

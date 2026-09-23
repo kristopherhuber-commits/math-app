@@ -12,6 +12,9 @@ export type { TopicId, AttemptSummary, AssignmentItem };
 
 export const SCHEMA_VERSION = 3;
 
+/** The single learner profile in v1 (requirements §9.1). */
+export const PROFILE_ID = 'default';
+
 export interface Profile {
   id: 'default';
   name: string;

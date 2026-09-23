@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { config, TOPICS, type TopicId } from '../engine/config';
 import { parseAssignmentLink } from '../engine/session';
-import { numberSettings } from '../data/attempts';
+import type { Settings } from '../data/db';
+import { logError } from '../data/errors';
+import { defaultSettings, loadSettings } from '../data/settings';
 import { addAssignmentFromLink } from '../data/progress';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AssignmentSummary } from './screens/AssignmentSummary';
 import { Home } from './screens/Home';
 import { Session, type SessionKind } from './screens/Session';
+import { SettingsProvider } from './settings';
 import { rewardStrings } from './strings';
 import './ui.css';
 import './tiles.css';
@@ -51,12 +54,11 @@ export function App() {
       ? rewardStrings.home.badLink
       : undefined;
   });
-  const [settings, setSettings] = useState<{ currency: string; naturalIncludesZero: boolean }>({
-    currency: config.settings.currency,
-    naturalIncludesZero: config.settings.naturalIncludesZero,
-  });
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
   useEffect(() => {
-    void numberSettings().then(setSettings);
+    void loadSettings()
+      .then(setSettings)
+      .catch((e: unknown) => logError('loadSettings', e));
   }, []);
 
   // Until the parent area (M5): `?assign=EQ:10,PC:5@2&order=mixed&title=…` queues an assignment
@@ -101,7 +103,8 @@ export function App() {
           <Session
             key={route.key}
             kind={route.kind}
-            {...settings}
+            currency={settings.currency}
+            naturalIncludesZero={settings.naturalIncludesZero}
             onHome={home}
             onSummary={(id) => setRoute({ name: 'summary', id })}
           />
@@ -110,8 +113,10 @@ export function App() {
   };
 
   return (
-    <ErrorBoundary onReset={() => setRoute((r) => (r.name === 'session' ? { ...r, key: r.key + 1 } : r))}>
-      {screen()}
-    </ErrorBoundary>
+    <SettingsProvider value={settings}>
+      <ErrorBoundary onReset={() => setRoute((r) => (r.name === 'session' ? { ...r, key: r.key + 1 } : r))}>
+        {screen()}
+      </ErrorBoundary>
+    </SettingsProvider>
   );
 }
