@@ -834,3 +834,37 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- data and the error list (R-PAR-6, R-NF-5) ---------- */
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+  align-items: start;
+}
+.file-btn {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.file-btn:focus-within {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+.error-list ol {
+  margin: 0 0 var(--space-4);
+  padding-left: var(--space-5);
+}
+.error-list li p {
+  margin: var(--space-2) 0;
+}
+.error-list pre {
+  max-height: 200px;
+  overflow: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--parent-bg);
+  font-size: 13px;
+  white-space: pre-wrap;
+}

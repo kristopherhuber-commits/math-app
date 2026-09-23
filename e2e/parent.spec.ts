@@ -4,7 +4,8 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { generateEq } from '../src/engine/topics/eq/generator';
 import { eqWalkthrough } from '../src/engine/topics/eq/hints';
-import { assignment, attemptRow, openHome, PIN } from './helpers';
+import { readFileSync } from 'node:fs';
+import { assignment, attemptRow, openHome, PIN, putRows } from './helpers';
 
 async function press(target: Locator, touch: boolean) {
   if (touch) await target.tap();
@@ -444,4 +445,73 @@ test('missed questions: from Worth a look to the replay of every line, rejected 
   await press(page.locator('.missed-row').first(), hasTouch);
   await expect(replay.locator('.try.wrong')).toHaveText([/\$1\.00.*PC-M1/, /\$2\.00.*PC-M2/]);
   await expect(replay).toContainText('Answer:');
+});
+
+test('data: export, reset, import restores; a bad file changes nothing; the error list (R-PAR-6, R-NF-5)', async ({
+  page,
+  hasTouch,
+}, info) => {
+  await openHome(page, {
+    assignments: [assignment('PC:3', { seed: 2, title: 'Keep me' })],
+    attempts: [attemptRow({ topic: 'PC', finishedAt: new Date().toISOString() })],
+  });
+  await putRows(page, {
+    errors: [
+      { at: new Date().toISOString(), where: 'saveAttempt', message: 'disk full', stack: 'Error: disk full' },
+    ],
+  });
+  await unlock(page, hasTouch);
+  await press(page.getByRole('navigation').getByRole('button', { name: 'Data' }), hasTouch);
+  const errorList = page.getByRole('region', { name: 'Error list' });
+  await expect(errorList).toContainText('saveAttempt');
+  await expect(errorList).toContainText('disk full');
+
+  // Export.
+  const downloading = page.waitForEvent('download');
+  await press(page.getByRole('button', { name: 'Export data' }), hasTouch);
+  const download = await downloading;
+  expect(download.suggestedFilename()).toMatch(/^turtle-penguin-math-\d{4}-\d{2}-\d{2}\.json$/);
+  const saved = info.outputPath('export.json');
+  await download.saveAs(saved);
+  const exported = JSON.parse(readFileSync(saved, 'utf8'));
+  expect(exported).toMatchObject({ app: 'turtle-penguin-math', schemaVersion: 3 });
+  expect(exported.attempts).toHaveLength(1);
+
+  // Reset (asked first).
+  await press(page.getByRole('button', { name: 'Reset all progress' }), hasTouch);
+  await press(page.getByRole('alertdialog').getByRole('button', { name: 'Cancel' }), hasTouch);
+  await press(page.getByRole('button', { name: 'Reset all progress' }), hasTouch);
+  await press(page.getByRole('button', { name: 'Yes, reset' }), hasTouch);
+  await expect(page.getByText('Progress reset.')).toBeVisible();
+  await press(page.getByRole('navigation').getByRole('button', { name: 'Assignments' }), hasTouch);
+  await expect(page.getByText('No assignments yet.')).toBeVisible();
+  await press(page.getByRole('navigation').getByRole('button', { name: 'Data' }), hasTouch);
+
+  // A file that isn't an export changes nothing.
+  const input = page.locator('input[type="file"]');
+  await input.setInputFiles({
+    name: 'x.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{"hello":1}'),
+  });
+  await expect(
+    page.getByText("That file couldn't be read as an export from this app. Nothing was changed."),
+  ).toBeVisible();
+  await input.setInputFiles({
+    name: 'new.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ ...exported, schemaVersion: 9 })),
+  });
+  await expect(page.getByText('That file comes from a newer version of the app (format v9).')).toBeVisible();
+
+  // Import the export (asked first).
+  await input.setInputFiles(saved);
+  await expect(page.getByRole('alertdialog')).toContainText(
+    'This file has 1 answer and 1 assignment (format v3)',
+  );
+  await press(page.getByRole('button', { name: 'Replace my data' }), hasTouch);
+  await expect(page.getByText('Imported.')).toBeVisible();
+  await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
+  await expect(page.getByRole('heading', { name: 'Keep me' })).toBeVisible();
+  await expect(page.getByText('0 of 3 done')).toBeVisible();
 });

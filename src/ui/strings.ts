@@ -979,7 +979,7 @@ export const parentStrings = {
     importSub: 'Replace everything on this device with an exported file.',
     import: 'Choose a file…',
     importConfirm: (attempts: number, assignments: number, version: number) =>
-      `This file has ${attempts} answers and ${assignments} assignments (format v${version}). Replace everything on this device with it?`,
+      `This file has ${attempts} ${attempts === 1 ? 'answer' : 'answers'} and ${assignments} ${assignments === 1 ? 'assignment' : 'assignments'} (format v${version}). Replace everything on this device with it?`,
     importYes: 'Replace my data',
     importDone: 'Imported.',
     importBad: "That file couldn't be read as an export from this app. Nothing was changed.",
@@ -997,5 +997,6 @@ export const parentStrings = {
     errorsSub: "Unexpected errors. The learner only saw “Oops, let's try another one”.",
     errorsNone: 'No errors logged.',
     errorsClear: 'Clear the list',
+    errorsStack: 'Details',
   },
 };
