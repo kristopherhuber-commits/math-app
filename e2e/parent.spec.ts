@@ -2,6 +2,8 @@
 // the PIN gate and reset, the assignment builder and queue, settings, dashboard, missed-question
 // review, and data export / import / reset. Runs on desktop (mouse) and tablet (touch).
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { generateEq } from '../src/engine/topics/eq/generator';
+import { eqWalkthrough } from '../src/engine/topics/eq/hints';
 import { assignment, attemptRow, openHome, PIN } from './helpers';
 
 async function press(target: Locator, touch: boolean) {
@@ -364,4 +366,82 @@ test('the dashboard: level, clean solves, hints, minutes, and what is worth a lo
   await expect(worth).toContainText('Equations: needed a walkthrough 3 of the last 6.');
   await expect(worth).toContainText('Equations: sign errors when moving a term (EQ-D4) × 6 this week.');
   await expect(page.getByRole('img', { name: 'Minutes per day' })).toBeVisible();
+});
+
+test('missed questions: from Worth a look to the replay of every line, rejected ones with their codes (R-PAR-4)', async ({
+  page,
+  hasTouch,
+}) => {
+  const q = generateEq(3, 7);
+  const steps = eqWalkthrough(q.text, q.variable).filter((w) => w.kind !== 'CHECK');
+  const now = Date.now();
+  const rows = Array.from({ length: 3 }, (_, i) => {
+    const finishedAt = new Date(now - (3 - i) * 60_000).toISOString();
+    return attemptRow({
+      topic: 'EQ',
+      level: 3,
+      generatorId: q.generatorId,
+      seed: 7,
+      finishedAt,
+      maxHint: 2,
+      clean: false,
+      stars: 1,
+      wrongTries: 1,
+      tries: [
+        { at: finishedAt, answer: 'nonsense = = 1', verdict: 'stepRejected', diagnostic: 'EQ-D4' },
+        { at: finishedAt, answer: 'still = = 2', verdict: 'stepRejected', diagnostic: 'EQ-D4' },
+        ...steps.map((st) => ({
+          at: finishedAt,
+          answer: st.line,
+          verdict: 'stepAccepted',
+          stepType: st.kind,
+        })),
+      ],
+    });
+  });
+  // A clean answer is not missed; a PC answer with two wrong tries is.
+  rows.push(attemptRow({ topic: 'EQ', finishedAt: new Date(now).toISOString() }));
+  rows.push(
+    attemptRow({
+      topic: 'PC',
+      generatorId: 'pc.v1',
+      seed: 3,
+      finishedAt: new Date(now - 3_600_000).toISOString(),
+      wrongTries: 2,
+      clean: false,
+      stars: 1,
+      tries: [
+        { at: new Date(now).toISOString(), answer: '$1.00', verdict: 'wrong', diagnostic: 'PC-M1' },
+        { at: new Date(now).toISOString(), answer: '$2.00', verdict: 'wrong', diagnostic: 'PC-M2' },
+      ],
+    }),
+  );
+  await openHome(page, { attempts: rows });
+  await unlock(page, hasTouch);
+  await press(page.getByRole('navigation').getByRole('button', { name: 'Missed questions' }), hasTouch);
+  await expect(page.getByRole('region', { name: '4 questions' })).toBeVisible();
+
+  await press(page.getByRole('navigation').getByRole('button', { name: 'Progress' }), hasTouch);
+  const worth = page.getByRole('region', { name: 'Worth a look' });
+  await expect(worth).toContainText('(EQ-D4) × 6 this week');
+  await press(worth.getByRole('button', { name: 'Open missed questions ›' }), hasTouch);
+  await expect(page.getByRole('heading', { name: 'Missed questions' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Diagnostic: EQ-D4 ×' })).toBeVisible();
+  await expect(page.getByRole('region', { name: '3 questions' })).toBeVisible();
+
+  await press(page.locator('.missed-row').first(), hasTouch);
+  const replay = page.getByRole('region', { name: 'The question' });
+  await expect(replay).toContainText('eq.v1 · level 3 · seed 7');
+  await expect(replay.locator('.try')).toHaveCount(2 + steps.length);
+  await expect(replay.locator('.try.stepRejected').first()).toContainText('EQ-D4');
+  await expect(replay.locator('.try.stepRejected').first()).toContainText('rejected');
+  await expect(replay.locator('.try.stepAccepted').last()).toContainText('SOLVE');
+
+  // Clearing the code and filtering by topic: the price change is there.
+  await press(page.getByRole('button', { name: 'Diagnostic: EQ-D4 ×' }), hasTouch);
+  await page.getByLabel('Topic').selectOption('PC');
+  await expect(page.getByRole('region', { name: '1 question' })).toBeVisible();
+  await press(page.locator('.missed-row').first(), hasTouch);
+  await expect(replay.locator('.try.wrong')).toHaveText([/\$1\.00.*PC-M1/, /\$2\.00.*PC-M2/]);
+  await expect(replay).toContainText('Answer:');
 });

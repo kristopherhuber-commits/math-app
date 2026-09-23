@@ -723,3 +723,114 @@
 .attention .link-btn {
   padding: 0;
 }
+
+/* ---------- missed-question review (R-PAR-4) ---------- */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.filters .text-input {
+  min-width: 200px;
+  font-size: 17px;
+}
+.chip-btn {
+  min-height: var(--target-min);
+  padding: 0 var(--space-4);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--var-ink);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.missed-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.6fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+.missed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.missed-row {
+  width: 100%;
+  min-height: var(--target-min);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--parent-bg);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.missed-row.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.replay-empty {
+  padding: var(--space-5);
+}
+.review-question {
+  margin: var(--space-3) 0;
+}
+.review-question .math-hero {
+  margin: var(--space-2) 0;
+}
+.seed-line {
+  font-size: 13px;
+}
+.replay h3 {
+  font-size: 17px;
+  margin: var(--space-4) 0 var(--space-2);
+}
+.try-list {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.try {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--parent-bg);
+}
+.try-answer {
+  display: block;
+  font-size: 19px;
+}
+.try.stepRejected .try-answer,
+.try.wrong .try-answer {
+  text-decoration: underline wavy var(--amber);
+  text-underline-offset: 6px;
+}
+.try.stepRejected,
+.try.wrong {
+  background: var(--amber-soft);
+}
+.try-meta code {
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--amber);
+  font-weight: 800;
+}
+@media (max-width: 1199px) {
+  .missed-layout {
+    grid-template-columns: 1fr;
+  }
+}
