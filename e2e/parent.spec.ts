@@ -2,7 +2,7 @@
 // the PIN gate and reset, the assignment builder and queue, settings, dashboard, missed-question
 // review, and data export / import / reset. Runs on desktop (mouse) and tablet (touch).
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { PIN } from './helpers';
+import { openHome, PIN } from './helpers';
 
 async function press(target: Locator, touch: boolean) {
   if (touch) await target.tap();
@@ -63,4 +63,60 @@ test('first run by keyboard: digits and Backspace on the PIN pad', async ({ page
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Hi there!' })).toBeVisible();
   await expect(page.getByText("Pip: Pick a topic. Let's play!")).toBeVisible();
+});
+
+/** From Home, open the parent area with the PIN. */
+async function unlock(page: Page, touch: boolean, pin = PIN) {
+  await press(page.getByRole('button', { name: 'Parent', exact: true }), touch);
+  await expect(page.getByRole('heading', { name: 'Parent area' })).toBeVisible();
+  await tapPin(page, pin, touch);
+}
+
+test('the PIN gate: a wrong PIN, back to the learner, then in (R-PAR-1)', async ({ page, hasTouch }) => {
+  await openHome(page);
+  await unlock(page, hasTouch, '0000');
+  await expect(page.getByText("That's not the PIN. Try again.")).toBeVisible();
+  await press(page.getByRole('button', { name: '‹ Back' }), hasTouch);
+  await expect(page.getByRole('heading', { name: 'Hi there!' })).toBeVisible();
+  await unlock(page, hasTouch);
+  await expect(page.getByRole('navigation', { name: 'Parent area' })).toBeVisible();
+  await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
+  await expect(page.getByRole('heading', { name: 'Hi there!' })).toBeVisible();
+  // Leaving locks it again.
+  await press(page.getByRole('button', { name: 'Parent', exact: true }), hasTouch);
+  await expect(page.getByRole('group', { name: 'PIN pad' })).toBeVisible();
+});
+
+test('PIN reset: answer the multiplication, set a new PIN twice (R-PAR-1)', async ({ page, hasTouch }) => {
+  await openHome(page);
+  await press(page.getByRole('button', { name: 'Parent', exact: true }), hasTouch);
+  await press(page.getByRole('button', { name: 'Forgot PIN?' }), hasTouch);
+  const question = page.locator('.reset-question .prompt');
+  const answer = page.getByRole('textbox', { name: 'Answer' });
+  await answer.fill('1');
+  await press(page.getByRole('button', { name: 'Check' }), hasTouch);
+  await expect(page.getByText("That's not it. Here's another one.")).toBeVisible();
+  const [, a, b] = /What is (\d+) × (\d+)\?/.exec((await question.textContent()) ?? '')!;
+  await answer.fill(String(Number(a) * Number(b)));
+  await press(page.getByRole('button', { name: 'Check' }), hasTouch);
+  await expect(page.getByRole('heading', { name: 'Choose a new PIN' })).toBeVisible();
+  await tapPin(page, '9753', hasTouch);
+  await tapPin(page, '9753', hasTouch);
+  await expect(page.getByRole('navigation', { name: 'Parent area' })).toBeVisible();
+  await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
+  await unlock(page, hasTouch, PIN);
+  await expect(page.getByText("That's not the PIN. Try again.")).toBeVisible();
+  await tapPin(page, '9753', hasTouch);
+  await expect(page.getByRole('navigation', { name: 'Parent area' })).toBeVisible();
+});
+
+test('the parent area locks itself after 10 minutes without input', async ({ page }) => {
+  await page.clock.install();
+  await openHome(page);
+  await unlock(page, false);
+  await expect(page.getByRole('navigation', { name: 'Parent area' })).toBeVisible();
+  await page.clock.fastForward('09:00');
+  await expect(page.getByRole('navigation', { name: 'Parent area' })).toBeVisible();
+  await page.clock.fastForward('02:00');
+  await expect(page.getByRole('group', { name: 'PIN pad' })).toBeVisible();
 });

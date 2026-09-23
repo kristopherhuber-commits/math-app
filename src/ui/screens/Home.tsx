@@ -104,8 +104,10 @@ function Beach({ snap }: { snap: HomeSnapshot }) {
 export function Home({
   onStartAssignment,
   onFreePractice,
+  onParent,
   focusFree = false,
 }: {
+  onParent: () => void;
   onStartAssignment: (id: string) => void;
   onFreePractice: (topic: TopicId) => void;
   /** Coming from the summary's "Free practice ›": focus the first topic tile. */
@@ -188,6 +190,11 @@ export function Home({
           ))}
         </div>
       </section>
+      <p className="parent-link">
+        <button type="button" className="link-btn" onClick={onParent}>
+          {h.parent}
+        </button>
+      </p>
     </main>
   );
 }

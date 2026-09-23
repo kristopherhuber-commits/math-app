@@ -8,6 +8,7 @@ import { AssignmentSummary } from './screens/AssignmentSummary';
 import { Home } from './screens/Home';
 import { Session, type SessionKind } from './screens/Session';
 import { Setup } from './screens/Setup';
+import { ParentArea } from './parent/ParentArea';
 import { SettingsProvider } from './settings';
 import './ui.css';
 import './tiles.css';
@@ -20,7 +21,8 @@ type Route =
   | { name: 'setup' }
   | { name: 'home'; key: number; focusFree?: boolean }
   | { name: 'session'; kind: SessionKind; key: number }
-  | { name: 'summary'; id: string };
+  | { name: 'summary'; id: string }
+  | { name: 'parent' };
 
 /**
  * `?topic=RD&level=3&seed=42` opens a fixed level; `?level=3` alone opens EQ, as before (the parent,
@@ -91,7 +93,12 @@ export function App() {
             focusFree={route.focusFree ?? false}
             onStartAssignment={(id) => start({ kind: 'assignment', id })}
             onFreePractice={(topic) => start({ kind: 'free', topic })}
+            onParent={() => setRoute({ name: 'parent' })}
           />
+        );
+      case 'parent':
+        return (
+          <ParentArea onExit={() => void reloadSettings().then(home)} onSettingsChanged={reloadSettings} />
         );
       case 'session':
         return (

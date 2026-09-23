@@ -106,3 +106,132 @@
   color: var(--ink-muted);
   font-size: 15px;
 }
+
+/* ---------- parent area shell (mockups 10 and 11) ---------- */
+.parent {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--parent-bg);
+  font-size: 16px;
+}
+.parent-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6) var(--space-4);
+  background: var(--parent-nav);
+  color: var(--on-parent-nav);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+.parent-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+}
+.parent-nav-title {
+  margin: 0 var(--space-3);
+  font-size: 20px;
+  font-weight: 900;
+}
+.parent-nav-sub {
+  margin: var(--space-1) var(--space-3) 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--on-parent-nav-muted);
+}
+.parent-nav-item,
+.parent-back {
+  width: 100%;
+  min-height: var(--target-min);
+  padding: 0 var(--space-4);
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--on-parent-nav-muted);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+.parent-nav-item.active,
+.parent-nav-item:hover {
+  background: var(--parent-nav-active);
+  color: var(--on-parent-nav);
+}
+.parent-back {
+  background: var(--parent-nav-active);
+  color: var(--on-parent-nav);
+  text-align: center;
+}
+.parent-nav :focus-visible {
+  outline: 3px solid var(--on-parent-nav);
+  outline-offset: 2px;
+}
+.parent-main {
+  padding: var(--space-6);
+  min-width: 0;
+}
+.parent-main h1:focus {
+  outline: none;
+}
+.parent-main .title {
+  font-size: 30px;
+  margin-bottom: var(--space-2);
+}
+.parent-sub {
+  color: var(--ink-muted);
+  font-weight: 800;
+  margin: 0 0 var(--space-5);
+}
+.parent-card {
+  background: var(--surface);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+.parent-card h2 {
+  font-size: 20px;
+  font-weight: 900;
+  margin: 0 0 var(--space-3);
+}
+.field-label {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink-muted);
+  margin-bottom: var(--space-2);
+}
+.reset-question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: center;
+}
+.reset-question .text-input {
+  max-width: 200px;
+  text-align: center;
+}
+@media (max-width: 959px) {
+  .parent {
+    grid-template-columns: 1fr;
+  }
+  .parent-nav {
+    position: static;
+    height: auto;
+  }
+  .parent-nav ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .parent-nav-item {
+    width: auto;
+  }
+}
