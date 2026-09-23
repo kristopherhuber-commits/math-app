@@ -30,12 +30,8 @@ import {
 import { parseEquation, type Expr } from '../../eq/parse';
 import { stageOf, type Stage } from '../../eq/stepChecker';
 
-export type HintTier = 1 | 2 | 3;
-export type Params = Record<string, string>;
-export interface HintContent {
-  id: string;
-  params: Params;
-}
+import type { HintContent, Params } from '../content';
+export type { HintContent, HintTier, Params } from '../content';
 
 function lin(text: string): { e: LinearEquation; left: Expr; right: Expr } {
   const r = parseEquation(text);
