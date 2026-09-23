@@ -44,10 +44,9 @@ function row(label: string, x: Rational, sign: '' | '−' = ''): ColumnRow {
 
 const times = (p: bigint) => (p === 1n ? 'x' : `${p}x`);
 
-/** The x-method (§6.2 walkthrough), with inline mini-questions (R-HELP-4). */
-function d2fWalk(q: McQuestion): NumWalkStep[] {
-  const rng = mulberry32(q.seed ^ 0x9e3779b9);
-  const rep = repOf(q);
+/** The x-method (§6.2 walkthrough), with inline mini-questions (R-HELP-4). Also used by FDP. */
+export function xMethodSteps(rep: DecimalRep, seed: number): NumWalkStep[] {
+  const rng = mulberry32(seed ^ 0x9e3779b9);
   const x = toRational(rep);
   const m = rep.nonRep.length;
   const k = rep.block.length;
@@ -143,23 +142,32 @@ function d2fWalk(q: McQuestion): NumWalkStep[] {
   return steps;
 }
 
-/** F→D by long division, pointing out the remainder that comes back (§6.2). */
-function f2dWalk(q: McQuestion): NumWalkStep[] {
-  const rng = mulberry32(q.seed ^ 0x9e3779b9);
-  const n = BigInt(q.params.n!);
-  const d = BigInt(q.params.d!);
+/**
+ * F→D by long division (§6.2; R-FDP-4 "F→D by division"). For a repeating decimal it points out
+ * the remainder that comes back; for a terminating one, the remainder 0. Also used by FDP.
+ */
+export function divisionSteps(n: bigint, d: bigint, seed: number): NumWalkStep[] {
+  const rng = mulberry32(seed ^ 0x9e3779b9);
   const ld = longDivision(n, d);
-  const repeat = ld.repeat!;
+  const x = rat(n, d);
+  const both = showDecimalOf(x, 'both');
+  const first: NumWalkStep = {
+    explain: content('rd.walk.f2d.divide', { n: `${n}`, d: `${d}` }),
+    math: [`${fracTex(n, d)} = ${n} \\div ${d}`],
+  };
+  if (!ld.repeat) {
+    return [
+      first,
+      { explain: content('rd.walk.f2d.rows', { d: `${d}` }), division: { ld, highlightRepeat: false } },
+      { explain: content('rd.walk.f2d.stops'), math: [`${fracTex(n, d)} = ${both.latex}`] },
+    ];
+  }
+  const repeat = ld.repeat;
   const again = ld.rows[repeat.row]!.remainder;
   const others = ld.rows.map((r) => r.remainder).filter((r) => r !== again);
-  const x = rat(n, d);
   const rep = fromRational(x);
-  const both = showDecimalOf(x, 'both');
   return [
-    {
-      explain: content('rd.walk.f2d.divide', { n: `${n}`, d: `${d}` }),
-      math: [`${fracTex(n, d)} = ${n} \\div ${d}`],
-    },
+    first,
     {
       explain: content('rd.walk.f2d.rows', { d: `${d}` }),
       division: { ld, highlightRepeat: false },
@@ -180,5 +188,7 @@ function f2dWalk(q: McQuestion): NumWalkStep[] {
 }
 
 export function rdWalkthrough(q: McQuestion): NumWalkStep[] {
-  return q.kind === 'F2D' ? f2dWalk(q) : d2fWalk(q);
+  return q.kind === 'F2D'
+    ? divisionSteps(BigInt(q.params.n!), BigInt(q.params.d!), q.seed)
+    : xMethodSteps(repOf(q), q.seed);
 }

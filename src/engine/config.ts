@@ -40,6 +40,30 @@ export const config = {
     /** Levels (and above) where bar notation is shown beside the ellipsis (R-DISP-3). */
     barFromLevel: 3,
   },
+  /** FDP (§6.3). Denominator pools per level; ranges the spec leaves open are M3 assumptions. */
+  fdp: {
+    denominators: {
+      1: [2, 4, 5, 10],
+      2: [8, 20, 25, 50, 100],
+      /** Level 3 mixed numbers: whole part 1…mixedWholeMax over these denominators. */
+      3: [2, 4, 5, 8, 10, 20, 25],
+      4: [3, 6, 9, 11, 12],
+    } as Record<number, readonly number[]>,
+    mixedWholeMax: 5,
+    /** Level 3 "< 1%": p/1000 for p in 1…9 (0.1% … 0.9%). */
+    tinyMaxThousandths: 9,
+    barFromLevel: 4,
+  },
+  /** PC (§6.4). Prices and percents the spec leaves open are M3 assumptions. */
+  pc: {
+    minPriceDollars: 5,
+    maxPriceDollars: 200,
+    nicePercents: [10, 20, 25, 50] as readonly number[],
+    /** Level 2: any whole percent in this range. */
+    anyPercent: { min: 1, max: 90 },
+    /** Levels 3–4: successive and reverse changes. */
+    stepPercents: [5, 10, 15, 20, 25, 30, 40, 50, 60, 75] as readonly number[],
+  },
   /** R-DISP-6 */
   variables: [
     'a',
