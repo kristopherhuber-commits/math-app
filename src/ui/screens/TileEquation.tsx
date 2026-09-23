@@ -215,6 +215,7 @@ export function TileEquation({ level, seed, onHome }: Props) {
                   <li
                     key={i}
                     className={`step-line accepted ${s.solved && i === s.lines.length - 2 ? 'solved' : ''}`}
+                    data-line={line.text}
                   >
                     <MathLine text={line.text} className="math-md" />
                     <span className="step-label">{strings.labels[line.label]}</span>

@@ -58,11 +58,11 @@ test('solve with the physical keyboard, including a rejected line', async ({ pag
 
 test('hint ladder: Help opens H1, then H2; Esc closes it', async ({ page }) => {
   await page.getByRole('button', { name: 'Help' }).click();
-  await expect(page.getByText('Hint 1 of 2')).toBeVisible();
+  await expect(page.getByText('Hint 1 of 3')).toBeVisible();
   await page.getByRole('button', { name: 'Another hint' }).click();
-  await expect(page.getByText('Hint 2 of 2')).toBeVisible();
+  await expect(page.getByText('Hint 2 of 3')).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.getByText('Hint 2 of 2')).toBeHidden();
+  await expect(page.getByText('Hint 2 of 3')).toBeHidden();
 });
 
 test('attempts are saved to IndexedDB after every step (R-SES-5)', async ({ page }) => {

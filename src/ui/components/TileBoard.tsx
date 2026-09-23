@@ -75,6 +75,18 @@ export function TileBoard({ board, disabled, onDrop, onSign, onSwap, announce, o
     else onAllPlaced();
   }, [waiting, board, onAllPlaced]);
 
+  // A touch drag that starts on a tile must not become a scroll or fling gesture: Chrome swallows
+  // the next tap (on + or −) to stop a fling. touch-action: none alone did not prevent that.
+  useEffect(() => {
+    const el = boardRef.current;
+    if (!el) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.target instanceof Element && e.target.closest('.term-tile')) e.preventDefault();
+    };
+    el.addEventListener('touchmove', onTouchMove, { passive: false });
+    return () => el.removeEventListener('touchmove', onTouchMove);
+  }, []);
+
   const finishDrop = (id: string, to: Side) => {
     const term = tileText(tileById(board, id), v);
     if (to === sideOf(board, id)) announce(strings.tiles.returned(term));
