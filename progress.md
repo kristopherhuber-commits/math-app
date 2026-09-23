@@ -69,6 +69,8 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | M3: how do answer options show repeating decimals? | **Both forms, stacked** (`0.181818…` over `= 0.\overline{18}`), so no option is ever ellipsis-only. |
 | 2026-09-23 | M1 open item: tablet-portrait keypad (typed EQ) | **Deferred to M6** (polish). |
 | 2026-09-23 | M2 open item: the touch-drag fix on the real tablet | **Not tried yet**; stays open. |
+| 2026-09-23 | After trying M3: the device | **For now the app is used only in a desktop browser.** Tablet-only checks (the touch-drag fix, the portrait keypad) wait until the tablet is used. Touch and portrait stay in scope and in the e2e tests (R-PLAT-4/5). |
+| 2026-09-23 | After trying M3: hints in a panel inside the question card (M1 assumption 9) instead of design.md's docked drawer | **Approved: keep the in-card panel.** design.md is unchanged. |
 
 ## 5. Assumptions in force (spec silent; reversible)
 
@@ -81,7 +83,7 @@ From M1 (details in `docs/milestones/M1-report.md` §3):
 6. Wrong try (EQ) = two rejections on the same step; a wrong try opens the hint at the next tier and pulses Help; the ladder restarts at H1 per step; `Attempt.maxHint` keeps the highest tier.
 7. Clean solve (EQ) = no wrong try and no hint above H1.
 8. `Attempt.finishedAt` and `Attempt.stars` are optional in the types; `AttemptSummary` has a placeholder shape.
-9. Hints show in a panel inside the question card, not a docked drawer.
+9. Hints show in a panel inside the question card, not a docked drawer. (Approved by the parent on 2026-09-23; see §4.)
 10. No decimal key on the typed keypad; the physical keyboard can type `.`.
 11. Nunito comes from `@fontsource-variable/nunito`, bundled at build time.
 12. The solved state shows the substitution check line (celebration arrives in M4).
@@ -172,7 +174,11 @@ Scope and done-when: requirements §12 (assignments, adaptive levels, stars, str
 - The TopBar gets the stars, shells and progress bar (design.md §5).
 - Badges need "first delayed repeating decimal" (RD `params.shape === 'delayed'`) and "first successive-change problem" (PC `kind === 'successive'`); both are in `Attempt.params`.
 
-Open items: the tablet-portrait keypad for typed EQ (M6); the M2 touch-drag fix on the real tablet (not tried yet).
+Open items, parked while the app is used only in a desktop browser (§4): the tablet-portrait keypad for typed EQ (M6), and the M2 touch-drag fix on the real tablet.
+
+After M4:
+- **M5, parent area:** PIN and reset, first-run naming, assignment builder, dashboard, missed-question review, settings, export/import/reset, error list. Done when the R-TEST-5 parent flow is green.
+- **M6, polish:** shells and accessories, animations and sounds, axe accessibility pass (R-TEST-6), an offline test that completes a question (R-TEST-7), performance budgets (R-NF-1/2), the portrait keypad.
 
 ## 11. Reference materials
 
