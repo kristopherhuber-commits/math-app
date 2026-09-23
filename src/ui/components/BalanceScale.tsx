@@ -42,12 +42,15 @@ export function BalanceScale({
   mode,
   playKey = 0,
   label,
+  showAfter = true,
 }: {
   frames: BalanceFrames;
   mode: BalanceMode;
   /** Change to replay the animation. */
   playKey?: number | string;
   label: string;
+  /** false: only the "same thing on both sides" frame (the result is left to the learner). */
+  showAfter?: boolean;
 }) {
   const [phase, setPhase] = useState<Phase>(mode === 'static' ? 'after' : 'before');
 
@@ -61,6 +64,18 @@ export function BalanceScale({
     ];
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [mode, playKey]);
+
+  if (!showAfter) {
+    return (
+      <figure className="balance balance-static" aria-label={label}>
+        <div className="balance-frame">
+          <Beam />
+          <Pan text={frames.before.L} op={frames.op} phase="op" side="L" />
+          <Pan text={frames.before.R} op={frames.op} phase="op" side="R" />
+        </div>
+      </figure>
+    );
+  }
 
   if (mode === 'static') {
     // Reduced motion: two frames, no movement (R-NF-3).

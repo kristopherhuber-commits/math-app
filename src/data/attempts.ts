@@ -1,5 +1,6 @@
 // Attempt persistence (R-SES-5: saved after every step; R-PAR-4 needs every line, including
 // rejected ones with their diagnostic codes).
+import { config } from '../engine/config';
 import { db, type Attempt, type TryRecord } from './db';
 
 export const PROFILE_ID = 'default';
@@ -28,5 +29,32 @@ export async function saveAttempt(a: Attempt): Promise<void> {
   } catch (e) {
     // R-NF-5: never surface storage errors to the learner.
     console.error('saveAttempt failed', e);
+  }
+}
+
+/**
+ * R-EQ-PED-2: correct sign choices in the tile builder so far, derived from the stored attempts
+ * (accepted SIGN tries), so there is no second counter to keep in sync.
+ */
+export async function storedCorrectSigns(): Promise<number> {
+  try {
+    const attempts = await db.attempts.where('topic').equals('EQ').toArray();
+    return attempts.reduce(
+      (n, a) => n + a.tries.filter((t) => t.stepType === 'SIGN' && t.verdict === 'stepAccepted').length,
+      0,
+    );
+  } catch (e) {
+    console.error('storedCorrectSigns failed', e);
+    return 0;
+  }
+}
+
+/** The parent's "full balance animation" setting (R-PAR-5; its UI arrives in M5). */
+export async function fullBalanceAnimSetting(): Promise<boolean> {
+  try {
+    const s = await db.settings.get(PROFILE_ID);
+    return s?.fullBalanceAnim ?? config.eq.fullBalanceAnimDefault;
+  } catch {
+    return config.eq.fullBalanceAnimDefault;
   }
 }

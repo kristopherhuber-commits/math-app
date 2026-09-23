@@ -15,6 +15,8 @@ export const config = {
     allowSkippingDefault: false,
     /** R-EQ-PED-2 */
     shortBalanceAfterCorrectSigns: 10,
+    /** R-EQ-PED-2: the parent can re-enable the full animation; off means "shorten after 10". */
+    fullBalanceAnimDefault: false,
     /** design.md §6.3: two rejections on the same step count as one wrong try. */
     rejectionsPerWrongTry: 2,
     /** R-EQ-GEN-2 */
@@ -22,7 +24,7 @@ export const config = {
     maxAbsValueHigh: 50, // levels 4–6
     maxAbsSolution: 20,
     maxSolutionDenominator: 9,
-    /** Levels that use the tile builder (R-ANS-5). Typed mode is used there until M2. */
+    /** Levels that use the tile builder (R-ANS-5). */
     tileLevels: [1, 2] as readonly number[],
   },
   /** R-DISP-6 */

@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useReducer, useRef } from 'react';
 import { newSeed } from '../../engine/rng';
-import { eqHint, eqWalkthrough } from '../../engine/topics/eq/hints';
+import { eqWalkthrough } from '../../engine/topics/eq/hints';
 import { saveAttempt } from '../../data/attempts';
 import { MathLine, Rich } from '../components/Math';
 import { Keypad, type KeypadKey } from '../components/Keypad';
-import { feedbackText, hintText, strings } from '../strings';
+import { HintPanel } from '../components/HintPanel';
+import { Walkthrough } from '../components/Walkthrough';
+import { useReducedMotion } from '../hooks/useReducedMotion';
+import { Turtle } from '../mascots/Turtle';
+import { feedbackText, strings } from '../strings';
 import { practiceReducer, startPractice } from '../practice/practiceReducer';
 
 interface Props {
@@ -17,6 +21,7 @@ export function EquationPractice({ level, seed, onHome }: Props) {
   const [s, dispatch] = useReducer(practiceReducer, undefined, () => startPractice(level, seed ?? newSeed()));
   const inputRef = useRef<HTMLInputElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
+  const reduced = useReducedMotion();
   const v = s.question.variable;
   const lastLine = s.lines[s.lines.length - 1]!.text;
 
@@ -26,9 +31,10 @@ export function EquationPractice({ level, seed, onHome }: Props) {
   }, [s.attempt]);
 
   useEffect(() => {
+    if (s.walk) return;
     if (s.solved) nextRef.current?.focus();
     else inputRef.current?.focus();
-  }, [s.solved, s.question]);
+  }, [s.solved, s.question, s.walk]);
 
   // Keyboard paths (design.md §10): H opens help, Esc closes it — outside the line input.
   useEffect(() => {
@@ -42,10 +48,6 @@ export function EquationPractice({ level, seed, onHome }: Props) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const hint = useMemo(
-    () => (s.hintOpen && s.hintTier > 0 && !s.solved ? eqHint(lastLine, v, s.hintTier as 1 | 2) : null),
-    [s.hintOpen, s.hintTier, s.solved, lastLine, v],
-  );
   const check = useMemo(
     () => (s.solved ? eqWalkthrough(s.question.text, v).at(-1)!.explain.params : null),
     [s.solved, s.question.text, v],
@@ -102,142 +104,141 @@ export function EquationPractice({ level, seed, onHome }: Props) {
       </header>
 
       <main className="practice">
-        <section className="card question-card" aria-labelledby="prompt">
-          <span className="chip">{strings.practice.chip(s.level)}</span>
-          <h1 id="prompt" className="prompt">
-            <Rich text={strings.practice.prompt(v)} />
-          </h1>
+        {s.walk ? (
+          <Walkthrough
+            steps={s.walk.steps}
+            index={s.walk.index}
+            variable={v}
+            solved={s.solved}
+            motion={reduced ? 'static' : 'full'}
+            onNext={() => dispatch({ type: 'walkNext' })}
+            onBack={() => dispatch({ type: 'walkBack' })}
+            onNextQuestion={() => dispatch({ type: 'next', seed: newSeed() })}
+          />
+        ) : (
+          <section className="card question-card" aria-labelledby="prompt">
+            <span className="chip">{strings.practice.chip(s.level)}</span>
+            <h1 id="prompt" className="prompt">
+              <Rich text={strings.practice.prompt(v)} />
+            </h1>
 
-          <ol className="steps" aria-label={strings.practice.steps}>
-            {s.lines.map((line, i) => (
-              <li
-                key={i}
-                className={`step-line ${i === 0 ? 'given' : 'accepted'} ${s.solved && i === s.lines.length - 1 ? 'solved' : ''}`}
-              >
-                <MathLine text={line.text} className="math-md" />
-                <span className="step-label">
-                  {strings.labels[line.label]}
-                  {line.note && <> {<Rich text={strings.decimalAlsoFraction(line.note)} />}</>}
-                </span>
-              </li>
-            ))}
-          </ol>
+            <ol className="steps" aria-label={strings.practice.steps}>
+              {s.lines.map((line, i) => (
+                <li
+                  key={i}
+                  className={`step-line ${i === 0 ? 'given' : 'accepted'} ${s.solved && i === s.lines.length - 1 ? 'solved' : ''}`}
+                >
+                  <MathLine text={line.text} className="math-md" />
+                  <span className="step-label">
+                    {strings.labels[line.label]}
+                    {line.note && <> {<Rich text={strings.decimalAlsoFraction(line.note)} />}</>}
+                  </span>
+                </li>
+              ))}
+            </ol>
 
-          {!s.solved && (
-            <label className="current-line">
-              <span className="visually-hidden">{strings.practice.currentLine}</span>
-              <input
-                ref={inputRef}
-                className="line-input math-md"
-                value={s.input}
-                inputMode="none"
-                autoComplete="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                onChange={(e) => dispatch({ type: 'input', value: e.target.value })}
-                onKeyDown={onInputKey}
+            {!s.solved && (
+              <label className="current-line">
+                <span className="visually-hidden">{strings.practice.currentLine}</span>
+                <input
+                  ref={inputRef}
+                  className="line-input math-md"
+                  value={s.input}
+                  inputMode="none"
+                  autoComplete="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  onChange={(e) => dispatch({ type: 'input', value: e.target.value })}
+                  onKeyDown={onInputKey}
+                />
+              </label>
+            )}
+
+            <div aria-live="polite" className="live">
+              {fb && s.feedback && (
+                <div className="step-feedback with-turtle" role="status">
+                  <Turtle pose="think" size={72} />
+                  <div>
+                    <p className="feedback-title">
+                      <Rich text={fb.title} />
+                    </p>
+                    {fb.detail && (
+                      <p className="feedback-detail">
+                        <Rich text={fb.detail} />
+                      </p>
+                    )}
+                    {span && (
+                      <p className="feedback-line math-md">
+                        {s.feedback.line.slice(0, span.start)}
+                        <span className="error-mark">
+                          {s.feedback.line.slice(span.start, span.end) || ' '}
+                        </span>
+                        {s.feedback.line.slice(span.end)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {s.solved && check && (
+                <div className="solved-box" role="status">
+                  <p className="feedback-title">{strings.practice.solved}</p>
+                  <p>
+                    Check: <Rich text={`$${check.left} = ${check.leftValue}$`} /> and{' '}
+                    <Rich text={`$${check.right} = ${check.rightValue}$`} /> ✓
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {s.hintOpen && s.hintTier > 0 && !s.solved && (
+              <HintPanel
+                line={lastLine}
+                variable={v}
+                tier={s.hintTier as 1 | 2}
+                walkOffered={s.walkOffered}
+                onMore={() => dispatch({ type: 'moreHint' })}
+                onClose={() => dispatch({ type: 'closeHint' })}
+                onShowMe={() => dispatch({ type: 'walkStart' })}
               />
-            </label>
-          )}
-
-          <div aria-live="polite" className="live">
-            {fb && s.feedback && (
-              <div className="step-feedback" role="status">
-                <p className="feedback-title">
-                  <Rich text={fb.title} />
-                </p>
-                {fb.detail && (
-                  <p className="feedback-detail">
-                    <Rich text={fb.detail} />
-                  </p>
-                )}
-                {span && (
-                  <p className="feedback-line math-md">
-                    {s.feedback.line.slice(0, span.start)}
-                    <span className="error-mark">{s.feedback.line.slice(span.start, span.end) || ' '}</span>
-                    {s.feedback.line.slice(span.end)}
-                  </p>
-                )}
-              </div>
             )}
-            {s.solved && check && (
-              <div className="solved-box" role="status">
-                <p className="feedback-title">{strings.practice.solved}</p>
-                <p>
-                  Check: <Rich text={`$${check.left} = ${check.leftValue}$`} /> and{' '}
-                  <Rich text={`$${check.right} = ${check.rightValue}$`} /> ✓
-                </p>
-              </div>
-            )}
-          </div>
 
-          {hint && (
-            <aside className="hint-panel" aria-label={strings.hint.title(s.hintTier)}>
-              <div className="hint-header">
-                <span className="label">{strings.hint.title(s.hintTier)}</span>
-                <span className="ladder" aria-hidden="true">
-                  <span className={`dot ${s.hintTier >= 1 ? 'on' : ''}`} />
-                  <span className={`dot ${s.hintTier >= 2 ? 'on' : ''}`} />
-                </span>
-              </div>
-              <p className="hint-body">
-                <Rich text={hintText(hint)} />
-              </p>
-              <div className="hint-actions">
-                {s.hintTier < 2 && (
-                  <button
-                    type="button"
-                    className="btn btn-help btn-small"
-                    onClick={() => dispatch({ type: 'moreHint' })}
-                  >
-                    {strings.hint.more}
-                  </button>
-                )}
+            <div className="actions">
+              {!s.solved ? (
                 <button
                   type="button"
-                  className="btn btn-outline btn-small"
-                  onClick={() => dispatch({ type: 'closeHint' })}
+                  className={`btn btn-help ${s.helpPulse ? 'pulsing' : ''}`}
+                  onClick={() => dispatch({ type: 'help' })}
                 >
-                  {strings.hint.close}
+                  <Turtle size={44} /> {strings.practice.help}
                 </button>
-              </div>
-            </aside>
-          )}
+              ) : (
+                <span />
+              )}
+              {s.solved && (
+                <button
+                  ref={nextRef}
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => dispatch({ type: 'next', seed: newSeed() })}
+                >
+                  {strings.practice.next}
+                </button>
+              )}
+            </div>
+          </section>
+        )}
 
-          <div className="actions">
-            {!s.solved ? (
-              <button
-                type="button"
-                className={`btn btn-help ${s.helpPulse ? 'pulsing' : ''}`}
-                onClick={() => dispatch({ type: 'help' })}
-              >
-                {strings.practice.help}
-              </button>
-            ) : (
-              <span />
-            )}
-            {s.solved && (
-              <button
-                ref={nextRef}
-                type="button"
-                className="btn btn-primary"
-                onClick={() => dispatch({ type: 'next', seed: newSeed() })}
-              >
-                {strings.practice.next}
-              </button>
-            )}
-          </div>
-        </section>
-
-        <section className="card keypad-card" aria-label={strings.practice.keypad}>
-          <Keypad
-            variable={v}
-            disabled={s.solved}
-            onKey={insert}
-            onClear={() => dispatch({ type: 'input', value: '' })}
-            onCheck={() => dispatch({ type: 'check' })}
-          />
-        </section>
+        {!s.walk && (
+          <section className="card keypad-card" aria-label={strings.practice.keypad}>
+            <Keypad
+              variable={v}
+              disabled={s.solved}
+              onKey={insert}
+              onClear={() => dispatch({ type: 'input', value: '' })}
+              onCheck={() => dispatch({ type: 'check' })}
+            />
+          </section>
+        )}
       </main>
     </div>
   );

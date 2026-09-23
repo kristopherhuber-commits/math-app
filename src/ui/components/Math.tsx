@@ -4,7 +4,10 @@ import { lineToLatex } from '../../engine/eq/format';
 
 /** Engine text (U+2212 minus, a/b fractions) → LaTeX; falls back to a light conversion. */
 export function toLatex(text: string): string {
-  return lineToLatex(text) ?? text.replace(/−/g, '-').replace(/×/g, '\\times ').replace(/÷/g, '\\div ');
+  const t = text.trim();
+  // A leading + (a tile `+3`, a balance op `+ 3`) is dropped by the parser; keep it.
+  if (t.startsWith('+')) return `+${toLatex(t.slice(1))}`;
+  return lineToLatex(t) ?? t.replace(/−/g, '-').replace(/×/g, '\\times ').replace(/÷/g, '\\div ');
 }
 
 export function MathText({ latex, className }: { latex: string; className?: string }) {

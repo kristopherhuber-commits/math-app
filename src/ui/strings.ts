@@ -56,10 +56,64 @@ export const strings = {
   } satisfies Record<StepLabel | 'given', string>,
   decimalAlsoFraction: (p: P) => `($${p.fraction}$ is also fine.)`,
   hint: {
-    title: (n: number) => `Hint ${n} of 2`,
+    title: (n: number) => `Hint ${n} of 3`,
     more: 'Another hint',
     close: 'Close',
     offer: 'Want a hint? I can help.',
+    showMe: 'Show me step by step',
+    walkNote: "Walkthrough = 1 star, and that's OK!",
+  },
+  tiles: {
+    prompt: (v: string) => `Solve for $${v}$`,
+    given: 'given',
+    board: 'Equation board',
+    unknowns: (v: string) => `Unknowns ($${v}$ terms)`,
+    knowns: 'Knowns (numbers)',
+    swap: '⇄ swap',
+    swapLabel: 'Swap which side holds the unknowns',
+    whichSign: 'Which sign?',
+    plus: 'plus',
+    minus: 'minus',
+    soFar: 'So far:',
+    doneMoving: 'Done moving',
+    check: 'Check',
+    tile: (term: string, side: 'L' | 'R', locked: boolean) =>
+      `${term}, on the ${side === 'L' ? 'left' : 'right'}${locked ? ', moved' : ''}`,
+    alreadyPlaced: (term: string, isVar: boolean) =>
+      `$${term}$ is already with the ${isVar ? 'unknowns' : 'knowns'}. Move the ones on the other side.`,
+    signTitle: (term: string) => `When $${term}$ moves across the =, what happens to its sign?`,
+    balanceSubtract: (amount: string) => `Take $${amount}$ away from BOTH sides: the scale stays balanced.`,
+    balanceAdd: (amount: string) => `Add $${amount}$ to BOTH sides: the scale stays balanced.`,
+    shortcut: "Moving a term across = flips its sign (that's the balance, done in one step).",
+    balanceLabel: 'Balance scale',
+    simplifyVar: (varText: string, v: string) => `$${varText} = {?}\\,${v}$`,
+    simplifyConst: (constText: string) => `$${constText} = {?}$`,
+    divide: (line: string) => `$${line}$. Divide both sides by …?`,
+    answer: (v: string) => `$${v} = {?}$`,
+    divisorFeedback: (v: string) => `Not quite. What number is $${v}$ being multiplied by?`,
+    pad: 'Number pad',
+    padMinus: 'minus',
+    padDelete: 'delete',
+    entry: 'Your answer',
+    steps: 'Steps',
+    rail: {
+      MOVE: ['Move', 'unknowns | knowns'],
+      SIMPLIFY: ['Simplify', 'combine like terms'],
+      SOLVE: ['Solve', 'divide both sides'],
+    } as Record<string, [string, string]>,
+    pickedUp: (term: string) =>
+      `Picked up ${term}. Left and right arrows choose a side, Enter drops it, Escape cancels.`,
+    dropped: (term: string, side: 'L' | 'R') =>
+      `${term} moved to the ${side === 'L' ? 'left' : 'right'}. Which sign?`,
+    returned: (term: string) => `${term} is back where it was.`,
+  },
+  walk: {
+    title: "Let's do it together",
+    step: (k: number, n: number) => `Walkthrough · step ${k} of ${n}`,
+    next: 'Next ›',
+    back: '‹ Back',
+    finish: 'Done',
+    progress: 'Walkthrough progress',
   },
   errorFallback: "Oops, let's try another one.",
 };
@@ -101,7 +155,7 @@ export function feedbackText(r: Extract<StepResult, { accepted: false }>): {
         detail: 'First get the unknowns on one side and numbers on the other.',
       };
     case 'EQ-D7':
-      return { title: 'Check your adding:', detail: `$${p.expression} = ?$` };
+      return { title: 'Check your adding:', detail: `$${p.expression} = {?}$` };
     case 'EQ-D8':
       return {
         title: `Check: $${p.c}${p.variable} = ${p.d}$.`,
@@ -177,11 +231,11 @@ export function hintText(h: HintContent): string {
     case 'eq.simplify.h1':
       return `Combine the $${p.variable}$ terms, then combine the numbers.`;
     case 'eq.simplify.h2.both':
-      return `$${p.varSide} = ?\\,${p.variable}$. And $${p.constSide} = ?$`;
+      return `$${p.varSide} = {?}\\,${p.variable}$. And $${p.constSide} = {?}$`;
     case 'eq.simplify.h2.var':
-      return `$${p.varSide} = ?\\,${p.variable}$`;
+      return `$${p.varSide} = {?}\\,${p.variable}$`;
     case 'eq.simplify.h2.const':
-      return `$${p.constSide} = ?$`;
+      return `$${p.constSide} = {?}$`;
     case 'eq.solve.h1':
       return `$${p.variable}$ is being multiplied by $${p.c}$. How do you undo multiplying?`;
     case 'eq.solve.h2.divide':
@@ -190,6 +244,21 @@ export function hintText(h: HintContent): string {
       return `$${p.variable}$ is being multiplied by $${p.c}$. What could you multiply both sides by to leave just $${p.variable}$?`;
     case 'eq.solve.h2.multiply':
       return `Multiply both sides by $${p.m}$.`;
+    // H3 walkthrough steps (§7.6)
+    case 'eq.walk.expand':
+      return 'Multiply out the brackets: every term inside gets multiplied.';
+    case 'eq.walk.clear':
+      return `Multiply every term on both sides by $${p.m}$, so there are no fractions left.`;
+    case 'eq.walk.separate':
+      return `Move $${p.moved}$ across the =, so the $${p.variable}$ terms are on one side and the numbers on the other. Each one flips its sign: that's doing the same thing to both sides.`;
+    case 'eq.walk.simplify':
+      return `Combine the $${p.variable}$ terms, and combine the numbers.`;
+    case 'eq.walk.solve.divide':
+      return `Divide both sides by $${p.c}$.`;
+    case 'eq.walk.solve.multiply':
+      return `Multiply both sides by $${p.m}$.`;
+    case 'eq.walk.check':
+      return `Check: put $${p.variable} = ${p.value}$ back into the first equation. $${p.left} = ${p.leftValue}$ and $${p.right} = ${p.rightValue}$. Both sides match ✓`;
     default:
       return '';
   }

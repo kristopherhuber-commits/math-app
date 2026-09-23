@@ -3,7 +3,10 @@ import { config } from '../engine/config';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { EquationPractice } from './screens/EquationPractice';
 import { Home } from './screens/Home';
+import { TileEquation } from './screens/TileEquation';
+import { isTileLevel } from './practice/tileReducer';
 import './ui.css';
+import './tiles.css';
 
 type Route = { name: 'home' } | { name: 'practice'; level: number; seed?: number; key: number };
 
@@ -29,6 +32,14 @@ export function App() {
     >
       {route.name === 'home' ? (
         <Home onStart={(level) => setRoute({ name: 'practice', level, key: Date.now() })} />
+      ) : isTileLevel(route.level) ? (
+        // R-ANS-5: levels 1–2 use the tile builder, levels 3+ typed steps.
+        <TileEquation
+          key={route.key}
+          level={route.level}
+          {...(route.seed !== undefined ? { seed: route.seed } : {})}
+          onHome={home}
+        />
       ) : (
         <EquationPractice
           key={route.key}

@@ -1,0 +1,535 @@
+/* M2 component styles: mascot, tile builder, balance scale, walkthrough. Tokens only (design.md §2). */
+
+/* ---------- mascot (§4.1) ---------- */
+.turtle {
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+}
+.btn-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.step-feedback.with-turtle,
+.balance-explainer {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
+.balance-explainer {
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--help-bg);
+  color: var(--help-ink);
+  animation: line-in var(--dur-base) var(--ease-standard);
+}
+.step-feedback.with-turtle > div,
+.balance-explainer > div {
+  flex: 1;
+  min-width: 0;
+}
+.hint-who {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.hint-actions {
+  flex-wrap: wrap;
+}
+.hint-note {
+  margin: var(--space-2) 0 0;
+  font-size: 15px;
+  text-align: right;
+}
+.muted {
+  color: var(--ink-muted);
+}
+
+/* ---------- tile builder layout (mockup 05) ---------- */
+.tiles-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-5);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+  align-items: start;
+}
+.tile-prompt-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+}
+.tile-prompt-row .given-line {
+  flex: 1;
+  text-align: center;
+}
+
+/* ---------- StepRail (§5) ---------- */
+.step-rail {
+  padding: var(--space-5) var(--space-4);
+}
+.step-rail ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.rail-item {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  min-height: 84px;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--line);
+}
+.rail-item.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+.rail-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  font-weight: 900;
+}
+.rail-item.active .rail-num {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.rail-item.done .rail-num {
+  background: var(--success);
+  color: var(--on-primary);
+}
+.rail-name {
+  display: block;
+  font-size: 20px;
+  font-weight: 900;
+}
+.rail-sub {
+  display: block;
+  font-size: 15px;
+  color: var(--ink-muted);
+}
+
+/* ---------- board: DropZone, TermTile, SignPicker (§5) ---------- */
+.tile-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: stretch;
+  margin-top: var(--space-5);
+}
+.drop-zone {
+  min-height: 200px;
+  padding: var(--space-4);
+  border: 2px dashed var(--line);
+  border-radius: var(--radius-lg);
+  transition: filter var(--dur-base) var(--ease-standard);
+}
+.drop-zone.zone-var {
+  background: var(--var-bg);
+  border-color: var(--var-line);
+}
+.drop-zone.zone-const {
+  background: var(--const-bg);
+  border-color: var(--const-line);
+}
+.drop-zone.drag-over {
+  border-style: solid;
+  border-width: 3px;
+  filter: brightness(0.96);
+}
+.zone-label {
+  font-size: 15px;
+  font-weight: 900;
+  margin-bottom: var(--space-3);
+}
+.zone-var .zone-label {
+  color: var(--var-ink);
+}
+.zone-const .zone-label {
+  color: var(--const-ink);
+}
+.zone-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+.tile-slot {
+  display: inline-flex;
+  border-radius: var(--radius-sm);
+}
+.tile-slot.ghosting {
+  outline: 2px dashed var(--ink-muted);
+  outline-offset: -2px;
+}
+.term-tile {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  min-height: 64px;
+  padding: 0 var(--space-4);
+  font-family: var(--font-math);
+  font-size: 30px;
+  font-weight: 400;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: var(--shadow-press);
+  transition:
+    transform var(--dur-slow) var(--ease-pop),
+    box-shadow var(--dur-base) var(--ease-standard);
+}
+/* Shape carries the meaning as well as colour (design.md §10). */
+.term-tile.tile-var {
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--var-ink);
+  border: 3px solid var(--var-line);
+}
+.term-tile.tile-const {
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--const-ink);
+  border: 3px solid var(--const-line);
+}
+.term-tile.dragging {
+  z-index: 5;
+  cursor: grabbing;
+  transition: none;
+  box-shadow: var(--shadow-lift);
+}
+.term-tile.dragging:not([style]) {
+  transform: translateY(-6px) scale(1.06);
+}
+.term-tile.locked,
+.term-tile[aria-disabled='true'] {
+  cursor: default;
+}
+.term-tile.awaiting-sign {
+  border-style: dashed;
+}
+.tile-q {
+  font-family: var(--font-ui);
+  font-weight: 900;
+  color: var(--primary);
+  margin-right: 2px;
+}
+.term-tile.static {
+  cursor: default;
+  box-shadow: none;
+  min-height: 56px;
+}
+.tile-equals {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+.equals-sign {
+  font-family: var(--font-math);
+  font-size: 48px;
+  line-height: 1;
+}
+.swap-pill {
+  min-height: var(--target-min);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--line);
+  background: var(--surface);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.swap-pill:disabled {
+  color: var(--ink-muted);
+  background: var(--surface-sunken);
+  cursor: default;
+}
+.sign-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 3px solid var(--primary);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  animation: line-in var(--dur-base) var(--ease-standard);
+}
+.sign-key {
+  width: 58px;
+  height: var(--target-min);
+  border-radius: var(--radius-key);
+  border: 2px solid var(--var-line);
+  background: var(--var-bg);
+  color: var(--var-ink);
+  font-size: 28px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: var(--shadow-press);
+}
+.sign-prompt {
+  padding: 0 var(--space-2);
+}
+.so-far {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: var(--space-5) 0 0;
+}
+
+/* ---------- Simplify / Solve (§6.2) ---------- */
+.line-tiles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+.line-tiles-side {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+}
+.line-tiles-side.highlight {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.tile-steps {
+  margin-top: var(--space-5);
+}
+.pad-area {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+  margin-top: var(--space-5);
+}
+.pad-left {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.pad-prompt {
+  margin: 0;
+}
+.pad-entry {
+  display: block;
+  min-height: 64px;
+  min-width: 140px;
+  padding: var(--space-2) var(--space-5);
+  border: 3px solid var(--primary);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-family: var(--font-math);
+}
+.number-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 72px);
+  gap: var(--space-2);
+}
+
+/* ---------- BalanceScale (§5, R-EQ-PED-1) ---------- */
+.balance {
+  margin: var(--space-3) 0 0;
+}
+.balance-frame {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 30%;
+  padding-top: 34px;
+  min-height: 110px;
+}
+.balance-beam {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.balance-bar,
+.balance-fulcrum {
+  fill: var(--turtle-dark);
+}
+.balance-pan {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+}
+.balance-pan-body {
+  align-self: flex-start;
+  padding: var(--space-1) var(--space-4);
+  background: var(--surface);
+  color: var(--ink);
+  border: 2px solid var(--turtle);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.balance-op {
+  color: var(--coral);
+  animation: op-in var(--dur-slow) var(--ease-standard);
+}
+.balance-short .balance-op {
+  animation-duration: var(--dur-fast);
+}
+@keyframes op-in {
+  from {
+    opacity: 0;
+  }
+}
+.balance[data-phase='after'] .balance-pan-body {
+  animation: pan-collapse var(--dur-slow) var(--ease-pop);
+}
+@keyframes pan-collapse {
+  from {
+    transform: scale(1.06);
+  }
+}
+.balance-arrow {
+  display: block;
+  text-align: center;
+  font-size: 24px;
+}
+
+/* ---------- Walkthrough (§5, mockup 07) ---------- */
+.walkthrough {
+  background: var(--help-bg);
+  border-color: var(--turtle);
+  color: var(--help-ink);
+}
+.practice > .walkthrough {
+  grid-column: 1 / -1;
+}
+.walk-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-5);
+  align-items: center;
+}
+.walk-title {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 900;
+  margin: 0;
+}
+.walk-step {
+  margin: 0;
+}
+.walk-progress {
+  display: flex;
+  gap: var(--space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.walk-progress li {
+  width: 40px;
+  height: 12px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--turtle);
+}
+.walk-progress li.on {
+  background: var(--turtle);
+}
+.walk-body {
+  list-style: none;
+  margin: var(--space-5) 0 0;
+  padding: var(--space-5);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.walk-line {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  animation: line-in var(--dur-slow) var(--ease-standard);
+}
+.walk-line.done {
+  color: var(--ink-muted);
+}
+.walk-line.current .walk-result {
+  color: var(--primary);
+}
+.walk-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  font-weight: 900;
+  font-size: 15px;
+}
+.walk-line.current .walk-num {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.walk-explain {
+  margin: 0;
+}
+.walk-content {
+  min-width: 0;
+}
+
+/* ---------- tablet portrait (§3.1) ---------- */
+@media (max-width: 959px) {
+  .tiles-layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-4);
+  }
+  .step-rail ol {
+    flex-direction: row;
+  }
+  .rail-item {
+    flex: 1;
+    min-height: 64px;
+  }
+  .rail-sub {
+    display: none;
+  }
+  .walk-header {
+    grid-template-columns: auto 1fr;
+  }
+  .walk-progress {
+    grid-column: 1 / -1;
+  }
+}
+
+/* R-NF-3: no movement; the balance scale shows two frames instead. */
+@media (prefers-reduced-motion: reduce) {
+  .term-tile,
+  .walk-line,
+  .sign-picker,
+  .balance-explainer,
+  .balance-op,
+  .balance[data-phase='after'] .balance-pan-body {
+    transition: none;
+    animation: none;
+  }
+}
