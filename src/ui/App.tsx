@@ -57,6 +57,10 @@ export function App() {
   useEffect(() => {
     void reloadSettings();
   }, [reloadSettings]);
+  // R-PAR-5 / R-NF-3: the parent's "reduce motion" switch works like the OS setting in CSS too.
+  useEffect(() => {
+    document.documentElement.toggleAttribute('data-reduce-motion', settings.reduceMotion);
+  }, [settings.reduceMotion]);
 
   // First run (R-PAR-1): the parent sets a PIN before anything else.
   useEffect(() => {

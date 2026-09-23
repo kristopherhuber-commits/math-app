@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { useSettings } from '../settings';
 
 const QUERY = '(prefers-reduced-motion: reduce)';
 
-/** R-NF-3: the OS setting. The parent's "reduce motion" setting (R-PAR-5) joins this in M5. */
+/** R-NF-3: the OS setting, or the parent's "reduce motion" setting (R-PAR-5). */
 export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(
     () => typeof window !== 'undefined' && !!window.matchMedia?.(QUERY).matches,
@@ -14,5 +15,5 @@ export function useReducedMotion(): boolean {
     mq.addEventListener('change', on);
     return () => mq.removeEventListener('change', on);
   }, []);
-  return reduced;
+  return useSettings().reduceMotion || reduced;
 }

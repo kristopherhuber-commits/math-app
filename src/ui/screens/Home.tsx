@@ -113,6 +113,7 @@ export function Home({
   /** Coming from the summary's "Free practice ›": focus the first topic tile. */
   focusFree?: boolean;
 }) {
+  const settings = useSettings();
   const [snap, setSnap] = useState<HomeSnapshot | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -166,7 +167,7 @@ export function Home({
           </h2>
           {!snap.freeOpen && (
             <span id="free-note" className="label muted">
-              {snap.assignment ? h.freeLocked : h.freeNever}
+              {settings.freePractice === 'never' ? h.freeNever : h.freeLocked}
             </span>
           )}
         </div>

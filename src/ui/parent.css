@@ -500,3 +500,99 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- settings (R-PAR-5) ---------- */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+.setting-row:last-child {
+  border-bottom: none;
+}
+.setting-row > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.setting-label {
+  font-size: 17px;
+  font-weight: 800;
+}
+.settings-group .segmented button {
+  min-width: 0;
+  padding: 0 var(--space-3);
+}
+.switch {
+  flex: none;
+  position: relative;
+  width: 64px;
+  height: var(--target-min);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.switch::before {
+  content: '';
+  position: absolute;
+  inset: 8px 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-sunken);
+  border: 2px solid var(--line);
+  transition: background var(--dur-fast) var(--ease-standard);
+}
+.switch-knob {
+  position: absolute;
+  top: 12px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 2px solid var(--line);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+.switch[aria-checked='true']::before {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.switch[aria-checked='true'] .switch-knob {
+  transform: translateX(32px);
+  border-color: var(--primary);
+}
+.bounds-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.bounds-table th {
+  text-align: left;
+  font-weight: 800;
+  padding: var(--space-2) 0;
+}
+.bounds-table td {
+  padding: var(--space-1) 0 var(--space-1) var(--space-3);
+}
+.bounds-table td > .label {
+  display: block;
+}
+.currency-input {
+  max-width: 90px;
+  text-align: center;
+}
+.settings-group .text-input {
+  max-width: 260px;
+}
+.pin-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}

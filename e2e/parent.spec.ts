@@ -250,3 +250,70 @@ test('the queue reorders by mouse drag', async ({ page }) => {
   await page.mouse.up();
   await expect(queued).toHaveText(['Three', 'Two']);
 });
+
+test('settings: free practice, names, level range, allow skipping, PIN (R-PAR-5, R-SES-6, R-ADP-5)', async ({
+  page,
+  hasTouch,
+}) => {
+  await openHome(page, { assignments: [assignment('PC:2', { seed: 4, title: 'Today' })] });
+  await unlock(page, hasTouch);
+  await press(page.getByRole('navigation').getByRole('button', { name: 'Settings' }), hasTouch);
+  await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
+
+  const free = page.getByRole('radiogroup', { name: 'Free practice' });
+  await expect(free.getByRole('radio', { name: 'Always' })).toHaveAttribute('aria-checked', 'true');
+  await press(free.getByRole('radio', { name: 'After the assignment' }), hasTouch);
+  await expect(page.getByText('Saved.')).toBeVisible();
+
+  // Price changes can't go below level 2.
+  await press(page.getByRole('button', { name: 'Raise Price changes, lowest level' }), hasTouch);
+  await expect(page.getByRole('group', { name: 'Price changes, lowest level' })).toContainText('2');
+
+  const skip = page.getByRole('switch', { name: 'Allow skipping steps (typed equations)' });
+  await expect(skip).toHaveAttribute('aria-checked', 'false');
+  await press(skip, hasTouch);
+  await expect(skip).toHaveAttribute('aria-checked', 'true');
+
+  await page.getByLabel('Penguin (celebrations)').fill('Waddles');
+  await page.getByLabel('Turtle (help)').click();
+
+  await page.getByLabel('New PIN (4 digits)').fill('12');
+  await press(page.getByRole('button', { name: 'Change PIN' }), hasTouch);
+  await expect(page.getByText('A PIN is 4 digits.')).toBeVisible();
+  await page.getByLabel('New PIN (4 digits)').fill('8642');
+  await press(page.getByRole('button', { name: 'Change PIN' }), hasTouch);
+  await expect(page.getByText('PIN changed.')).toBeVisible();
+
+  await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
+  await expect(page.getByText("Waddles: Price changes today? Let's go!")).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Price changes, locked' })).toBeDisabled();
+  await expect(page.getByText("unlocks when today's assignment is done")).toBeVisible();
+  // The level range holds: the assignment's price change starts at level 2.
+  await press(page.getByRole('button', { name: 'Start ›' }), hasTouch);
+  await expect(page.getByText('Price changes · Level 2')).toBeVisible();
+  await press(page.getByRole('button', { name: '‹ Home' }), hasTouch);
+
+  // The new PIN opens the parent area; the old one doesn't.
+  await unlock(page, hasTouch);
+  await expect(page.getByText("That's not the PIN. Try again.")).toBeVisible();
+  await tapPin(page, '8642', hasTouch);
+  await press(page.getByRole('navigation').getByRole('button', { name: 'Settings' }), hasTouch);
+  await press(
+    page.getByRole('radiogroup', { name: 'Free practice' }).getByRole('radio', { name: 'Never' }),
+    hasTouch,
+  );
+  await expect(page.getByText('Saved.')).toBeVisible();
+  await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
+  await expect(page.getByText('not open right now')).toBeVisible();
+});
+
+test('settings: reduce motion marks the page for the CSS (R-PAR-5, R-NF-3)', async ({ page }) => {
+  await openHome(page);
+  await expect(page.locator('html')).not.toHaveAttribute('data-reduce-motion');
+  await unlock(page, false);
+  await page.getByRole('navigation').getByRole('button', { name: 'Settings' }).click();
+  await page.getByRole('switch', { name: 'Reduce motion' }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-reduce-motion');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-reduce-motion');
+});

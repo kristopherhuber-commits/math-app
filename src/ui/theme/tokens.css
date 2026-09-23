@@ -115,3 +115,17 @@
     --dur-celebrate: 120ms;
   }
 }
+/* The parent's "reduce motion" setting (R-PAR-5): the same durations, and every CSS animation and
+   transition ends at once on its final frame. */
+:root[data-reduce-motion] {
+  --dur-base: 120ms;
+  --dur-slow: 120ms;
+  --dur-celebrate: 120ms;
+}
+:root[data-reduce-motion] *,
+:root[data-reduce-motion] *::before,
+:root[data-reduce-motion] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}
