@@ -75,7 +75,7 @@ Status: **done**, deployed to https://kristopherhuber-commits.github.io/math-app
 ## 7. Commands
 
 ```powershell
-cd C:\Users\huber\git\math-app
+cd <path to your clone of math-app>
 npm run dev        # http://localhost:5173/math-app/
 npm test           # unit + property tests
 npm run coverage   # engine coverage
