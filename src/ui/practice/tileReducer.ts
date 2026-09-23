@@ -58,7 +58,6 @@ export type TileFeedback =
 
 export interface TileState extends HelpFields {
   level: number;
-  questionNumber: number;
   question: EqQuestion;
   board: Board;
   phase: TilePhase;
@@ -69,7 +68,7 @@ export interface TileState extends HelpFields {
   feedback: TileFeedback | null;
   /** The last correct crossing, replayed on the balance scale (R-EQ-PED-1). */
   balance: { view: BalanceView; n: number } | null;
-  /** Correct sign choices this session, added to the stored count for R-EQ-PED-2. */
+  /** Correct sign choices in this question, added to the stored count for R-EQ-PED-2. */
   correctSigns: number;
 }
 
@@ -85,19 +84,17 @@ export type TileAction =
   | { type: 'closeHint' }
   | { type: 'walkStart' }
   | { type: 'walkNext' }
-  | { type: 'walkBack' }
-  | { type: 'next'; seed: number };
+  | { type: 'walkBack' };
 
-export function startTiles(level: number, seed: number, questionNumber = 1, correctSigns = 0): TileState {
-  return tilesFor(generateEq(level, seed), questionNumber, correctSigns);
+export function startTiles(level: number, seed: number): TileState {
+  return tilesFor(generateEq(level, seed));
 }
 
 /** Tile state for a given question (tests build §7.5 examples directly). */
-export function tilesFor(question: EqQuestion, questionNumber = 1, correctSigns = 0): TileState {
+export function tilesFor(question: EqQuestion): TileState {
   const { level, seed } = question;
   return {
     level,
-    questionNumber,
     question,
     board: newBoard(question.text, question.variable),
     phase: 'MOVE',
@@ -106,7 +103,7 @@ export function tilesFor(question: EqQuestion, questionNumber = 1, correctSigns 
     entry: '',
     feedback: null,
     balance: null,
-    correctSigns,
+    correctSigns: 0,
     ...freshHelp,
     solved: false,
     attempt: newAttempt({
@@ -360,9 +357,6 @@ export function tileReducer(s: TileState, action: TileAction): TileState {
       return onWalkNext(s);
     case 'walkBack':
       return onWalkBack(s);
-
-    case 'next':
-      return startTiles(s.level, action.seed, s.questionNumber + 1, s.correctSigns);
   }
 }
 

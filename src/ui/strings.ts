@@ -704,3 +704,51 @@ export function numText(h: HintContent): string {
       return '';
   }
 }
+
+// ---------------------------------------------------------------------------------------------
+// Sessions and rewards (M4: R-SES, R-ADP-6, R-RWD). Pip speaks here, never in help (R-HELP-7).
+
+export const rewardStrings = {
+  topBar: {
+    question: (n: number, total?: number) => (total ? `Question ${n} of ${total}` : `Question ${n}`),
+    progress: 'Progress',
+    stars: (n: number) => `${n} ${n === 1 ? 'star' : 'stars'}`,
+    shells: (n: number) => `${n} ${n === 1 ? 'shell' : 'shells'}`,
+  },
+  celebrate: {
+    headline: { 3: '3 stars! Brilliant!', 2: '2 stars! Nice work!', 1: '1 star. You did it!' } as Record<
+      1 | 2 | 3,
+      string
+    >,
+    shells: (n: number) => `+${n} ${n === 1 ? 'shell' : 'shells'}`,
+    levelUp: 'Level up!',
+    badge: (name: string) => `New badge: ${name}`,
+    streak: (n: number) => `${n}-day streak!`,
+    streakSub: 'You practised every assignment day.',
+    streakClose: 'Yay!',
+  },
+  badges: {
+    'first-solve': 'First question solved',
+    'perfect-assignment': 'A perfect assignment',
+    'eq-no-walkthrough': '10 equations without a walkthrough',
+    'first-delayed-rd': 'First delayed repeating decimal',
+    'first-successive-pc': 'First two-step price change',
+    'streak-7': '7-day streak',
+    'streak-30': '30-day streak',
+    'max-level-NC': 'Top level in number sets',
+    'max-level-RD': 'Top level in repeating decimals',
+    'max-level-FDP': 'Top level in fractions, decimals, percents',
+    'max-level-PC': 'Top level in price changes',
+    'max-level-EQ': 'Top level in equations',
+  } as Record<string, string>,
+  summary: {
+    title: 'Assignment done!',
+    sub: (title: string | undefined, n: number) => `${title ? `${title} · ` : ''}${n} questions`,
+    totals: (stars: number) => `${stars} stars · +${stars} shells`,
+    byTopic: 'Stars by topic',
+    row: (stars: 1 | 2 | 3, n: number) => `${'★'.repeat(stars)} ×${n}`,
+    rowSpeech: (stars: 1 | 2 | 3, n: number) => `${n} with ${stars} ${stars === 1 ? 'star' : 'stars'}`,
+    freePractice: 'Free practice ›',
+    home: 'Home',
+  },
+};

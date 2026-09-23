@@ -22,7 +22,6 @@ import {
 
 export interface NcState extends HelpFields<NumWalkStep> {
   level: number;
-  questionNumber: number;
   naturalIncludesZero: boolean;
   question: NcQuestion;
   ticked: NcSet[];
@@ -41,19 +40,16 @@ export type NcAction =
   | { type: 'walkStart' }
   | { type: 'walkNext' }
   | { type: 'walkBack' }
-  | { type: 'next'; seed: number }
   | { type: 'naturalIncludesZero'; value: boolean };
 
 export function startNc(
   level: number,
   seed: number,
-  questionNumber = 1,
   naturalIncludesZero: boolean = config.settings.naturalIncludesZero,
 ): NcState {
   const question = generateNc(level, seed);
   return {
     level,
-    questionNumber,
     naturalIncludesZero,
     question,
     ticked: [],
@@ -117,8 +113,6 @@ export function ncReducer(s: NcState, action: NcAction): NcState {
       return onWalkNext(s);
     case 'walkBack':
       return onWalkBack(s);
-    case 'next':
-      return startNc(s.level, action.seed, s.questionNumber + 1, s.naturalIncludesZero);
     case 'naturalIncludesZero':
       // The parent setting arrives from storage after the first render; only before any answer.
       return s.attempt.tries.length === 0 ? { ...s, naturalIncludesZero: action.value } : s;

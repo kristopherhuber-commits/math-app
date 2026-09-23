@@ -177,7 +177,6 @@ describe('tileReducer', () => {
     expect(tileReducer(s, { type: 'padKey', key: '1' })).toBe(s);
     while (!s.solved) s = tileReducer(s, { type: 'walkNext' });
     expect(s.attempt).toMatchObject({ maxHint: 3, clean: false });
-    const n = tileReducer(s, { type: 'next', seed: 5 });
-    expect([n.level, n.questionNumber, n.correctSigns, n.phase]).toEqual([2, 2, 2, 'MOVE']);
+    expect(s.attempt).toMatchObject({ stars: 1, wrongTries: 0 });
   });
 });

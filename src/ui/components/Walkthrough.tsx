@@ -8,6 +8,7 @@ import { Turtle } from '../mascots/Turtle';
 import { hintText, strings } from '../strings';
 import { BalanceScale, type BalanceFrames, type BalanceMode } from './BalanceScale';
 import { MathLine, Rich } from './Math';
+import { CelebrationSlot } from '../practice/question';
 
 interface ShellProps {
   count: number;
@@ -60,6 +61,7 @@ export function WalkShell({
         {children}
       </ol>
       {after}
+      {solved && <CelebrationSlot />}
       <div className="actions">
         <button type="button" className="btn btn-outline" onClick={onBack} disabled={index === 0 || solved}>
           {strings.walk.back}

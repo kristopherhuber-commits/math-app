@@ -1,10 +1,9 @@
 // Tile builder screen for EQ levels 1–2 (R-EQ-TILE-1…6, R-EQ-PED-1/2, design.md §6.2, mockup 05).
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { config } from '../../engine/config';
-import { newSeed } from '../../engine/rng';
 import { allPlaced, boardText, newBoard, sideTerms, type BalanceView } from '../../engine/eq/tiles';
 import { eqHint, eqWalkthrough, type WalkKind } from '../../engine/topics/eq/hints';
-import { fullBalanceAnimSetting, saveAttempt, storedCorrectSigns } from '../../data/attempts';
+import { fullBalanceAnimSetting, storedCorrectSigns } from '../../data/attempts';
 import { BalanceScale, type BalanceMode } from '../components/BalanceScale';
 import { HintPanel } from '../components/HintPanel';
 import { MathLine, MathText, Rich, toLatex } from '../components/Math';
@@ -16,12 +15,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 import { Turtle } from '../mascots/Turtle';
 import { feedbackText, hintText, strings } from '../strings';
 import { startTiles, tileReducer, type TilePhase, type TileState } from '../practice/tileReducer';
-
-interface Props {
-  level: number;
-  seed?: number;
-  onHome: () => void;
-}
+import { CelebrationSlot, useReportAttempt, type QuestionProps } from '../practice/question';
 
 const RAIL: Record<TilePhase, RailStep> = {
   MOVE: 'MOVE',
@@ -93,8 +87,8 @@ function LineTiles({ s }: { s: TileState }) {
   );
 }
 
-export function TileEquation({ level, seed, onHome }: Props) {
-  const [s, dispatch] = useReducer(tileReducer, undefined, () => startTiles(level, seed ?? newSeed()));
+export function TileEquation({ level, seed, onSave, onSolved, onNext }: QuestionProps) {
+  const [s, dispatch] = useReducer(tileReducer, undefined, () => startTiles(level, seed));
   const reduced = useReducedMotion();
   const [prefs, setPrefs] = useState<{ storedSigns: number; fullAnim: boolean }>({
     storedSigns: 0,
@@ -113,9 +107,7 @@ export function TileEquation({ level, seed, onHome }: Props) {
   }, []);
 
   // R-SES-5: save after every step.
-  useEffect(() => {
-    void saveAttempt(s.attempt);
-  }, [s.attempt]);
+  useReportAttempt(s, onSave, onSolved);
 
   useEffect(() => {
     if (s.solved && !s.walk) nextRef.current?.focus();
@@ -158,19 +150,8 @@ export function TileEquation({ level, seed, onHome }: Props) {
   const rail: RailStep | 'DONE' = s.solved ? 'DONE' : RAIL[s.phase];
   const fb = s.feedback;
 
-  const topbar = (
-    <header className="topbar">
-      <button type="button" className="btn btn-outline btn-small" onClick={onHome}>
-        {strings.topBar.home}
-      </button>
-      <span className="topbar-title">{strings.topBar.title}</span>
-      <span className="topbar-progress label">{strings.topBar.question(s.questionNumber)}</span>
-    </header>
-  );
-
   return (
-    <div className="screen">
-      {topbar}
+    <>
       <main className="tiles-layout">
         <StepRail active={s.walk && !s.solved ? WALK_RAIL[s.walk.steps[s.walk.index]!.kind] : rail} />
         {s.walk ? (
@@ -182,7 +163,7 @@ export function TileEquation({ level, seed, onHome }: Props) {
             motion={reduced ? 'static' : 'full'}
             onNext={() => dispatch({ type: 'walkNext' })}
             onBack={() => dispatch({ type: 'walkBack' })}
-            onNextQuestion={() => dispatch({ type: 'next', seed: newSeed() })}
+            onNextQuestion={onNext}
           />
         ) : (
           <section className="card question-card tile-card" aria-labelledby="prompt">
@@ -318,6 +299,7 @@ export function TileEquation({ level, seed, onHome }: Props) {
                   </p>
                 </div>
               )}
+              {s.solved && <CelebrationSlot />}
             </div>
 
             {s.hintOpen && s.hintTier > 0 && !s.solved && (
@@ -351,12 +333,7 @@ export function TileEquation({ level, seed, onHome }: Props) {
                 <span />
               )}
               {s.solved ? (
-                <button
-                  ref={nextRef}
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => dispatch({ type: 'next', seed: newSeed() })}
-                >
+                <button ref={nextRef} type="button" className="btn btn-primary" onClick={onNext}>
                   {strings.practice.next}
                 </button>
               ) : s.phase === 'MOVE' ? (
@@ -386,6 +363,6 @@ export function TileEquation({ level, seed, onHome }: Props) {
       <div className="visually-hidden" aria-live="assertive">
         {announcement}
       </div>
-    </div>
+    </>
   );
 }

@@ -29,7 +29,6 @@ export interface Line {
 
 export interface PracticeState extends HelpFields {
   level: number;
-  questionNumber: number;
   question: EqQuestion;
   lines: Line[];
   input: string;
@@ -45,19 +44,17 @@ export type PracticeAction =
   | { type: 'closeHint' }
   | { type: 'walkStart' }
   | { type: 'walkNext' }
-  | { type: 'walkBack' }
-  | { type: 'next'; seed: number };
+  | { type: 'walkBack' };
 
 /** Keyboard input normalised to what the keypad produces (R-EQ-TYPE-2). */
 export function normalizeInput(s: string): string {
   return s.replace(/-/g, '−').replace(/\*/g, '×');
 }
 
-export function startPractice(level: number, seed: number, questionNumber = 1): PracticeState {
+export function startPractice(level: number, seed: number): PracticeState {
   const question = generateEq(level, seed);
   return {
     level,
-    questionNumber,
     question,
     lines: [{ text: question.text, label: 'given' }],
     input: '',
@@ -125,8 +122,5 @@ export function practiceReducer(s: PracticeState, action: PracticeAction): Pract
       return onWalkNext(s);
     case 'walkBack':
       return onWalkBack(s);
-
-    case 'next':
-      return startPractice(s.level, action.seed, s.questionNumber + 1);
   }
 }

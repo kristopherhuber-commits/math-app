@@ -2,25 +2,20 @@
 // a Sets map reference (not a hint), Help bottom-left and Check bottom-right. Keyboard: Tab to a
 // card, Space ticks it, Enter checks, H opens help, Esc closes it (design.md §10).
 import { useEffect, useReducer, useRef, useState } from 'react';
-import { newSeed } from '../../engine/rng';
 import { NC_SETS } from '../../engine/topics/nc/checker';
 import { ncHint } from '../../engine/topics/nc/hints';
-import { saveAttempt } from '../../data/attempts';
 import { HintPanel } from '../components/HintPanel';
 import { Tex } from '../components/Math';
 import { FeedbackToast, MathHero } from '../components/Numbers';
 import { NumberWalkthrough } from '../components/NumberWalkthrough';
 import { SetCheckbox, SetsMap } from '../components/SetsMap';
-import { TopBar } from '../components/TopBar';
 import { Turtle } from '../mascots/Turtle';
 import { numStrings, numText, strings, topicStrings } from '../strings';
 import { ncReducer, startNc } from '../practice/ncReducer';
+import { CelebrationSlot, useReportAttempt, type QuestionProps } from '../practice/question';
 
-interface Props {
-  level: number;
-  seed?: number;
+interface Props extends QuestionProps {
   naturalIncludesZero: boolean;
-  onHome: () => void;
 }
 
 function SetsMapDialog({ onClose }: { onClose: () => void }) {
@@ -50,10 +45,8 @@ function SetsMapDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function NcPractice({ level, seed, naturalIncludesZero, onHome }: Props) {
-  const [s, dispatch] = useReducer(ncReducer, undefined, () =>
-    startNc(level, seed ?? newSeed(), 1, naturalIncludesZero),
-  );
+export function NcPractice({ level, seed, naturalIncludesZero, onSave, onSolved, onNext }: Props) {
+  const [s, dispatch] = useReducer(ncReducer, undefined, () => startNc(level, seed, naturalIncludesZero));
   const [mapOpen, setMapOpen] = useState(false);
   const nextRef = useRef<HTMLButtonElement>(null);
   const q = s.question;
@@ -63,9 +56,7 @@ export function NcPractice({ level, seed, naturalIncludesZero, onHome }: Props) 
   }, [naturalIncludesZero]);
 
   // R-SES-5: save after every answer.
-  useEffect(() => {
-    void saveAttempt(s.attempt);
-  }, [s.attempt]);
+  useReportAttempt(s, onSave, onSolved);
 
   useEffect(() => {
     if (s.solved && !s.walk) nextRef.current?.focus();
@@ -83,16 +74,14 @@ export function NcPractice({ level, seed, naturalIncludesZero, onHome }: Props) 
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const next = () => dispatch({ type: 'next', seed: newSeed() });
+  const next = onNext;
   const flaggedNow = s.flagged.length > 0;
 
   return (
-    <div className="screen">
-      <TopBar title={topicStrings.name.NC} questionNumber={s.questionNumber} onHome={onHome} />
+    <>
       <main className="practice number-practice">
         {s.walk ? (
           <NumberWalkthrough
-            key={`${q.seed}-${s.questionNumber}`}
             steps={s.walk.steps}
             index={s.walk.index}
             solved={s.solved}
@@ -137,11 +126,7 @@ export function NcPractice({ level, seed, naturalIncludesZero, onHome }: Props) 
                   {...(flaggedNow ? { extra: numStrings.nc.flagged } : {})}
                 />
               )}
-              {s.solved && (
-                <div className="solved-box" role="status">
-                  <p className="feedback-title">{numStrings.solved}</p>
-                </div>
-              )}
+              {s.solved && <CelebrationSlot />}
             </div>
 
             {s.hintOpen && s.hintTier > 0 && !s.solved && (
@@ -192,6 +177,6 @@ export function NcPractice({ level, seed, naturalIncludesZero, onHome }: Props) 
         )}
       </main>
       {mapOpen && <SetsMapDialog onClose={() => setMapOpen(false)} />}
-    </div>
+    </>
   );
 }

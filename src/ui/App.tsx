@@ -1,34 +1,32 @@
 import { useEffect, useState } from 'react';
-import { config } from '../engine/config';
+import { config, TOPICS, type TopicId } from '../engine/config';
 import { numberSettings } from '../data/attempts';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { EquationPractice } from './screens/EquationPractice';
 import { Home } from './screens/Home';
-import { McPractice } from './screens/McPractice';
-import { NcPractice } from './screens/NcPractice';
-import { TileEquation } from './screens/TileEquation';
-import { isTileLevel } from './practice/tileReducer';
-import type { TopicKey } from './strings';
+import { Session, type SessionKind } from './screens/Session';
 import './ui.css';
 import './tiles.css';
 import './numbers.css';
+import './rewards.css';
 
 type Route =
-  { name: 'home' } | { name: 'practice'; topic: TopicKey; level: number; seed?: number; key: number };
-
-const TOPICS: readonly TopicKey[] = ['NC', 'RD', 'FDP', 'PC', 'EQ'];
+  { name: 'home' } | { name: 'session'; kind: SessionKind; key: number } | { name: 'summary'; id: string };
 
 /**
- * `?topic=RD&level=3&seed=42` opens a specific question; `?level=3` alone opens EQ, as before (used
- * by e2e tests and bug reports, R-ARCH-3).
+ * `?topic=RD&level=3&seed=42` opens a fixed level; `?level=3` alone opens EQ, as before (tests and
+ * bug reports, R-ARCH-3). They don't change adaptive levels or rewards.
  */
 function initialRoute(): Route {
   const q = new URLSearchParams(window.location.search);
-  const topic = (q.get('topic') ?? 'EQ').toUpperCase() as TopicKey;
+  const topic = (q.get('topic') ?? 'EQ').toUpperCase() as TopicId;
   const level = Number(q.get('level'));
   const seed = q.get('seed');
   if (TOPICS.includes(topic) && Number.isInteger(level) && level >= 1 && level <= config.levels[topic]) {
-    return { name: 'practice', topic, level, key: 0, ...(seed !== null ? { seed: Number(seed) >>> 0 } : {}) };
+    return {
+      name: 'session',
+      kind: { kind: 'fixed', topic, level, ...(seed !== null ? { seed: Number(seed) >>> 0 } : {}) },
+      key: 0,
+    };
   }
   return { name: 'home' };
 }
@@ -43,55 +41,29 @@ export function App() {
     void numberSettings().then(setSettings);
   }, []);
   const home = () => setRoute({ name: 'home' });
+  const start = (kind: SessionKind) => setRoute({ name: 'session', kind, key: Date.now() });
 
   const screen = () => {
-    if (route.name === 'home')
-      return (
-        <Home onStart={(topic, level) => setRoute({ name: 'practice', topic, level, key: Date.now() })} />
-      );
-    const seed = route.seed !== undefined ? { seed: route.seed } : {};
-    switch (route.topic) {
-      case 'NC':
+    switch (route.name) {
+      case 'home':
+        return <Home onStart={(topic, level) => start({ kind: 'fixed', topic, level })} />;
+      case 'summary':
+        return <Home onStart={(topic, level) => start({ kind: 'fixed', topic, level })} />;
+      case 'session':
         return (
-          <NcPractice
+          <Session
             key={route.key}
-            level={route.level}
-            {...seed}
-            naturalIncludesZero={settings.naturalIncludesZero}
+            kind={route.kind}
+            {...settings}
             onHome={home}
+            onSummary={(id) => setRoute({ name: 'summary', id })}
           />
-        );
-      case 'RD':
-      case 'FDP':
-      case 'PC':
-        return (
-          <McPractice
-            key={route.key}
-            topic={route.topic}
-            level={route.level}
-            {...seed}
-            currency={settings.currency}
-            onHome={home}
-          />
-        );
-      case 'EQ':
-        // R-ANS-5: levels 1–2 use the tile builder, levels 3+ typed steps.
-        return isTileLevel(route.level) ? (
-          <TileEquation key={route.key} level={route.level} {...seed} onHome={home} />
-        ) : (
-          <EquationPractice key={route.key} level={route.level} {...seed} onHome={home} />
         );
     }
   };
 
   return (
-    <ErrorBoundary
-      onReset={() =>
-        setRoute((r) =>
-          r.name === 'practice' ? { name: 'practice', topic: r.topic, level: r.level, key: r.key + 1 } : r,
-        )
-      }
-    >
+    <ErrorBoundary onReset={() => setRoute((r) => (r.name === 'session' ? { ...r, key: r.key + 1 } : r))}>
       {screen()}
     </ErrorBoundary>
   );

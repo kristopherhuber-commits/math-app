@@ -39,7 +39,6 @@ export const MC_TOPICS: Record<McTopic, TopicEngine> = {
 export interface McState extends HelpFields<NumWalkStep> {
   topic: McTopic;
   level: number;
-  questionNumber: number;
   currency: string;
   question: McQuestion;
   selected: string | null;
@@ -57,21 +56,18 @@ export type McAction =
   | { type: 'closeHint' }
   | { type: 'walkStart' }
   | { type: 'walkNext' }
-  | { type: 'walkBack' }
-  | { type: 'next'; seed: number };
+  | { type: 'walkBack' };
 
 export function startMc(
   topic: McTopic,
   level: number,
   seed: number,
-  questionNumber = 1,
   currency: string = config.settings.currency,
 ): McState {
   const question = MC_TOPICS[topic].generate(level, seed, currency);
   return {
     topic,
     level,
-    questionNumber,
     currency,
     question,
     selected: null,
@@ -134,7 +130,5 @@ export function mcReducer(s: McState, action: McAction): McState {
       return onWalkNext(s);
     case 'walkBack':
       return onWalkBack(s);
-    case 'next':
-      return startMc(s.topic, s.level, action.seed, s.questionNumber + 1, s.currency);
   }
 }

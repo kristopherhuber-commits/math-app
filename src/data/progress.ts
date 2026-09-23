@@ -343,3 +343,9 @@ export async function assignmentSummary(id: string): Promise<Summary | null> {
     freeOpen: (await homeSnapshot()).freeOpen,
   };
 }
+
+export const getAssignment = (id: string) => db.assignments.get(id);
+
+export async function shellCount(): Promise<number> {
+  return (await db.rewards.get(PROFILE_ID))?.shells ?? 0;
+}

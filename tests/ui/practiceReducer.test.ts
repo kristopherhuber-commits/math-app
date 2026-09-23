@@ -106,8 +106,7 @@ describe('practiceReducer', () => {
     expect(s.solved).toBe(true);
     expect(s.attempt.finishedAt).toBeDefined();
     expect(s.attempt.clean).toBe(false);
-    const n = practiceReducer(s, { type: 'next', seed: 3 });
-    expect([n.level, n.walk, n.solved]).toEqual([3, null, false]);
+    expect(s.attempt).toMatchObject({ stars: 1, maxHint: 3 });
   });
 
   it('level 6: typing the final answer straight away solves the question, clean', () => {
@@ -116,12 +115,5 @@ describe('practiceReducer', () => {
     expect(s.solved).toBe(true);
     expect(s.lines.at(-1)!.label).toBe('solvedDirect');
     expect(s.attempt.clean).toBe(true);
-  });
-
-  it('next starts a new question at the same level', () => {
-    const s = practiceReducer(startPractice(4, 1), { type: 'next', seed: 2 });
-    expect(s.level).toBe(4);
-    expect(s.questionNumber).toBe(2);
-    expect(s.attempt.seed).toBe(2);
   });
 });

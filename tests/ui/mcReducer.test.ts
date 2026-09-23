@@ -24,6 +24,19 @@ describe('multiple choice (RD, FDP, PC)', () => {
     expect(mcReducer(s, { type: 'select', id: w! }).selected).toBeNull();
   });
 
+  it.each([
+    ['second try', 1, false, 2],
+    ['H1 only', 0, true, 2],
+    ['second try with H1', 1, true, 2],
+    ['third try (H1 opened by the second wrong)', 2, false, 1],
+  ] as const)('stars on solve: %s → %i ★ (R-RWD-1)', (_n, wrong, h1, stars) => {
+    let s = startMc('PC', 2, 5);
+    if (h1) s = mcReducer(s, { type: 'help' });
+    for (const id of wrongIds(s).slice(0, wrong)) s = pick(s, id);
+    s = pick(s, rightId(s));
+    expect(s.attempt).toMatchObject({ stars, wrongTries: wrong });
+  });
+
   it('second wrong opens H1 and pulses Help; later wrongs advance and offer the walkthrough (R-HELP-2)', () => {
     let s = startMc('FDP', 2, 11);
     const [a, b, c] = wrongIds(s);
@@ -39,14 +52,13 @@ describe('multiple choice (RD, FDP, PC)', () => {
     expect(s.attempt.maxHint).toBe(2);
   });
 
-  it('correct first time is a clean solve; Next starts a new question (R-ADP-1)', () => {
+  it('correct first time is a clean solve with 3 stars (R-ADP-1, R-RWD-1)', () => {
     let s = startMc('PC', 1, 3);
     s = pick(s, rightId(s));
     expect(s.solved).toBe(true);
     expect(s.attempt.clean).toBe(true);
     expect(s.attempt.tries).toEqual([expect.objectContaining({ verdict: 'correct' })]);
-    const n = mcReducer(s, { type: 'next', seed: 99 });
-    expect([n.questionNumber, n.solved, n.question.seed]).toEqual([2, false, 99]);
+    expect(s.attempt).toMatchObject({ stars: 3, wrongTries: 0 });
   });
 
   it('Help any time, then the walkthrough to the end counts as done (R-HELP-3/6)', () => {
