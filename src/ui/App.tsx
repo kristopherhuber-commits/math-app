@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { config, TOPICS, type TopicId } from '../engine/config';
 import { parseAssignmentLink } from '../engine/session';
 import { numberSettings } from '../data/attempts';
 import { addAssignmentFromLink } from '../data/progress';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { AssignmentSummary } from './screens/AssignmentSummary';
 import { Home } from './screens/Home';
 import { Session, type SessionKind } from './screens/Session';
 import { rewardStrings } from './strings';
@@ -13,7 +14,7 @@ import './numbers.css';
 import './rewards.css';
 
 type Route =
-  | { name: 'home'; key: number }
+  | { name: 'home'; key: number; focusFree?: boolean }
   | { name: 'session'; kind: SessionKind; key: number }
   | { name: 'summary'; id: string };
 
@@ -72,16 +73,24 @@ export function App() {
       .catch((e: unknown) => console.error('addAssignmentFromLink failed', e));
   }, []);
 
-  const home = () => setRoute({ name: 'home', key: Date.now() });
+  const home = useCallback(() => setRoute({ name: 'home', key: Date.now() }), []);
   const start = (kind: SessionKind) => setRoute({ name: 'session', kind, key: Date.now() });
 
   const screen = () => {
     switch (route.name) {
-      case 'home':
       case 'summary':
         return (
+          <AssignmentSummary
+            id={route.id}
+            onHome={home}
+            onFreePractice={() => setRoute({ name: 'home', key: Date.now(), focusFree: true })}
+          />
+        );
+      case 'home':
+        return (
           <Home
-            key={route.name === 'home' ? route.key : route.id}
+            key={route.key}
+            focusFree={route.focusFree ?? false}
             notice={notice}
             onStartAssignment={(id) => start({ kind: 'assignment', id })}
             onFreePractice={(topic) => start({ kind: 'free', topic })}

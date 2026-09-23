@@ -1,7 +1,7 @@
 // Home (design.md §7.1, mockup 01): streak and shells, today's assignment with its progress
 // (R-SES-5: Keep going resumes where the learner left off), Pip and Shelly on the beach, and the
 // free-practice topic tiles, locked until the assignment is done (R-SES-6). No percentages.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TOPICS, type TopicId } from '../../engine/config';
 import { homeSnapshot, type HomeSnapshot } from '../../data/progress';
 import { MathText } from '../components/Math';
@@ -102,13 +102,21 @@ export function Home({
   onStartAssignment,
   onFreePractice,
   notice,
+  focusFree = false,
 }: {
   onStartAssignment: (id: string) => void;
   onFreePractice: (topic: TopicId) => void;
   /** A message for the parent, e.g. an unreadable assignment link. */
   notice?: string | undefined;
+  /** Coming from the summary's "Free practice ›": focus the first topic tile. */
+  focusFree?: boolean;
 }) {
   const [snap, setSnap] = useState<HomeSnapshot | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (snap && focusFree)
+      gridRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+  }, [snap, focusFree]);
   useEffect(() => {
     void homeSnapshot()
       .then(setSnap)
@@ -165,7 +173,7 @@ export function Home({
             </span>
           )}
         </div>
-        <div className="topic-grid">
+        <div className="topic-grid" ref={gridRef}>
           {TOPICS.map((t) => (
             <button
               key={t}
