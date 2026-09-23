@@ -321,7 +321,6 @@ export const topicStrings = {
 export const numStrings = {
   check: 'Check',
   notQuite: 'Not quite.',
-  solved: "Yes! That's it.",
   mcKeyboard: 'Tap an answer, then Check. Keyboard: 1–5 to choose, Enter to check.',
   options: 'Answer options',
   option: (n: number, speech: string) => `Option ${n}: ${speech}`,

@@ -29,7 +29,7 @@ const setNames: Record<string, string> = {
 async function answerMc(page: Page, q: McQuestion, touch: boolean) {
   await press(page.locator('.mc-option').nth(correctIndex(q)), touch);
   await press(page.getByRole('button', { name: 'Check' }), touch);
-  await expect(page.getByText("Yes! That's it.")).toBeVisible();
+  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
 }
 
 for (const [topic, level, seed, gen] of [
@@ -52,7 +52,7 @@ test('RD: keyboard only, 1–5 then Enter (design.md §10)', async ({ page }) =>
   await page.keyboard.press(`${correctIndex(q) + 1}`);
   await expect(page.locator('.mc-option.selected')).toHaveCount(1);
   await page.keyboard.press('Enter');
-  await expect(page.getByText("Yes! That's it.")).toBeVisible();
+  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next question' })).toBeFocused();
 });
 
@@ -63,7 +63,7 @@ test('NC: tick exactly the right sets by mouse or touch', async ({ page, hasTouc
   for (const set of NC_SETS.filter((s) => m[s]))
     await press(page.getByRole('checkbox', { name: new RegExp(`^${setNames[set]}`) }), hasTouch);
   await press(page.getByRole('button', { name: 'Check' }), hasTouch);
-  await expect(page.getByText("Yes! That's it.")).toBeVisible();
+  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
 });
 
 test('NC: keyboard only, Tab and Space, Enter checks', async ({ page }) => {
@@ -78,7 +78,7 @@ test('NC: keyboard only, Tab and Space, Enter checks', async ({ page }) => {
   }
   await cards.last().focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByText("Yes! That's it.")).toBeVisible();
+  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
 });
 
 test('wrong answers: "Not quite" with the misconception line, then the hint (R-HELP-1/1a/2)', async ({

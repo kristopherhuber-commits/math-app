@@ -40,6 +40,7 @@ test('solve a typed equation with the on-screen keypad (mouse or touch)', async 
   const how = info.project.use.hasTouch ? 'tap' : 'click';
   for (const line of lines) await enterByKeypad(page, line, how);
   await expect(page.getByText('Solved!')).toBeVisible();
+  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next question' })).toBeFocused();
   await expect(page.locator('.step-line')).toHaveCount(lines.length + 1);
 });

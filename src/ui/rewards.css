@@ -64,3 +64,175 @@
     transition: none;
   }
 }
+
+/* Celebration (design.md §5, mockup 08): ≤ 1.2 s, skippable, never blocking (R-RWD-5). */
+.celebration {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--star) 14%, var(--surface));
+  cursor: default;
+}
+.celebration-art {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: none;
+}
+.celebration-stars {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: calc(-1 * var(--space-2));
+}
+.celebration-star {
+  display: inline-flex;
+  animation: star-pop 420ms var(--ease-pop) both;
+  animation-delay: calc(200ms + var(--i) * 80ms);
+}
+@keyframes star-pop {
+  from {
+    transform: scale(0) rotate(-40deg);
+    opacity: 0;
+  }
+}
+.celebration .penguin[data-pose='cheer'] .penguin-figure,
+.celebration .penguin[data-pose='hop'] .penguin-figure {
+  animation: pip-hop 600ms var(--ease-pop) 2;
+  transform-origin: 0 60px;
+}
+.celebration .penguin[data-pose='clap'] .penguin-flipper {
+  animation: pip-clap 300ms var(--ease-standard) 3;
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+@keyframes pip-hop {
+  40% {
+    transform: translateY(-14px);
+  }
+}
+@keyframes pip-clap {
+  50% {
+    translate: 0 -4px;
+    scale: 1.1;
+  }
+}
+.celebration-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.celebration-title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 900;
+  color: var(--ink);
+}
+.celebration.stars-1 .celebration-title,
+.celebration.stars-2 .celebration-title {
+  font-size: 24px;
+}
+.celebration-shells {
+  margin: 0;
+  font-weight: 800;
+  color: var(--coral);
+}
+.celebration-level {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--primary);
+}
+.celebration-badge {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-weight: 800;
+  font-size: 15px;
+}
+.confetti {
+  position: absolute;
+  inset: -8px -24px auto;
+  height: 150px;
+  pointer-events: none;
+  overflow: hidden;
+}
+.confetti-bit {
+  position: absolute;
+  top: 0;
+  left: var(--x);
+  width: 10px;
+  height: 5px;
+  border-radius: 1px;
+  opacity: 0;
+  animation: confetti-fall 1000ms var(--ease-standard) var(--d) both;
+}
+@keyframes confetti-fall {
+  from {
+    transform: translateY(-10px) rotate(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(140px) rotate(var(--r));
+    opacity: 0;
+  }
+}
+.celebration.still *,
+.celebration.still .penguin-figure {
+  animation: none !important;
+}
+
+/* Streak milestone: full screen, skippable. */
+.streak-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
+  animation: fade-in var(--dur-base) var(--ease-standard);
+}
+.streak-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-7);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-align: center;
+}
+.streak-card h2 {
+  margin: 0;
+}
+.streak-card p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-weight: 700;
+}
+.streak-penguin .penguin-figure {
+  animation: pip-slide 1100ms var(--ease-standard) both;
+}
+@keyframes pip-slide {
+  from {
+    transform: translateX(-160px) rotate(-18deg);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebration *,
+  .streak-overlay,
+  .streak-penguin .penguin-figure {
+    animation: none !important;
+  }
+}

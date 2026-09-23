@@ -19,7 +19,9 @@ import {
 import { TopBar, type TopBarProgress } from '../components/TopBar';
 import { CelebrationProvider } from '../practice/question';
 import { isTileLevel } from '../practice/tileReducer';
-import { numStrings, topicStrings } from '../strings';
+import { topicStrings } from '../strings';
+import { Celebration, StreakCelebration } from '../components/Celebration';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 import { EquationPractice } from './EquationPractice';
 import { McPractice } from './McPractice';
 import { NcPractice } from './NcPractice';
@@ -56,6 +58,8 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
   const [shells, setShells] = useState(0);
   const [events, setEvents] = useState<FinishEvents | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const osReduced = useReducedMotion();
+  const [streak, setStreak] = useState<number | null>(null);
   /** Questions started in this session (free practice and fixed levels count from 1). */
   const started = useRef(0);
   /** Free practice, R-HELP-6: the level to stay at after a walkthrough. */
@@ -160,6 +164,7 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
       );
       void pending.current.then((e) => {
         setEvents(e);
+        if (e.streak?.milestone) setStreak(e.streak.days);
         setStars((s) => s + e.stars);
         if (cur.rewarded) setShells(e.shells);
       });
@@ -180,6 +185,8 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
         advancing.current = false;
       });
   }, [advance, onSummary]);
+
+  const closeStreak = useCallback(() => setStreak(null), []);
 
   if (!cur) return <div className="screen" />;
 
@@ -203,9 +210,7 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
   };
 
   const celebration = events ? (
-    <div className="solved-box" role="status" data-motion={reduceMotion ? 'reduced' : 'full'}>
-      <p className="feedback-title">{numStrings.solved}</p>
-    </div>
+    <Celebration events={events} reduced={reduceMotion || osReduced} showShells={cur.rewarded} />
   ) : null;
 
   return (
@@ -218,6 +223,7 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
         onHome={onHome}
       />
       <CelebrationProvider value={celebration}>{screen()}</CelebrationProvider>
+      {streak !== null && <StreakCelebration days={streak} onClose={closeStreak} />}
     </div>
   );
 }
