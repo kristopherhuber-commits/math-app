@@ -15,12 +15,11 @@ test('live site loads, is installable and works offline', async ({ page, context
   await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
   await context.setOffline(true);
   await page.reload();
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Equations', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Solve for/ })).toBeVisible();
   // M3: a number topic works offline too.
   await page.getByRole('button', { name: '‹ Home' }).click();
-  await page.getByRole('radio', { name: /Repeating decimals/ }).click();
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Repeating decimals', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Write this/ })).toBeVisible();
   await context.setOffline(false);
 });

@@ -156,10 +156,25 @@ test('a wrong sign shows the balance explanation and is stored as EQ-D4; Esc can
   await expect(page.locator('.balance-explainer')).toBeVisible();
 });
 
-test('home level picker opens the tile builder at levels 1–2', async ({ page }) => {
+test('free practice at a stored EQ level 2 opens the tile builder (R-ADP, R-ANS-5)', async ({ page }) => {
   await page.goto('./');
-  await page.getByRole('radio', { name: /Level 1/ }).click();
-  await page.getByRole('button', { name: 'Start' }).click();
+  await expect(page.getByRole('heading', { name: 'Hi there!' })).toBeVisible();
+  // As if the learner had been moved down to level 2 (demotion is silent, R-ADP-6).
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const open = indexedDB.open('turtle-penguin-math');
+        open.onsuccess = () => {
+          const tx = open.result.transaction('topicStates', 'readwrite');
+          tx.objectStore('topicStates').put({ profileId: 'default', topic: 'EQ', level: 2, window: [] });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        };
+        open.onerror = () => reject(open.error);
+      }),
+  );
+  await page.getByRole('button', { name: 'Equations', exact: true }).click();
+  await expect(page.getByText('Equations · Level 2')).toBeVisible();
   await expect(page.locator('.tile-board')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Your next line' })).toHaveCount(0);
 });

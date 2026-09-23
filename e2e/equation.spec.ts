@@ -86,9 +86,9 @@ test('attempts are saved to IndexedDB after every step (R-SES-5)', async ({ page
   expect(tries).toBeGreaterThanOrEqual(1);
 });
 
-test('home level picker starts practice at the chosen level', async ({ page }) => {
+test('Home: the Equations tile opens free practice at the adaptive level, 3 to start', async ({ page }) => {
   await page.goto('./');
-  await page.getByRole('radio', { name: /Level 5/ }).click();
-  await page.getByRole('button', { name: 'Start' }).click();
-  await expect(page.getByText('Equations · Level 5')).toBeVisible();
+  await page.getByRole('button', { name: 'Equations', exact: true }).click();
+  await expect(page.getByText('Equations · Level 3')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Your next line' })).toBeVisible();
 });

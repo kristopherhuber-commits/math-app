@@ -137,14 +137,13 @@ test('NC: the second wrong Check outlines the mismatched cards (R-NC-3)', async 
   await expect(page.getByLabel('Hint 1 of 3')).toBeVisible();
 });
 
-test('Home: pick a topic and a level, then start', async ({ page }) => {
+test('Home: with no assignment, a topic tile opens free practice at level 1 (R-SES-6)', async ({ page }) => {
   await page.goto('./');
-  await page.getByRole('radio', { name: /Price changes/ }).click();
-  await page.getByRole('radio', { name: /Level 2/ }).click();
-  await page.getByRole('button', { name: 'Start' }).click();
-  await expect(page.getByText('Price changes · Level 2')).toBeVisible();
+  await expect(page.getByText('No assignment right now.')).toBeVisible();
+  await page.getByRole('button', { name: 'Price changes', exact: true }).click();
+  await expect(page.getByText('Price changes · Level 1')).toBeVisible();
+  await expect(page.getByText('Question 1', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '‹ Home' }).click();
-  await page.getByRole('radio', { name: /Number sets/ }).click();
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Number sets', exact: true }).click();
   await expect(page.getByText('Number sets · Level 1')).toBeVisible();
 });
