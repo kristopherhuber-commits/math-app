@@ -54,6 +54,14 @@ export const config = {
     tinyMaxThousandths: 9,
     barFromLevel: 4,
   },
+  /** NC (§6.1). Ranges the spec leaves open are M3 assumptions. */
+  nc: {
+    maxInteger: 50,
+    fractionDenominators: [2, 3, 4, 5, 6, 8, 10] as readonly number[],
+    repeatingDenominators: [3, 6, 7, 9, 11, 12] as readonly number[],
+    /** The digits of a patterned irrational shown before the ellipsis: d, then 0^i d for i = 1…3. */
+    patternGroups: 3,
+  },
   /** PC (§6.4). Prices and percents the spec leaves open are M3 assumptions. */
   pc: {
     minPriceDollars: 5,

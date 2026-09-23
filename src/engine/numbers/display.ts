@@ -14,8 +14,8 @@ export const BLOCK_TIMES = 3;
 export type Notation = 'ellipsis' | 'both' | 'bar';
 
 export interface Shown {
-  /** 'math' is rendered with KaTeX; 'money' is plain text in the UI face (design.md §2.2). */
-  kind: 'math' | 'money';
+  /** 'math' is rendered with KaTeX; 'money' and 'text' are plain text in the UI face (design.md §2.2). */
+  kind: 'math' | 'money' | 'text';
   latex: string;
   /** Second line when two forms are stacked (notation 'both'): "= 4.\overline{24}". */
   latex2?: string;
