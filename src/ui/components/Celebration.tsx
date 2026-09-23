@@ -56,7 +56,6 @@ export function Celebration({
     >
       <div className="celebration-art" aria-hidden="true">
         {big && !still && <Confetti />}
-        <Penguin pose={pose} size={big ? 132 : 104} />
         <span className="celebration-stars">
           {Array.from({ length: events.stars }, (_, i) => (
             <span key={i} className="celebration-star" style={{ '--i': i } as CSSProperties}>
@@ -64,6 +63,7 @@ export function Celebration({
             </span>
           ))}
         </span>
+        <Penguin pose={pose} size={big ? 132 : 104} />
       </div>
       <div className="celebration-text">
         <p className="celebration-title">{s.headline[events.stars]}</p>

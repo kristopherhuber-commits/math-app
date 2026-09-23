@@ -86,7 +86,9 @@
 .celebration-stars {
   display: flex;
   gap: var(--space-2);
-  margin-top: calc(-1 * var(--space-2));
+  margin-bottom: calc(-1 * var(--space-1));
+  position: relative;
+  z-index: 1;
 }
 .celebration-star {
   display: inline-flex;
@@ -246,6 +248,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--space-5);
+  margin-bottom: var(--space-5);
 }
 .home-counters {
   display: flex;
