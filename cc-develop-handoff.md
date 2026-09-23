@@ -36,7 +36,7 @@ There is also a published design system artifact (tokens, brand book, character 
 ### 2.1 Development machine
 - **Windows 11, PowerShell.** Write every command the parent is meant to run as PowerShell, with Windows paths. Do not assume POSIX tools. npm scripts must work under PowerShell (no `rm -rf`, no `VAR=x cmd`; use cross-platform packages or Node scripts where needed).
 - **Node:** Node 24 LTS (installed with `winget install OpenJS.NodeJS.LTS`). A new shell may need its PATH refreshed before `node` resolves.
-- **Git:** the repo is initialised on `main`. M0 adds a `.gitignore` (node_modules, dist, coverage, Playwright reports) and creates a **public GitHub repo** under the parent's account with `gh repo create --public` (check `gh --help` for exact flags).
+- **Git:** public repo `kristopherhuber-commits/math-app`, branch `main`. The repo-local git identity is the GitHub no-reply address; keep it (public repo). `gh` is authenticated with the `workflow` scope.
 
 ### 2.2 Stack (fixed)
 - TypeScript + React + **Vite**, built as an installable **PWA** that works fully offline (`vite-plugin-pwa` is fine).
@@ -60,7 +60,11 @@ Repository layout: follow the tree in `docs/requirements.md` §2.1. Don't reorga
 
 ## 3. Build order: milestones, with stop points
 
-`docs/requirements.md` §12 defines the milestones. **Do M0 and M1, then stop and hand back to the parent.** The learner will try the equation flow before anything else is built on top of it.
+`docs/requirements.md` §12 defines the milestones.
+
+**Status (2026-09-22): M0 and M1 are done and deployed.** Read `docs/milestones/M1-report.md` before starting M2: it lists the code map, the assumptions made, the spec conflicts found, and the deviations M2 must remove. Build **one milestone per session**, then stop and report as in §6, saving the report as `docs/milestones/M<n>-report.md`.
+
+The M0 and M1 sections below are kept as the record of what was asked.
 
 ### M0: Scaffold
 - `.gitignore`, public GitHub remote (§2.1).
@@ -94,8 +98,16 @@ The heart of the app.
 **Done when:** every acceptance example in requirements §7.5 passes as a named test, every diagnostic has ≥ 2 positive and ≥ 2 negative tests (R-TEST-3), property tests are green for all six levels, attempts show up in IndexedDB, and a person can solve equations end to end in the browser on a laptop and, from the hosted URL, on a tablet.
 **Then stop.** Report as in §6.
 
-### M2–M6 (only after the parent says go)
-M2: tile builder, balance scale, H3 walkthrough UI (undoes both M1 deviations) · M3: the four number topics · M4: sessions, adaptive levels, rewards · M5: parent area · M6: polish, a11y, offline and performance budgets. Each has its "done when" in requirements §12.
+### M2: Tile builder, balance scale, walkthrough (next)
+- **Tile builder for EQ levels 1–2** exactly as R-EQ-TILE-1…6 and design.md §6.2: drop zones with swap, drag across the `=`, SignPicker, lock on correct sign; Simplify and Solve phases with the small number pad. Drag works by **mouse, touch and keyboard** (pointer events, 6 px threshold, snap; Tab / Enter / ←→ / Enter). This removes M1 deviation 1: levels 1–2 stop using typed mode.
+- **BalanceScale** animation (R-EQ-PED-1), shortening after 10 correct sign choices (R-EQ-PED-2; count stored per learner), with a two-frame version under reduced motion (R-NF-3).
+- **H3 walkthrough UI** (design.md §5 Walkthrough, mockup 07) for typed *and* tile modes, driven by the engine's existing `eqWalkthrough()`, one step per tap, ending with the substitution check; "Show me step by step" in the hint panel. This removes M1 deviation 2. After a walkthrough the question counts as done (R-HELP-6).
+- **Open question for the parent in the M2 plan:** add the turtle (Shelly) art now (design.md §4.1, `gen.py` geometry), since the balance explanation and walkthrough are presented by the turtle (R-HELP-7)? Requirements §12 doesn't list it under M2. The penguin and stars stay in M4 either way.
+- Record every tile move and sign choice in the `Attempt` as `TryRecord`s so the parent review (M5) can replay them.
+- **Done when** (requirements §12): touch + mouse + keyboard drag work; the Playwright tile test passes (including touch emulation, R-TEST-5); all existing tests stay green.
+
+### M3–M6 (only after the parent says go)
+M3: the four number topics · M4: sessions, adaptive levels, rewards · M5: parent area · M6: polish, a11y, offline and performance budgets. Each has its "done when" in requirements §12.
 
 ---
 
@@ -153,14 +165,14 @@ True minus sign `−` (U+2212), never a hyphen (R-DISP-1). Stacked fractions (R-
 3. Assumptions you made where the spec was silent.
 4. Conflicts found between `requirements.md`, `design.md` and the mockups.
 5. Approved deviations still in force (the M1 list in §3), and which milestone removes each one.
-6. Exact PowerShell commands to run it locally, the hosted URL, and how to install it from that URL on an iPad (Safari → Share → Add to Home Screen) and on an Android tablet (Chrome → Install app).
+6. Exact PowerShell commands to run it locally, and confirmation that the hosted URL (https://kristopherhuber-commits.github.io/math-app/) was redeployed and still installs and works offline (`$env:LIVE_URL='…'; npx playwright test e2e/zz-live.spec.ts`).
 7. What you would build next, and anything you think is wrong with the plan.
 
 ---
 
 ## 7. Start here
 
-1. Read the four documents in §0.
-2. **Enter plan mode** and produce a plan for M0 + M1: files, order, test strategy, and any open questions for the parent.
+1. Read the four documents in §0, then `docs/milestones/M1-report.md`, then skim the code map it lists.
+2. **Enter plan mode** and produce a plan for the next milestone (currently **M2**): files, order, test strategy, and any open questions for the parent.
 3. Get the plan approved before writing code.
-4. Build M0, then M1. Stop at the end of M1 and report as in §6.
+4. Build that milestone only. Stop, save the report as `docs/milestones/M<n>-report.md`, update the status line in §3 and the deviation list in `CLAUDE.md`, commit, push (which deploys), and report as in §6.

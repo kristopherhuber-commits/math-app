@@ -1,6 +1,6 @@
 # Turtle & Penguin Math — standing rules
 
-Read `cc-develop-handoff.md` for the full brief. Precedence: `docs/requirements.md` > `docs/design.md` > mockups > handoff, except the approved deviations below.
+Read `cc-develop-handoff.md` for the full brief and the current milestone (§3 status line). Milestone reports, including assumptions and spec conflicts already resolved, are in `docs/milestones/`. Precedence: `docs/requirements.md` > `docs/design.md` > mockups > handoff, except the approved deviations below.
 
 ## Public repo
 This repo and its GitHub Pages site are public. Never commit names, ages, gender, locations or local user paths of the parent or the learner. Refer to "the parent" and "the learner".
