@@ -1,0 +1,108 @@
+/* First run and the parent area (design.md §5 "Parent", mockups 10 and 11). Tokens only. */
+
+/* ---------- first run and the PIN pad ---------- */
+.setup,
+.pin-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-5);
+}
+.pin-card {
+  width: min(440px, 100%);
+  text-align: center;
+}
+.pin-sub {
+  margin: 0 0 var(--space-4);
+}
+.pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-4);
+  margin: var(--space-4) 0 var(--space-2);
+}
+.pin-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  border: 3px solid var(--primary);
+}
+.pin-dot.filled {
+  background: var(--primary);
+}
+.pin-message {
+  min-height: 24px;
+  margin: 0 0 var(--space-3);
+  color: var(--amber);
+  font-weight: 800;
+}
+.pin-pad {
+  grid-template-columns: repeat(3, 88px);
+  justify-content: center;
+}
+.pin-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-5);
+}
+.link-btn {
+  min-height: var(--target-min);
+  padding: 0 var(--space-3);
+  border: none;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.naming {
+  width: min(720px, 100%);
+  text-align: center;
+}
+.naming-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5);
+  margin: var(--space-5) 0;
+}
+.naming-friend {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+.naming-friend svg {
+  height: 140px;
+}
+.text-input {
+  width: 100%;
+  min-height: var(--target-min);
+  padding: 0 var(--space-4);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--ink);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 800;
+}
+.text-input:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+}
+.naming .text-input {
+  text-align: center;
+}
+
+/* ---------- Home: the small Parent link (mockup 01, marker 5) ---------- */
+.parent-link {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-5);
+}
+.parent-link .link-btn {
+  color: var(--ink-muted);
+  font-size: 15px;
+}

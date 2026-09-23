@@ -38,6 +38,10 @@
   --amber-soft: #fdebd3;
   --parent-bg: #f4f6f8;
   --parent-nav: #1e3448;
+  /* Text and the selected item on the parent nav (mockups 10/11; not named in design.md §2.1) */
+  --on-parent-nav: #ffffff;
+  --on-parent-nav-muted: #b8c6d3;
+  --parent-nav-active: #2e4a63;
 
   /* §2.2 typography */
   --font-ui: 'Nunito Variable', 'Nunito', system-ui, sans-serif;
@@ -100,6 +104,7 @@
   --amber-soft: #3a2610;
   --parent-bg: #0b141b;
   --parent-nav: #0b141b;
+  --parent-nav-active: #1e3240;
 }
 
 /* R-NF-3: reduced motion collapses every duration to a short fade. */

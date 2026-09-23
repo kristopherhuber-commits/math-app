@@ -6,6 +6,7 @@ import { generatePc } from '../src/engine/topics/pc/generator';
 import { generateNc } from '../src/engine/topics/nc/generator';
 import { NC_SETS, ncMembership } from '../src/engine/topics/nc/checker';
 import type { McQuestion } from '../src/engine/topics/mc';
+import { openHome } from './helpers';
 
 // M3 (R-TEST-5): one question per number topic by mouse (or touch on the tablet project) and by
 // keyboard; wrong answers, the hint ladder, the RD walkthrough with its mini-questions, NC outlines.
@@ -138,7 +139,7 @@ test('NC: the second wrong Check outlines the mismatched cards (R-NC-3)', async 
 });
 
 test('Home: with no assignment, a topic tile opens free practice at level 1 (R-SES-6)', async ({ page }) => {
-  await page.goto('./');
+  await openHome(page);
   await expect(page.getByText('No assignment right now.')).toBeVisible();
   await page.getByRole('button', { name: 'Price changes', exact: true }).click();
   await expect(page.getByText('Price changes · Level 1')).toBeVisible();

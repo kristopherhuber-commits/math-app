@@ -1,85 +1,81 @@
 import { useCallback, useEffect, useState } from 'react';
 import { config, TOPICS, type TopicId } from '../engine/config';
-import { parseAssignmentLink } from '../engine/session';
 import type { Settings } from '../data/db';
 import { logError } from '../data/errors';
-import { defaultSettings, loadSettings } from '../data/settings';
-import { addAssignmentFromLink } from '../data/progress';
+import { defaultSettings, isSetUp, loadSettings } from '../data/settings';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AssignmentSummary } from './screens/AssignmentSummary';
 import { Home } from './screens/Home';
 import { Session, type SessionKind } from './screens/Session';
+import { Setup } from './screens/Setup';
 import { SettingsProvider } from './settings';
-import { rewardStrings } from './strings';
 import './ui.css';
 import './tiles.css';
 import './numbers.css';
 import './rewards.css';
+import './parent.css';
 
 type Route =
+  | { name: 'loading' }
+  | { name: 'setup' }
   | { name: 'home'; key: number; focusFree?: boolean }
   | { name: 'session'; kind: SessionKind; key: number }
   | { name: 'summary'; id: string };
 
 /**
- * `?topic=RD&level=3&seed=42` opens a fixed level; `?level=3` alone opens EQ, as before (tests and
- * bug reports, R-ARCH-3). They don't change adaptive levels or rewards.
+ * `?topic=RD&level=3&seed=42` opens a fixed level; `?level=3` alone opens EQ, as before (the parent,
+ * tests and bug reports, R-ARCH-3). They don't change adaptive levels or rewards, and they skip the
+ * first-run setup. Everything else waits for the setup check.
  */
 function initialRoute(): Route {
   const q = new URLSearchParams(window.location.search);
   const topic = (q.get('topic') ?? 'EQ').toUpperCase() as TopicId;
   const level = Number(q.get('level'));
   const seed = q.get('seed');
-  if (
-    !q.has('assign') &&
-    TOPICS.includes(topic) &&
-    Number.isInteger(level) &&
-    level >= 1 &&
-    level <= config.levels[topic]
-  ) {
+  if (TOPICS.includes(topic) && Number.isInteger(level) && level >= 1 && level <= config.levels[topic]) {
     return {
       name: 'session',
       kind: { kind: 'fixed', topic, level, ...(seed !== null ? { seed: Number(seed) >>> 0 } : {}) },
       key: 0,
     };
   }
-  return { name: 'home', key: 0 };
+  return { name: 'loading' };
 }
 
 export function App() {
   const [route, setRoute] = useState<Route>(initialRoute);
-  const [notice] = useState<string | undefined>(() => {
-    const q = new URLSearchParams(window.location.search);
-    return q.has('assign') && !parseAssignmentLink(Object.fromEntries(q))
-      ? rewardStrings.home.badLink
-      : undefined;
-  });
   const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const reloadSettings = useCallback(
+    () =>
+      loadSettings()
+        .then(setSettings)
+        .catch((e: unknown) => logError('loadSettings', e)),
+    [],
+  );
   useEffect(() => {
-    void loadSettings()
-      .then(setSettings)
-      .catch((e: unknown) => logError('loadSettings', e));
-  }, []);
+    void reloadSettings();
+  }, [reloadSettings]);
 
-  // Until the parent area (M5): `?assign=EQ:10,PC:5@2&order=mixed&title=…` queues an assignment
-  // (R-SES-1/2). The query is removed at once, so a reload doesn't add it again.
+  // First run (R-PAR-1): the parent sets a PIN before anything else.
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search);
-    if (!q.has('assign')) return;
-    window.history.replaceState(null, '', window.location.pathname);
-    const link = parseAssignmentLink(Object.fromEntries(q));
-    const refresh = () => setRoute({ name: 'home', key: Date.now() });
-    if (!link) return;
-    void addAssignmentFromLink(link)
-      .then(refresh)
-      .catch((e: unknown) => console.error('addAssignmentFromLink failed', e));
-  }, []);
+    if (route.name !== 'loading') return;
+    void isSetUp()
+      .catch((e: unknown) => {
+        void logError('isSetUp', e);
+        return true;
+      })
+      .then((ok) => setRoute(ok ? { name: 'home', key: Date.now() } : { name: 'setup' }));
+  }, [route.name]);
 
   const home = useCallback(() => setRoute({ name: 'home', key: Date.now() }), []);
   const start = (kind: SessionKind) => setRoute({ name: 'session', kind, key: Date.now() });
 
   const screen = () => {
     switch (route.name) {
+      case 'loading':
+        return <main className="home" />;
+      case 'setup':
+        return <Setup onDone={() => void reloadSettings().then(home)} />;
       case 'summary':
         return (
           <AssignmentSummary
@@ -93,7 +89,6 @@ export function App() {
           <Home
             key={route.key}
             focusFree={route.focusFree ?? false}
-            notice={notice}
             onStartAssignment={(id) => start({ kind: 'assignment', id })}
             onFreePractice={(topic) => start({ kind: 'free', topic })}
           />

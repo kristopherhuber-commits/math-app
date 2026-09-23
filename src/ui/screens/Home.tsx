@@ -9,6 +9,7 @@ import { MathText } from '../components/Math';
 import { ShellIcon } from '../components/TopBar';
 import { Penguin } from '../mascots/Penguin';
 import { Turtle } from '../mascots/Turtle';
+import { useSettings } from '../settings';
 import { rewardStrings, strings, topicStrings } from '../strings';
 
 const h = rewardStrings.home;
@@ -78,19 +79,20 @@ function AssignmentCard({ snap, onStart }: { snap: HomeSnapshot; onStart: (id: s
 }
 
 function Beach({ snap }: { snap: HomeSnapshot }) {
+  const names = useSettings().mascotNames;
   const a = snap.assignment;
   const next =
     a && snap.progress ? a.items.find((it, i) => (snap.progress!.done[i] ?? 0) < it.count) : undefined;
   const line = next
-    ? h.pipToday(topicStrings.name[next.topic])
+    ? h.pipToday(names.penguin, topicStrings.name[next.topic])
     : snap.streak > 0
-      ? h.pipStreak(snap.streak)
-      : h.pipFree;
+      ? h.pipStreak(names.penguin, snap.streak)
+      : h.pipFree(names.penguin);
   return (
     <section className="beach" aria-label={line}>
       <div className="speech">
         <p className="speech-title">{line}</p>
-        <p className="speech-sub">{h.shelly}</p>
+        <p className="speech-sub">{h.shelly(names.turtle)}</p>
       </div>
       <span className="sand" aria-hidden="true" />
       <Turtle size={150} className="beach-turtle" />
@@ -102,13 +104,10 @@ function Beach({ snap }: { snap: HomeSnapshot }) {
 export function Home({
   onStartAssignment,
   onFreePractice,
-  notice,
   focusFree = false,
 }: {
   onStartAssignment: (id: string) => void;
   onFreePractice: (topic: TopicId) => void;
-  /** A message for the parent, e.g. an unreadable assignment link. */
-  notice?: string | undefined;
   /** Coming from the summary's "Free practice ›": focus the first topic tile. */
   focusFree?: boolean;
 }) {
@@ -152,11 +151,6 @@ export function Home({
           </span>
         </div>
       </header>
-      {notice && (
-        <p className="home-notice" role="status">
-          {notice}
-        </p>
-      )}
 
       <div className="home-main">
         <AssignmentCard snap={snap} onStart={onStartAssignment} />

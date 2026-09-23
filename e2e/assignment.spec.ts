@@ -1,6 +1,7 @@
-// M4 (R-TEST-5, requirements §12 "assignment completes with summary"): an assignment from the
-// parent's link, answered through every question to its summary; resume after leaving; a level
-// up; the keyboard path. Answers come from the engine with the assignment's question seeds.
+// M4 (R-TEST-5, requirements §12 "assignment completes with summary"): an assignment answered
+// through every question to its summary; resume after leaving; a level up; the keyboard path.
+// The assignment is stored with a known seed (helpers.ts); the parent's builder is in parent.spec.
+// Answers come from the engine with the assignment's question seeds.
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { questionSeed } from '../src/engine/session';
 import { generatePc } from '../src/engine/topics/pc/generator';
@@ -8,6 +9,7 @@ import { generateRd } from '../src/engine/topics/rd/generator';
 import { generateEq } from '../src/engine/topics/eq/generator';
 import { eqWalkthrough } from '../src/engine/topics/eq/hints';
 import type { McQuestion } from '../src/engine/topics/mc';
+import { assignment, openHome } from './helpers';
 
 async function press(target: Locator, touch: boolean) {
   if (touch) await target.tap();
@@ -25,14 +27,13 @@ async function answerMc(page: Page, q: McQuestion, touch: boolean) {
 const next = (page: Page, touch: boolean) =>
   press(page.getByRole('button', { name: 'Next question' }), touch);
 
-test('an assignment from the link, through every question, to its summary (R-SES-1/5/7, R-RWD)', async ({
+test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)', async ({
   page,
   hasTouch,
 }) => {
   const seed = 5;
-  await page.goto(`./?assign=PC:2,RD:1,EQ:1@3&title=Test%20day&seed=${seed}`);
+  await openHome(page, { assignments: [assignment('PC:2,RD:1,EQ:1@3', { seed, title: 'Test day' })] });
   await expect(page.getByRole('heading', { name: 'Test day' })).toBeVisible();
-  await expect(page).toHaveURL(/\/math-app\/$/);
   const items = page.locator('.assignment-item');
   await expect(items).toHaveText([
     /Price changes\s*0 \/ 2/,
@@ -96,7 +97,7 @@ test('leave mid-assignment, reload, and Keep going resumes at the same question 
   page,
 }) => {
   const seed = 9;
-  await page.goto(`./?assign=PC:3&seed=${seed}`);
+  await openHome(page, { assignments: [assignment('PC:3', { seed })] });
   await page.getByRole('button', { name: 'Start ›' }).click();
   await answerMc(page, generatePc(1, questionSeed(seed, 0), '$'), false);
   await next(page, false);
@@ -118,7 +119,7 @@ test('leave mid-assignment, reload, and Keep going resumes at the same question 
 
 test('four clean answers out of five level up, and Pip says so (R-ADP-2, R-ADP-6)', async ({ page }) => {
   const seed = 3;
-  await page.goto(`./?assign=PC:6&seed=${seed}`);
+  await openHome(page, { assignments: [assignment('PC:6', { seed })] });
   await page.getByRole('button', { name: 'Start ›' }).click();
   for (let i = 0; i < 5; i++) {
     await expect(page.getByText(`Question ${i + 1} of 6`)).toBeVisible();
@@ -136,7 +137,7 @@ test('four clean answers out of five level up, and Pip says so (R-ADP-2, R-ADP-6
 
 test('keyboard only: start, answer with 1–5 and Enter, next (design.md §10)', async ({ page }) => {
   const seed = 21;
-  await page.goto(`./?assign=RD:2&seed=${seed}`);
+  await openHome(page, { assignments: [assignment('RD:2', { seed })] });
   await page.getByRole('button', { name: 'Start ›' }).focus();
   await page.keyboard.press('Enter');
   for (let i = 0; i < 2; i++) {
@@ -152,8 +153,9 @@ test('keyboard only: start, answer with 1–5 and Enter, next (design.md §10)',
   await expect(page.getByRole('button', { name: 'Free practice ›' })).toBeFocused();
 });
 
-test('a link that cannot be read adds nothing and says so', async ({ page }) => {
-  await page.goto('./?assign=XY:3');
-  await expect(page.getByText("That assignment link couldn't be read.")).toBeVisible();
+test('the old ?assign= link adds nothing: assignments come from the parent area (M5)', async ({ page }) => {
+  await openHome(page);
+  await page.goto('./?assign=PC:3&title=Old');
+  await expect(page.getByRole('heading', { name: 'Hi there!' })).toBeVisible();
   await expect(page.getByText('No assignment right now.')).toBeVisible();
 });

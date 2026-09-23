@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { generateEq } from '../src/engine/topics/eq/generator';
 import { correctSign, mustCross, newBoard, simplifyPlan, type Side } from '../src/engine/eq/tiles';
 import { formatRational, type Rational } from '../src/engine/rational';
+import { openHome } from './helpers';
 
 const M = '−';
 
@@ -157,22 +158,8 @@ test('a wrong sign shows the balance explanation and is stored as EQ-D4; Esc can
 });
 
 test('free practice at a stored EQ level 2 opens the tile builder (R-ADP, R-ANS-5)', async ({ page }) => {
-  await page.goto('./');
-  await expect(page.getByRole('heading', { name: 'Hi there!' })).toBeVisible();
   // As if the learner had been moved down to level 2 (demotion is silent, R-ADP-6).
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve, reject) => {
-        const open = indexedDB.open('turtle-penguin-math');
-        open.onsuccess = () => {
-          const tx = open.result.transaction('topicStates', 'readwrite');
-          tx.objectStore('topicStates').put({ profileId: 'default', topic: 'EQ', level: 2, window: [] });
-          tx.oncomplete = () => resolve();
-          tx.onerror = () => reject(tx.error);
-        };
-        open.onerror = () => reject(open.error);
-      }),
-  );
+  await openHome(page, { topicStates: [{ profileId: 'default', topic: 'EQ', level: 2, window: [] }] });
   await page.getByRole('button', { name: 'Equations', exact: true }).click();
   await expect(page.getByText('Equations · Level 2')).toBeVisible();
   await expect(page.locator('.tile-board')).toBeVisible();

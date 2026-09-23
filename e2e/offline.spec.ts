@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test';
+import { openHome } from './helpers';
 
 // M0 done-when: the built app loads again with the network off (R-PLAT-3).
 test('app shell reloads offline after first load', async ({ page, context }) => {
-  await page.goto('./');
+  await openHome(page);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await page.evaluate(async () => {
     const reg = await navigator.serviceWorker.ready;

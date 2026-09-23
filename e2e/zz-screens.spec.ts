@@ -4,6 +4,7 @@ import { generatePc } from '../src/engine/topics/pc/generator';
 import { generateEq } from '../src/engine/topics/eq/generator';
 import { eqWalkthrough } from '../src/engine/topics/eq/hints';
 import { questionSeed } from '../src/engine/session';
+import { assignment, openHome } from './helpers';
 
 const OUT = process.env.SHOTS ?? '';
 
@@ -12,6 +13,8 @@ test.skip(!OUT, 'screenshots only on demand');
 test('screens', async ({ page }, info) => {
   const tag = info.project.name;
   await page.goto('./');
+  await page.screenshot({ path: `${OUT}/${tag}-setup.png` });
+  await openHome(page);
   await page.screenshot({ path: `${OUT}/${tag}-home.png` });
   await page.goto('./?level=4&seed=2024');
   const input = page.getByRole('textbox', { name: 'Your next line' });
@@ -97,7 +100,9 @@ test('session and reward screens', async ({ page }, info) => {
       .click();
     await page.getByRole('button', { name: 'Check' }).click();
   };
-  await page.goto(`./?assign=PC:5,RD:1,EQ:1@3&title=Monday%20practice&seed=${seed}`);
+  await openHome(page, {
+    assignments: [assignment('PC:5,RD:1,EQ:1@3', { seed, title: 'Monday practice' })],
+  });
   await page.getByRole('button', { name: 'Start ›' }).waitFor();
   await shot('home-assignment', 200);
   await page.getByRole('button', { name: 'Start ›' }).click();

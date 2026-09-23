@@ -2,6 +2,7 @@
 // attempts persisted to IndexedDB.
 import { expect, test, type Page } from '@playwright/test';
 import { generateEq } from '../src/engine/topics/eq/generator';
+import { openHome } from './helpers';
 import { eqWalkthrough } from '../src/engine/topics/eq/hints';
 
 const LEVEL = 4;
@@ -87,7 +88,7 @@ test('attempts are saved to IndexedDB after every step (R-SES-5)', async ({ page
 });
 
 test('Home: the Equations tile opens free practice at the adaptive level, 3 to start', async ({ page }) => {
-  await page.goto('./');
+  await openHome(page);
   await page.getByRole('button', { name: 'Equations', exact: true }).click();
   await expect(page.getByText('Equations · Level 3')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Your next line' })).toBeVisible();

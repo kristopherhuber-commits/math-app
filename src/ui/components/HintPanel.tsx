@@ -3,6 +3,7 @@
 // hint body, so every topic shares the panel.
 import type { ReactNode } from 'react';
 import { Turtle } from '../mascots/Turtle';
+import { useSettings } from '../settings';
 import { strings } from '../strings';
 
 interface Props {
@@ -16,12 +17,16 @@ interface Props {
 }
 
 export function HintPanel({ tier, body, walkOffered, onMore, onClose, onShowMe }: Props) {
+  const turtle = useSettings().mascotNames.turtle;
   return (
     <aside className="hint-panel" aria-label={strings.hint.title(tier)}>
       <div className="hint-header">
         <span className="hint-who">
           <Turtle pose={tier === 1 ? 'think' : 'point'} size={56} />
-          <span className="label">{strings.hint.title(tier)}</span>
+          <span className="hint-name">
+            <strong>{turtle}</strong>
+            <span className="label">{strings.hint.title(tier)}</span>
+          </span>
         </span>
         <span className="ladder" aria-hidden="true">
           {[1, 2, 3].map((n) => (

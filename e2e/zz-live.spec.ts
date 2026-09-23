@@ -6,6 +6,12 @@ test.skip(!LIVE, 'live check only on demand');
 
 test('live site loads, is installable and works offline', async ({ page, context }) => {
   await page.goto(LIVE);
+  // A fresh browser starts at the first-run setup (M5, R-PAR-1): a PIN twice, then the names.
+  await expect(page.getByRole('heading', { name: 'Hello, grown-up!' })).toBeVisible();
+  await page.keyboard.type('2468');
+  await expect(page.getByRole('heading', { name: 'Type the PIN again' })).toBeVisible();
+  await page.keyboard.type('2468');
+  await page.getByRole('button', { name: "Let's go ›" }).click();
   await expect(page.getByRole('heading', { name: 'Hi there!' })).toBeVisible();
   const href = await page.locator('link[rel="manifest"]').getAttribute('href');
   const manifest = await (await page.request.get(new URL(href!, page.url()).toString())).json();
