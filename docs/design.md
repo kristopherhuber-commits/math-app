@@ -6,6 +6,10 @@
 | Requirements | `docs/requirements.md` (requirement IDs `R-…` are referenced below) |
 | Mockups | `docs/design/mockups/*.svg` (the source) + `*.png` (renders of the same) |
 | Mockup generator | `docs/design/mockups/_src/` (Python; regenerate after token changes) |
+| Original brief | `math-app-description.md` (the parent's first description of the app, for intent) |
+| Build brief | `cc-develop-handoff.md` (the original Claude Code instructions for M0–M2; historical) |
+| Milestone reports | `docs/milestones/M<n>-report.md` |
+| Project checkpoint | `progress.md` (status, decisions, Q&A, assumptions, next steps) |
 | Last updated | 2026-09-21 |
 
 **For Claude Code:** the mockups show layout, hierarchy and state. They are not pixel specs; the tokens and component specs below are the source of truth. Purple numbered circles in the mockups are **annotations**. They are not UI. Each one is explained in §7 under that screen.

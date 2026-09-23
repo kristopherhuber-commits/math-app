@@ -61,6 +61,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-22 | M2: where does the walkthrough start when the learner has made progress? | **From the learner's last accepted line**; accepted lines count as done, and it ends with the substitution check against the original equation. |
 | 2026-09-22 | M2: where is the R-EQ-PED-2 count of correct sign choices stored? | **Derived from stored attempts** (accepted `SIGN` tries). No schema change. |
 | 2026-09-23 | Project checkpoint | Don't edit `CLAUDE.md`. Status, Q&A and decisions live in `progress.md` (this file). |
+| 2026-09-23 | Reference list in design.md | Approved: design.md header now lists the original brief, the build brief, milestone reports and `progress.md`. |
 
 ## 5. Assumptions in force (spec silent; reversible)
 
