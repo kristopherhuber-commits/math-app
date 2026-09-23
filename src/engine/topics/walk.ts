@@ -42,6 +42,8 @@ export interface NumWalkStep {
   division?: { ld: LongDivision; highlightRepeat: boolean };
   sets?: { place: NcSet; lit: NcSet[] };
   mini?: MiniQuestion;
+  /** A sentence shown with the result, once the mini-question is answered (or at once without one). */
+  reveal?: HintContent;
 }
 
 /**

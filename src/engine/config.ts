@@ -29,6 +29,17 @@ export const config = {
     /** Levels that use the tile builder (R-ANS-5). */
     tileLevels: [1, 2] as readonly number[],
   },
+  /** Levels per topic (requirements §6–7). */
+  levels: { NC: 5, RD: 5, FDP: 5, PC: 5, EQ: 6 },
+  /** RD (§6.2). Ranges the spec leaves open are M3 assumptions. */
+  rd: {
+    /** L3: whole part 1…wholeMax, block length 1…3. L4: whole part 0…wholeMax. */
+    wholeMax: 9,
+    /** F→D denominators by level; level 5 uses all of them. */
+    f2dDenominators: { 3: [3, 9, 11], 4: [6, 12, 15, 22], 5: [7] } as Record<number, readonly number[]>,
+    /** Levels (and above) where bar notation is shown beside the ellipsis (R-DISP-3). */
+    barFromLevel: 3,
+  },
   /** R-DISP-6 */
   variables: [
     'a',
