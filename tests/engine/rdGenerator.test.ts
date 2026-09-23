@@ -243,7 +243,7 @@ describe('RD worked examples', () => {
   it('walkthrough for 4.2424…: 100x, 99x = 420, 420/99, gcd 3, 140/33', () => {
     const steps = rdWalkthrough(fake(4, '', '24'));
     expect(steps).toHaveLength(6);
-    expect(steps[2]!.math).toEqual(['100x = 424.242424\\ldots']);
+    expect(steps[2]!.math).toEqual(['100x = 424.242424\\text{…}']);
     expect(steps[3]!.math).toEqual(['99x = 420']);
     expect(steps[4]!.math).toEqual(['x = \\frac{420}{99}']);
     expect(steps[5]!.explain).toEqual({ id: 'rd.walk.simplify', params: { n: '420', d: '99', g: '3' } });
@@ -254,8 +254,8 @@ describe('RD worked examples', () => {
 
   it('walkthrough for 0.41666…: 100x = 41.666…, 1000x = 416.666…, 900x = 375, 375/900 = 5/12', () => {
     const steps = rdWalkthrough(fake(0, '41', '6'));
-    expect(steps[1]!.math).toEqual(['100x = 41.666\\ldots']);
-    expect(steps[2]!.math).toEqual(['1000x = 416.666\\ldots']);
+    expect(steps[1]!.math).toEqual(['100x = 41.666\\text{…}']);
+    expect(steps[2]!.math).toEqual(['1000x = 416.666\\text{…}']);
     expect(steps[3]!.math).toEqual(['900x = 375']);
     expect(steps[4]!.math).toEqual(['x = \\frac{375}{900}']);
     expect(steps[5]!.explain.params.g).toBe('75');

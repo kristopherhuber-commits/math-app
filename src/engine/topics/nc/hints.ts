@@ -74,7 +74,11 @@ export function ncWalkthrough(q: NcQuestion, naturalIncludesZero: boolean): NumW
       case 'nines':
         steps.push({
           explain: content('nc.walk.value.nines', { x }),
-          math: ['3 \\times 0.333\\ldots = 0.999\\ldots', '3 \\times \\frac{1}{3} = 1', `${x} = ${exact}`],
+          math: [
+            '3 \\times 0.333\\text{…} = 0.999\\text{…}',
+            '3 \\times \\frac{1}{3} = 1',
+            `${x} = ${exact}`,
+          ],
         });
         break;
       case 'decimal':

@@ -83,7 +83,7 @@ function showPattern(p: IrrationalPattern): Shown {
   const body = patternDigits(p);
   return {
     kind: 'math',
-    latex: `${signedTex(p.negative)}${body}\\ldots`,
+    latex: `${signedTex(p.negative)}${body}\\text{…}`,
     text: `${signed(p.negative)}${body}…`,
     speech: `${p.negative ? 'minus ' : ''}${body} and so on, never repeating`,
     caption: content(`nc.caption.${p.family}`, { digit: `${p.digit}` }),

@@ -9,8 +9,10 @@ export const strings = {
   appName: 'Turtle & Penguin Math',
   home: {
     greeting: 'Hi there!',
-    intro: 'Pick a level and solve equations one step at a time.',
+    intro: 'Pick a topic and a level.',
+    topics: 'Topics',
     topic: 'Equations',
+    levels: (topic: string) => `${topic} levels`,
     level: (n: number) => `Level ${n}`,
     levelExamples: {
       1: '$3x + 4 = 19$',
@@ -261,6 +263,443 @@ export function hintText(h: HintContent): string {
       return `Multiply both sides by $${p.m}$.`;
     case 'eq.walk.check':
       return `Check: put $${p.variable} = ${p.value}$ back into the first equation. $${p.left} = ${p.leftValue}$ and $${p.right} = ${p.rightValue}$. Both sides match ✓`;
+    default:
+      return '';
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Number topics (M3: NC, RD, FDP, PC). Text between §…§ is LaTeX and is rendered by <Tex>
+// ($ is left alone here because prices use it).
+
+export type TopicKey = 'NC' | 'RD' | 'FDP' | 'PC' | 'EQ';
+
+export const topicStrings = {
+  name: {
+    NC: 'Number sets',
+    RD: 'Repeating decimals',
+    FDP: 'Fractions, decimals, percents',
+    PC: 'Price changes',
+    EQ: 'Equations',
+  } satisfies Record<TopicKey, string>,
+  /** The glyph on each Home topic tile (design.md §5 TopicTile), as LaTeX. */
+  glyph: {
+    NC: '\\mathbb{N} \\subset \\mathbb{Z} \\subset \\mathbb{Q}',
+    RD: '0.\\overline{3} = \\tfrac{1}{3}',
+    FDP: '\\tfrac{3}{8} = 37.5\\%',
+    PC: '\\text{\\$40} \\to \\text{\\$44}',
+    EQ: '3x + 4 = 19',
+  } satisfies Record<TopicKey, string>,
+  chip: (topic: TopicKey, level: number) => `${topicStrings.name[topic]} · Level ${level}`,
+  /** Home level cards: an example per level (§6 tables); §…§ is LaTeX. */
+  levelExamples: {
+    NC: [
+      '§7,\\ 0,\\ \\tfrac{3}{4},\\ 0.25§',
+      '§-12,\\ -\\tfrac{5}{8},\\ 0.333\\text{…}§',
+      '§\\tfrac{12}{4},\\ 3.0§',
+      '§0.1010010001\\text{…}§',
+      'Challenge mix',
+    ],
+    RD: [
+      '§0.333\\text{…}§',
+      '§0.454545\\text{…}§',
+      '§4.242424\\text{…}§',
+      '§0.41666\\text{…}§',
+      'Mixed review',
+    ],
+    FDP: [
+      '§\\tfrac{1}{2} = 0.5 = 50\\%§',
+      '§\\tfrac{3}{8} = 0.375§',
+      '§2\\tfrac{1}{4} = 225\\%§',
+      '§\\tfrac{1}{3} = 33.\\overline{3}\\%§',
+      'Mixed review',
+    ],
+    PC: ['$40 up 10%', '$36.50 up 12%', 'Up 20%, then down 20%', 'Find the original price', 'Mixed review'],
+  } as Record<string, string[]>,
+};
+
+export const numStrings = {
+  check: 'Check',
+  notQuite: 'Not quite.',
+  solved: "Yes! That's it.",
+  mcKeyboard: 'Tap an answer, then Check. Keyboard: 1–5 to choose, Enter to check.',
+  options: 'Answer options',
+  option: (n: number, speech: string) => `Option ${n}: ${speech}`,
+  nc: {
+    prompt: 'Which sets does this number belong to? Tick all that apply.',
+    keyboard: 'Tap the sets, then Check. Keyboard: Tab to a set, Space to tick, Enter to check.',
+    sets: 'Number sets',
+    setsMap: 'Sets map',
+    setsMapTitle: 'The sets map',
+    close: 'Close',
+    flagged: 'Have another look at the outlined boxes.',
+    name: {
+      natural: 'Natural',
+      whole: 'Whole',
+      integer: 'Integer',
+      rational: 'Rational',
+      irrational: 'Irrational',
+      real: 'Real',
+    } as Record<string, string>,
+    example: (set: string, naturalIncludesZero: boolean): string =>
+      ({
+        natural: naturalIncludesZero ? '0, 1, 2, …' : '1, 2, 3, …',
+        whole: '0, 1, 2, …',
+        integer: '…, −1, 0, 1, …',
+        rational: 'fractions p/q',
+        irrational: 'never repeats',
+        real: 'all of these',
+      })[set] ?? '',
+  },
+  walk: {
+    division: 'Long division',
+    subtraction: 'Subtraction, lined up',
+    remainder: 'remainder',
+    comesBack: 'comes back!',
+    tailsCancel: 'the tails line up and cancel!',
+  },
+};
+
+const digitWord = (k: string) => (k === '1' ? '1 digit' : `${k} digits`);
+const placeWord = (k: string) => (k === '1' ? '1 place' : `${k} places`);
+const setList = (ids: string): string => {
+  const names = ids.split(',').map((s) => numStrings.nc.name[s] ?? s);
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : (names[0] ?? '');
+};
+
+/** "Not quite." plus one misconception line (R-HELP-1a, design.md §9). Never reveals the answer. */
+export function misconceptionLine(code: string, kind = ''): string | null {
+  switch (code) {
+    case 'RD-M1':
+      return 'That uses only the repeating block. What about the digits in front of it?';
+    case 'RD-M2':
+      return 'Close! Remember to take away the part that doesn’t repeat.';
+    case 'RD-M3':
+      return 'Count the digits in the repeating block. How many 9s does that make?';
+    case 'RD-M4':
+    case 'RD-F1':
+      return 'That decimal stops. This one goes on forever.';
+    case 'RD-M5':
+      return 'Only part of it repeats. Shift the part that doesn’t repeat first.';
+    case 'RD-M6':
+      return 'Over 10s gives a decimal that stops. This one goes on forever.';
+    case 'RD-F2':
+      return 'Check which digits repeat: watch for the remainder that comes back.';
+    case 'RD-F3':
+      return 'Check where the repeating starts. Not every digit repeats.';
+    case 'RD-F4':
+    case 'FDP-M2':
+      return 'The digits of a fraction aren’t its decimal. Try dividing.';
+    case 'RD-F5':
+    case 'FDP-M3':
+      return 'That’s the fraction flipped over. Divide the top by the bottom.';
+    case 'FDP-M1':
+      return 'Check which way the decimal point moves.';
+    case 'FDP-M4':
+      return 'Percent means out of 100, not out of 10.';
+    case 'FDP-M5':
+      return 'Divide the top and the bottom by the same number.';
+    case 'FDP-M6':
+      return 'That stops too soon. This one goes on forever.';
+    case 'FDP-M7':
+      return 'Don’t forget the whole-number part.';
+    case 'PC-M1':
+      return 'A percent isn’t a number of dollars. Find the percent of the price.';
+    case 'PC-M2':
+      return kind === 'reverse'
+        ? 'That’s how much it changed. What was the price before?'
+        : 'That’s how much it changed. What’s the new price?';
+    case 'PC-M3':
+      return 'Check the direction: is the price going up or down?';
+    case 'PC-M4':
+      return 'That’s the same as the start price.';
+    case 'PC-M5':
+      return 'The second percent is taken of the new price, so the percents don’t just add.';
+    case 'PC-M6':
+    case 'PC-M7':
+      return 'The percent was taken of the original price, not of the price after.';
+    default:
+      return null;
+  }
+}
+
+const upDown = (dir?: string) => (dir === 'up' ? 'up' : 'down');
+
+/** Number-topic prompts, captions, hints and walkthrough text (R-HELP-4/5). §…§ is LaTeX. */
+export function numText(h: HintContent): string {
+  const p: P = h.params;
+  switch (h.id) {
+    // captions (R-DISP-3/4)
+    case 'num.caption.block':
+      return `the block ${p.block} repeats forever`;
+    case 'nc.caption.growingZeros':
+      return 'one more 0 each time, forever';
+    case 'nc.caption.counting':
+      return 'the counting numbers 1, 2, 3, … written in a row, forever';
+
+    // prompts
+    case 'rd.prompt.d2f':
+      return 'Write this as a fraction in lowest terms:';
+    case 'rd.prompt.f2d':
+      return 'Write this fraction as a decimal:';
+    case 'fdp.prompt':
+      return (
+        {
+          decimal: 'Write this as a decimal:',
+          percent: 'Write this as a percent:',
+          fraction: 'Write this as a fraction in lowest terms:',
+          mixed: 'Write this as a mixed number in lowest terms:',
+          improper: 'Write this as an improper fraction in lowest terms:',
+        }[p.target ?? ''] ?? ''
+      );
+    case 'pc.prompt.single':
+      return `A price of ${p.price} goes ${upDown(p.dir)} ${p.pct}%. What is the new price?`;
+    case 'pc.prompt.successive':
+      return `A price of ${p.price} goes ${upDown(p.dir)} ${p.pct}%, then ${upDown(p.dir2)} ${p.pct2}%. What is the price now?`;
+    case 'pc.prompt.reverse':
+      return p.dir === 'up'
+        ? `After a ${p.pct}% increase, it costs ${p.price}. What was the original price?`
+        : `After a ${p.pct}% discount, it costs ${p.price}. What was the original price?`;
+    case 'pc.hero.single':
+      return `${p.price} → ${upDown(p.dir)} ${p.pct}% → ?`;
+    case 'pc.hero.successive':
+      return `${p.price} → ${upDown(p.dir)} ${p.pct}% → ${upDown(p.dir2)} ${p.pct2}% → ?`;
+    case 'pc.hero.reverse':
+      return p.dir === 'up' ? `? → up ${p.pct}% → ${p.price}` : `? → ${p.pct}% off → ${p.price}`;
+
+    // RD hints
+    case 'rd.d2f.h1':
+      return `Call the number §x§, so §x = ${p.x}§. Which digits repeat, and how many of them are there?`;
+    case 'rd.d2f.h2':
+      return `The block ${p.block} repeats. Multiply §x§ by §${p.pow}§, line the two numbers up and subtract §x§: the repeating tails cancel.`;
+    case 'rd.d2f.h2.delayed':
+      return `Only part of it repeats. Multiply §x§ by §${p.p1}§ so only the repeating part is after the point, and by §${p.p2}§ to shift one more block. Subtract the two: the tails cancel.`;
+    case 'rd.f2d.h1':
+      return `A fraction is a division: §\\frac{${p.n}}{${p.d}}§ means §${p.n} \\div ${p.d}§.`;
+    case 'rd.f2d.h2':
+      return `Divide §${p.n}§ by §${p.d}§ with long division and write down each remainder. When a remainder comes back, the digits repeat from there.`;
+
+    // RD walkthrough (x-method, long division)
+    case 'rd.walk.let':
+      return 'Call the number §x§.';
+    case 'rd.walk.block':
+      return `Look at the block that repeats: ${p.block}.`;
+    case 'rd.walk.mini.blockLength':
+      return 'How many digits are in the repeating block?';
+    case 'rd.walk.block.reveal':
+      return `${digitWord(p.k ?? '')}, so we multiply by §${p.pow}§.`;
+    case 'rd.walk.prefix':
+      return `Before the repeating starts, there is ${p.nonRep}.`;
+    case 'rd.walk.mini.prefixLength':
+      return 'How many digits come before the repeating block?';
+    case 'rd.walk.prefix.reveal':
+      return `${digitWord(p.m ?? '')}, so multiply by §${p.pow}§ to move them in front of the point:`;
+    case 'rd.walk.shift':
+      return `Multiply §x§ by §${p.pow}§: the point moves ${placeWord(p.k ?? '')} to the right.`;
+    case 'rd.walk.shift.more':
+      return `Now shift one more block: multiply §x§ by §${p.pow}§.`;
+    case 'rd.walk.mini.times':
+      return `What is §${p.pow} \\times ${p.x}§?`;
+    case 'rd.walk.subtract':
+      return `Line them up and subtract: §${p.left} = ${p.right}§`;
+    case 'rd.walk.mini.difference':
+      return `So §${p.coef}x§ = ?`;
+    case 'rd.walk.cancel':
+      return 'The repeating tails line up and cancel:';
+    case 'rd.walk.divide':
+      return `Divide both sides by §${p.coef}§:`;
+    case 'rd.walk.simplify':
+      return `Simplify: §\\gcd(${p.n}, ${p.d}) = ${p.g}§, so divide the top and the bottom by §${p.g}§:`;
+    case 'rd.walk.lowest':
+      return `§\\gcd(${p.n}, ${p.d}) = 1§, so it is already in lowest terms:`;
+    case 'rd.walk.f2d.divide':
+      return `§\\frac{${p.n}}{${p.d}}§ means §${p.n} \\div ${p.d}§. Let’s do it by long division.`;
+    case 'rd.walk.f2d.rows':
+      return `Each time: bring down a 0, divide by §${p.d}§, write the digit and keep the remainder.`;
+    case 'rd.walk.mini.remainder':
+      return 'Which remainder comes back?';
+    case 'rd.walk.f2d.again':
+      return `The remainder §${p.r}§ has come back.`;
+    case 'rd.walk.f2d.repeat':
+      return `Remainder §${p.r}§ came back, so from here the same digits come again, forever. The repeating block is ${p.block}.`;
+    case 'rd.walk.f2d.stops':
+      return 'The remainder is 0, so the decimal stops:';
+
+    // FDP hints (R-FDP-4)
+    case 'fdp.f2d.h1':
+      return `A fraction is a division. What division is §${p.f}§?`;
+    case 'fdp.f2d.h2':
+      return `Work out §${p.n} \\div ${p.d}§: by long division, or make the bottom 10, 100 or 1000 first.`;
+    case 'fdp.f2p.h1':
+      return `First turn §${p.f}§ into a decimal. Then remember: percent means out of 100.`;
+    case 'fdp.f2p.h2':
+      return `Work out §${p.n} \\div ${p.d}§, then multiply by 100.`;
+    case 'fdp.d2p.h1':
+      return `Percent means out of 100. What do you multiply §${p.dec}§ by to get a percent?`;
+    case 'fdp.d2p.h2':
+      return `Multiply §${p.dec}§ by 100: the decimal point moves 2 places to the right.`;
+    case 'fdp.p2d.h1':
+      return `Percent means out of 100. What do you do to §${p.pct}§ to get a decimal?`;
+    case 'fdp.p2d.h2':
+      return 'Divide by 100: the decimal point moves 2 places to the left.';
+    case 'fdp.d2f.h1':
+      return `Read §${p.dec}§ with place value. What place is its last digit in?`;
+    case 'fdp.d2f.h2':
+      return `Write §${p.dec}§ without the point, over §${p.d}§. Then divide the top and the bottom by their gcd.`;
+    case 'fdp.d2f.h2.repeat':
+      return 'This decimal repeats. Call it §x§, multiply by 10, 100 or 1000 to shift one block, and subtract §x§.';
+    case 'fdp.p2f.h1':
+      return `Percent means out of 100. How would you write §${p.pct}§ as a fraction?`;
+    case 'fdp.p2f.h2':
+      return `Write §${p.pct}§ over 100 (make the top a whole number if it has a point), then divide the top and the bottom by their gcd.`;
+    case 'fdp.p2f.h2.repeat':
+      return `First divide by 100: §${p.pct} = ${p.dec}§. Then call it §x§ and use the repeating-decimal method.`;
+
+    // FDP walkthrough
+    case 'fdp.walk.toImproper':
+      return 'First write the mixed number as an improper fraction:';
+    case 'fdp.walk.toMixed':
+      return `It is more than 1, so write it as a mixed number: §${p.whole}§ wholes and what is left over.`;
+    case 'fdp.walk.times100':
+      return 'Now multiply by 100 to make a percent: the point moves 2 places to the right.';
+    case 'fdp.walk.d2p':
+      return `Percent means out of 100, so multiply §${p.dec}§ by 100.`;
+    case 'fdp.walk.mini.times100':
+      return `What is §${p.v} \\times 100§?`;
+    case 'fdp.walk.percent':
+      return 'Add the percent sign:';
+    case 'fdp.walk.p2d':
+      return `Percent means out of 100, so divide §${p.pct}§ by 100.`;
+    case 'fdp.walk.mini.over100':
+      return `What is §${p.v} \\div 100§?`;
+    case 'fdp.walk.decimal':
+      return 'So as a decimal:';
+    case 'fdp.walk.d2f.over':
+      return `Write §${p.dec}§ over §${p.d}§:`;
+    case 'fdp.walk.p2f.first':
+      return 'First divide by 100 to make a decimal:';
+    case 'fdp.walk.p2f.over100':
+      return 'Percent means out of 100:';
+    case 'fdp.walk.p2f.whole':
+      return `Multiply the top and the bottom by §${p.k}§ so the top is a whole number:`;
+
+    // PC hints (R-PC-2)
+    case 'pc.single.h1':
+      return `First find ${p.pct}% of ${p.price}. Then: is the price going up or down?`;
+    case 'pc.single.h2':
+      return p.dir === 'up'
+        ? `Find ${p.pct}% of ${p.price} and add it on. Or use the multiplier: up ${p.pct}% means × ${p.mult}.`
+        : `Find ${p.pct}% of ${p.price} and take it away. Or use the multiplier: down ${p.pct}% means × ${p.mult}.`;
+    case 'pc.successive.h1':
+      return `Do one change at a time. The second ${p.pct2}% is taken of the new price, not the first one.`;
+    case 'pc.successive.h2':
+      return `Multiply the price by ${p.m1}, then by ${p.m2}. (Or multiply ${p.m1} × ${p.m2} first.)`;
+    case 'pc.reverse.h1':
+      return `The ${p.pct}% was taken of the original price, not of ${p.price}. What was the original multiplied by?`;
+    case 'pc.reverse.h2':
+      return `original × ${p.mult} = ${p.price}. So divide ${p.price} by ${p.mult}.`;
+
+    // PC walkthrough (R-PC-2/3)
+    case 'pc.walk.part':
+      return `Find the part: ${p.pct}% of ${p.price}. Then ${p.dir === 'up' ? 'add it on' : 'take it away'}.`;
+    case 'pc.walk.second':
+      return `Now the second change. This ${p.pct}% is of ${p.price}, the new price.`;
+    case 'pc.walk.mini.part':
+      return `What is ${p.pct}% of ${p.price}?`;
+    case 'pc.walk.multiplier':
+      return `Or use the multiplier: ${upDown(p.dir)} ${p.pct}% means × ${p.mult}.`;
+    case 'pc.walk.notBack':
+      return `${p.dir === 'up' ? 'Up' : 'Down'} ${p.pct}% then ${upDown(p.dir2)} ${p.pct2}% does not get back to ${p.start}. The second ${p.pct2}% is taken of ${p.mid}, a ${p.bigger} number than ${p.start}.`;
+    case 'pc.walk.notAdd':
+      return `The two percents don’t just add up: the second ${p.pct2}% is taken of ${p.mid}, not of ${p.start}.`;
+    case 'pc.walk.backExactly':
+      return `This time the two changes do get back to ${p.start}: the multipliers multiply to exactly 1.`;
+    case 'pc.walk.multipliers':
+      return 'With multipliers: multiply them together, then multiply the price.';
+    case 'pc.walk.reverse.setup':
+      return p.dir === 'up'
+        ? `A ${p.pct}% increase means the original price was multiplied by ${p.mult}.`
+        : `${p.pct}% off means the original price was multiplied by ${p.mult}.`;
+    case 'pc.walk.reverse.divide':
+      return `To undo multiplying by ${p.mult}, divide by ${p.mult}.`;
+    case 'pc.walk.mini.divide':
+      return `What is ${p.price} ÷ ${p.mult}?`;
+    case 'pc.walk.reverse.check':
+      return `Check with the part method: ${p.pct}% of ${p.price}.`;
+
+    // NC hints
+    case 'nc.h1':
+      return `Start at the smallest set. Is §${p.x}§ a counting number (1, 2, 3, …)?`;
+    case 'nc.h2.intFraction':
+      return `§${p.x}§ simplifies. What is §${p.a} \\div ${p.b}§?`;
+    case 'nc.h2.zeroFraction':
+      return `What is §0 \\div ${p.b}§? Zero divided by any number is…?`;
+    case 'nc.h2.pointZero':
+      return `§${p.x}§ has only zeros after the point. Which integer is it?`;
+    case 'nc.h2.nines':
+      return `What is §3 \\times 0.333\\text{…}§? And what is §3 \\times \\frac{1}{3}§? What does that tell you about §${p.x}§?`;
+    case 'nc.h2.decimal':
+      return `§${p.x}§ stops. Can you write it as a fraction over §${p.over}§?`;
+    case 'nc.h2.repeating':
+      return `The block ${p.block} repeats forever. Every repeating decimal can be written as a fraction p/q. Is it an integer?`;
+    case 'nc.h2.fraction':
+      return `§${p.x}§ is written as one integer over another. Is it a whole number of ones, or in between?`;
+    case 'nc.h2.zero':
+      return '0 isn’t a counting number here, but it is a whole number. Which bigger sets contain the whole numbers?';
+    case 'nc.h2.zero.natural':
+      return 'Here 0 counts as a natural number. Which bigger sets contain the natural numbers?';
+    case 'nc.h2.negInt':
+      return `§${p.x}§ is negative, so it isn’t a whole number. Is it an integer?`;
+    case 'nc.h2.posInt':
+      return `§${p.x}§ is a counting number. Which bigger sets contain every counting number?`;
+    case 'nc.h2.irrational':
+      return 'Read the rule under the number. Does a block of digits ever repeat? Does it ever stop?';
+
+    // NC walkthrough on the sets map
+    case 'nc.walk.value.irrational.growingZeros':
+      return `§${p.x}§ never stops and never repeats: there is one more 0 each time. So it can’t be written as p/q.`;
+    case 'nc.walk.value.irrational.counting':
+      return `§${p.x}§ never stops and never repeats: the numbers keep getting longer. So it can’t be written as p/q.`;
+    case 'nc.walk.value.divide':
+      return 'First, what number is it? Divide:';
+    case 'nc.walk.value.pointZero':
+      return 'Zeros after the point don’t change the value:';
+    case 'nc.walk.value.nines':
+      return `§${p.x}§ is a number in disguise. Three thirds make one whole:`;
+    case 'nc.walk.value.decimal':
+      return `§${p.x}§ stops, so write it over §${p.over}§:`;
+    case 'nc.walk.value.repeating':
+      return `The block ${p.block} repeats forever, so it can be written as a fraction (the x-method):`;
+    case 'nc.walk.value.fraction':
+      return `§${p.x}§ is one integer over another, and it is between two integers.`;
+    case 'nc.walk.value.integer':
+      return `§${p.x}§ is an integer.`;
+    case 'nc.walk.place':
+      return 'Where does it go on the sets map?';
+    case 'nc.walk.mini.smallest':
+      return 'What is the smallest set it belongs to?';
+    case 'nc.walk.place.natural':
+      return 'It is a counting number, so it goes in Natural.';
+    case 'nc.walk.place.whole':
+      return 'It isn’t a counting number, but it is a whole number, so it goes in Whole.';
+    case 'nc.walk.place.integer':
+      return 'It is negative, but it is an integer, so it goes in Integer.';
+    case 'nc.walk.place.rational':
+      return 'It is p/q but not an integer, so it goes in Rational.';
+    case 'nc.walk.place.irrational':
+      return 'It can’t be written as p/q, so it goes in Irrational.';
+    case 'nc.walk.contains.natural':
+      return 'Every natural number is also whole, an integer, rational and real.';
+    case 'nc.walk.contains.whole':
+      return 'Every whole number is also an integer, rational and real.';
+    case 'nc.walk.contains.integer':
+      return 'Every integer is also rational and real.';
+    case 'nc.walk.contains.rational':
+      return 'Every rational number is also real.';
+    case 'nc.walk.contains.irrational':
+      return 'Every irrational number is also real (but never rational).';
+    case 'nc.walk.tick':
+      return `So tick: ${setList(p.sets ?? '')}.`;
     default:
       return '';
   }

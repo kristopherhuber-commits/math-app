@@ -147,13 +147,13 @@ describe('display (R-DISP-1/2/3/5)', () => {
   it('repeating decimals show the block 3 times, with the caption', () => {
     const s = showDecimal(rep(4, '', '24'), 'ellipsis');
     expect(s.text).toBe('4.242424…');
-    expect(s.latex).toBe('4.242424\\ldots');
+    expect(s.latex).toBe('4.242424\\text{…}');
     expect(s.caption).toEqual({ id: 'num.caption.block', params: { block: '24' } });
     expect(showDecimal(rep(0, '41', '6'), 'ellipsis').text).toBe('0.41666…');
   });
   it('both notations', () => {
     const s = showDecimal(rep(4, '', '24'), 'both');
-    expect(s.latex).toBe('4.242424\\ldots');
+    expect(s.latex).toBe('4.242424\\text{…}');
     expect(s.latex2).toBe('= 4.\\overline{24}');
     expect(showDecimal(rep(4, '', '24'), 'bar').latex).toBe('4.\\overline{24}');
   });

@@ -192,7 +192,7 @@ describe('FDP worked examples (§6.3)', () => {
     expect(fdpWalkthrough(fake('3/8', 'F', 'P')).at(-1)!.math![0]).toBe('0.375 \\times 100 = 37.5\\%');
     expect(fdpWalkthrough(fake('1/250', 'P', 'F')).at(-1)!.math![0]).toBe('\\frac{4}{1000} = \\frac{1}{250}');
     expect(fdpWalkthrough(fake('1/3', 'F', 'P')).at(-1)!.math![0]).toBe(
-      '0.333\\ldots \\times 100 = 33.333\\ldots\\%',
+      '0.333\\text{…} \\times 100 = 33.333\\text{…}\\%',
     );
     expect(fdpWalkthrough(fake('9/4', 'D', 'F', 'mixed')).at(-1)!.math![0]).toBe(
       '\\frac{9}{4} = 2\\frac{1}{4}',

@@ -58,3 +58,17 @@ export async function fullBalanceAnimSetting(): Promise<boolean> {
     return config.eq.fullBalanceAnimDefault;
   }
 }
+
+/** Parent settings the number topics read (R-PC-4 currency, §6.1 natural numbers); UI in M5. */
+export async function numberSettings(): Promise<{ currency: string; naturalIncludesZero: boolean }> {
+  const fallback = {
+    currency: config.settings.currency,
+    naturalIncludesZero: config.settings.naturalIncludesZero,
+  };
+  try {
+    const s = await db.settings.get(PROFILE_ID);
+    return s ? { currency: s.currency, naturalIncludesZero: s.naturalIncludesZero } : fallback;
+  } catch {
+    return fallback;
+  }
+}

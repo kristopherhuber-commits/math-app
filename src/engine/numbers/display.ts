@@ -91,7 +91,7 @@ export function showDecimal(rep: DecimalRep, notation: Notation, suffix: '' | '%
       speech: `${word}${ell}${spokenSuffix}`,
     };
   }
-  const ellLatex = `${s.latex}${ell}\\ldots${texSuffix}`;
+  const ellLatex = `${s.latex}${ell}\\text{…}${texSuffix}`;
   const ellText = `${s.text}${ell}…${suffix}`;
   const bar = { latex: `${s.latex}${barLatex}${texSuffix}`, text: `${s.text}${barText}${suffix}` };
   const speech = `${word}${ell} repeating${spokenSuffix}, block ${rep.block}`;

@@ -91,12 +91,15 @@ export function pcWalkthrough(q: McQuestion): NumWalkStep[] {
     case 'successive': {
       const [s1, s2] = spec.steps as [PcStep, PcStep];
       const both = mul(multiplier(s1), multiplier(s2));
+      const back = prices[2] === prices[0];
+      const cancelPair = s1.up !== s2.up && s1.pct === s2.pct;
       return [
         partStep(prices[0]!, prices[1]!, s1, 'pc.walk.part'),
         partStep(prices[1]!, prices[2]!, s2, 'pc.walk.second'),
-        // R-PC-3: the second percent is taken of a different number.
+        // R-PC-3: the second percent is taken of a different number, so "up 20% then down 20%"
+        // doesn't return to the start. (Up 25% then down 20% does, and the walkthrough says so.)
         {
-          explain: content(s1.up !== s2.up ? 'pc.walk.notBack' : 'pc.walk.notAdd', {
+          explain: content(back ? 'pc.walk.backExactly' : cancelPair ? 'pc.walk.notBack' : 'pc.walk.notAdd', {
             pct: `${s1.pct}`,
             pct2: `${s2.pct}`,
             dir: s1.up ? 'up' : 'down',
@@ -105,7 +108,11 @@ export function pcWalkthrough(q: McQuestion): NumWalkStep[] {
             mid: money(prices[1]!).text,
             bigger: s1.up ? 'bigger' : 'smaller',
           }),
-          math: [`${tex(prices[2]!)} \\ne ${tex(prices[0]!)}`],
+          math: back
+            ? [`${multText(multiplier(s1))} \\times ${multText(multiplier(s2))} = 1.00`]
+            : cancelPair
+              ? [`${tex(prices[2]!)} \\ne ${tex(prices[0]!)}`]
+              : [],
         },
         {
           explain: content('pc.walk.multipliers', {

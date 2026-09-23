@@ -27,9 +27,8 @@ export function d2fModels(rep: DecimalRep): McCandidate[] {
   // RD-M3: the wrong number of 9s.
   if (k >= 2) out.push(frac(rat(through - before, nines(k - 1)), 'RD-M3'));
   out.push(frac(rat(through - before, nines(k + 1)), 'RD-M3'));
-  // RD-M4: treated as terminating: cut after one block, or after the digits shown.
+  // RD-M4: treated as terminating, cut after one block (4.24).
   out.push(frac(rat(through, ten(m + k)), 'RD-M4'));
-  out.push(frac(rat(big(`${w}${rep.nonRep}${rep.block.repeat(3)}`), ten(m + 3 * k)), 'RD-M4'));
   if (m > 0) {
     // RD-M5 (delayed): forgot the 10^m shift, e.g. 0.41666… → 416/999 or 41/99.
     out.push(frac(add(rat(w), rat(big(rep.nonRep + rep.block), ten(m + k) - 1n)), 'RD-M5'));

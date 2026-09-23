@@ -23,6 +23,18 @@ export function MathLine({ text, className }: { text: string; className?: string
   return <MathText latex={toLatex(text)} className={className} />;
 }
 
+/** Number-topic copy from strings.ts with §…§ LaTeX segments ($ stays text: prices use it). */
+export function Tex({ text }: { text: string }) {
+  const parts = text.split('§');
+  return (
+    <>
+      {parts.map((part, i) =>
+        i % 2 === 1 ? <MathText key={i} latex={part} /> : <Fragment key={i}>{part}</Fragment>,
+      )}
+    </>
+  );
+}
+
 /** Copy from strings.ts with $…$ math segments. */
 export function Rich({ text }: { text: string }) {
   const parts = text.split('$');

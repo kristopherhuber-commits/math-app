@@ -93,8 +93,13 @@ describe.each([1, 2, 3, 4, 5])('PC level %i (R-TEST-2)', (level) => {
         if (q.params.kind === 'single') expect(ids).toEqual(['pc.walk.part', 'pc.walk.multiplier']);
         if (q.params.kind === 'successive') {
           expect(ids).toContain('pc.walk.multipliers');
-          expect(ids.some((id) => id === 'pc.walk.notBack' || id === 'pc.walk.notAdd')).toBe(true);
-          if (q.params.dir !== q.params.dir2) expect(ids).toContain('pc.walk.notBack');
+          expect(
+            ids.some(
+              (id) => id === 'pc.walk.notBack' || id === 'pc.walk.notAdd' || id === 'pc.walk.backExactly',
+            ),
+          ).toBe(true);
+          if (q.params.dir !== q.params.dir2 && q.params.pct === q.params.pct2)
+            expect(ids).toContain('pc.walk.notBack');
         }
         const tex = answer.replace('$', '\\$');
         const lastMath = steps.at(-1)!.math!.join(' ');
@@ -140,6 +145,19 @@ describe('PC worked examples (§6.4)', () => {
     const steps = pcWalkthrough(x);
     expect(steps.map((s) => s.explain.id)).toContain('pc.walk.notBack');
     expect(steps.at(-1)!.math![0]).toBe('1.20 \\times 0.80 = 0.96');
+  });
+  it('up 25% then down 20% does get back: the walkthrough says so instead of "not back"', () => {
+    const x = q({
+      kind: 'successive',
+      price: 4000n,
+      steps: [
+        { pct: 25, up: true },
+        { pct: 20, up: false },
+      ],
+    });
+    expect(x.params.answer).toBe('$40.00');
+    const back = pcWalkthrough(x).find((s) => s.explain.id === 'pc.walk.backExactly')!;
+    expect(back.math).toEqual(['1.25 \\times 0.80 = 1.00']);
   });
   it('up 20% then down 10% → PC-M5 treats it as up 10%', () => {
     const x = q({
