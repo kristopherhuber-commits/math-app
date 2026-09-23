@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { practiceReducer, startPractice, type PracticeState } from '../../src/ui/practice/practiceReducer';
 import { eqWalkthrough } from '../../src/engine/topics/eq/hints';
+import { formatRational } from '../../src/engine/rational';
 
 function type(s: PracticeState, line: string): PracticeState {
   return practiceReducer(practiceReducer(s, { type: 'input', value: line }), { type: 'check' });
@@ -107,6 +108,14 @@ describe('practiceReducer', () => {
     expect(s.attempt.clean).toBe(false);
     const n = practiceReducer(s, { type: 'next', seed: 3 });
     expect([n.level, n.walk, n.solved]).toEqual([3, null, false]);
+  });
+
+  it('level 6: typing the final answer straight away solves the question, clean', () => {
+    let s = startPractice(6, 4242);
+    s = type(s, `${s.question.variable} = ${formatRational(s.question.solution)}`);
+    expect(s.solved).toBe(true);
+    expect(s.lines.at(-1)!.label).toBe('solvedDirect');
+    expect(s.attempt.clean).toBe(true);
   });
 
   it('next starts a new question at the same level', () => {

@@ -2,7 +2,7 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-23 · Current state: **M0, M1, M2 done and deployed. M3 waits for the parent's go.**
+Last updated: 2026-09-23 · Current state: **M0, M1, M2 done and deployed; the M2 build session is closed. Next session: M3.**
 
 ---
 
@@ -44,7 +44,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 |---|---|---|
 | 2026-09-22 | **M0 Scaffold** | Done. Vite + React + TS PWA, tooling, tokens (light + dark values), Dexie schema v1, Pages deploy, installable and offline on the hosted URL. |
 | 2026-09-22 | **M1 Engine + typed EQ** | Done. `Rational`, seeded PRNG, config; parser → linear form → step checker with EQ-D1…D11; generators L1–6; hints H1/H2/H3 content; typed-step UI at all levels; attempts saved after every step. 195 unit/property tests, 14 e2e, engine 94.6 % lines. Report: `docs/milestones/M1-report.md`. |
-| 2026-09-23 | **M2 Tile builder, balance scale, walkthrough** | Done. Tile builder at L1–2 (drag by mouse, touch, keyboard; SignPicker; Simplify/Solve with number pad); BalanceScale (full / short after 10 correct signs / two frames under reduced motion); H3 walkthrough UI for typed and tiles; Shelly the turtle. Both M1 deviations removed. 237 unit/property tests, 30 e2e (+4 on-demand skipped), engine 95.1 % lines, 202.5 KB gz JS. Report: `docs/milestones/M2-report.md`. |
+| 2026-09-23 | **M2 Tile builder, balance scale, walkthrough** | Done. Tile builder at L1–2 (drag by mouse, touch, keyboard; SignPicker; Simplify/Solve with number pad); BalanceScale (full / short after 10 correct signs / two frames under reduced motion); H3 walkthrough UI for typed and tiles; Shelly the turtle. Both M1 deviations removed. After the parent's review: level 6 accepts a correct final answer from any line (§4). 242 unit/property tests, 30 e2e (+4 on-demand skipped), engine 95.1 % lines, 202.5 KB gz JS. Report: `docs/milestones/M2-report.md`. |
 | — | M3 Number topics | Not started; waits for the parent. |
 | — | M4–M6 | Not started. |
 
@@ -61,7 +61,9 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-22 | M2: where does the walkthrough start when the learner has made progress? | **From the learner's last accepted line**; accepted lines count as done, and it ends with the substitution check against the original equation. |
 | 2026-09-22 | M2: where is the R-EQ-PED-2 count of correct sign choices stored? | **Derived from stored attempts** (accepted `SIGN` tries). No schema change. |
 | 2026-09-23 | Project checkpoint | Don't edit `CLAUDE.md`. Status, Q&A and decisions live in `progress.md` (this file). |
+| 2026-09-23 | After trying M2: at level 6 the learner may be doing the steps in her head | **Approved rule:** at EQ level 6, a correct final answer `v = q` entered on any line ends the question (label "Solved ✓ (straight to the answer)"; the solve can still be clean). How q is written is still checked (R-EQ-CHK-5 lowest terms, R-EQ-CHK-6 exact). A wrong value, and every line that is not a final answer, is checked as before. Levels 1–5 still require every step. Implemented in `checkStep` via `config.eq.finalAnswerAnyTimeLevels = [6]`. This overrides R-EQ-CHK-3 at level 6; `requirements.md` is unchanged. |
 | 2026-09-23 | Reference list in design.md | Approved: design.md header now lists the original brief, the build brief, milestone reports and `progress.md`. |
+| 2026-09-23 | M2 build session | Closed by the parent. M3 starts in a new session. |
 
 ## 5. Assumptions in force (spec silent; reversible)
 
@@ -102,9 +104,9 @@ From M2 (details in `docs/milestones/M2-report.md` §3):
 4. (M2) design.md §6.2 ends Solve with a celebration; celebrations are M4. The substitution-check box stands in until then.
 5. (M2) The hint note "Walkthrough = 1 star, and that's OK!" (design.md §5) is shown before stars exist (M4).
 
-## 7. Approved deviations in force
+## 7. Approved deviations and rules in force
 
-**None** since 2026-09-23. `CLAUDE.md` still lists the two M1 deviations as "in force until M2"; that text is out of date, and the parent asked for it to be left unchanged.
+**Deviations: none** since 2026-09-23. **Approved rules** (they override the spec): EQ-D4 detection (M1) and the level-6 final-answer rule (2026-09-23), both in §4. `CLAUDE.md` is out of date, and the parent asked for it to be left unchanged: it still lists the two M1 deviations as "in force until M2", and it points to `cc-develop-handoff.md` for the current milestone. **This file is the authority for status.**
 
 ## 8. Code map
 

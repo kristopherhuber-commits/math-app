@@ -11,6 +11,7 @@ import {
   toFixedPlaces,
   type Rational,
 } from '../rational';
+import { config } from '../config';
 import { termMagnitude } from './format';
 import {
   allTerms,
@@ -27,6 +28,7 @@ import {
   NonLinearError,
   ratio,
   simplifiedForm,
+  solution,
   type Lin,
   type LinearEquation,
   type SideInfo,
@@ -67,7 +69,8 @@ export type StepLabel =
   | 'simplified'
   | 'simplifiedPartial'
   | 'simplifiedSolved'
-  | 'solved';
+  | 'solved'
+  | 'solvedDirect';
 
 export type Params = Record<string, string>;
 
@@ -343,6 +346,30 @@ function classify(
     if (f.kind === 'inexactDecimal') return refuse('R-EQ-CHK-6');
     return reject('EQ-D10');
   };
+
+  // Approved rule (parent, 2026-09-23): at the levels in config.eq.finalAnswerAnyTimeLevels (level 6)
+  // a correct final answer v = q ends the question from any line, since the steps may be done in the
+  // head. How q is written is still checked (R-EQ-CHK-5/6). Every other line is checked as usual.
+  const target = solution(p);
+  if (
+    config.eq.finalAnswerAnyTimeLevels.includes(opts.level) &&
+    nSimplified &&
+    nIsVEqualsQ &&
+    !pSimplified &&
+    target
+  ) {
+    const constSide = nSimplified.varSide === 'L' ? nEq.right : nEq.left;
+    const f = finalForm(constSide, nText, target);
+    if (f.kind === 'ok') return accept('SOLVE', 'solvedDirect', true);
+    if (f.kind === 'okDecimal')
+      return {
+        ...(accept('SOLVE', 'solvedDirect', true) as Extract<StepResult, { accepted: true }>),
+        note: { id: 'decimalAlsoFraction', params: { fraction: f.fraction } },
+      };
+    if (f.kind === 'notLowest') return refuse('R-EQ-CHK-5', { written: f.written });
+    if (f.kind === 'inexactDecimal') return refuse('R-EQ-CHK-6');
+    // A wrong value falls through to the usual checks.
+  }
 
   // EXPAND: P has grouping parentheses; N has fewer; each side's Lin unchanged.
   if (pParens > 0 && nParens < pParens && linEq(n.left.lin, p.left.lin) && linEq(n.right.lin, p.right.lin)) {

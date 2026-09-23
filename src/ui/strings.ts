@@ -53,6 +53,7 @@ export const strings = {
     simplifiedPartial: 'Simplified ✓ (keep going)',
     simplifiedSolved: 'Simplified + solved ✓',
     solved: 'Solved ✓',
+    solvedDirect: 'Solved ✓ (straight to the answer)',
   } satisfies Record<StepLabel | 'given', string>,
   decimalAlsoFraction: (p: P) => `($${p.fraction}$ is also fine.)`,
   hint: {

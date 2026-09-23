@@ -277,6 +277,29 @@ describe('additional rules', () => {
       'SIMPLIFY+solved',
     );
   });
+  it('approved rule: at level 6 a correct final answer is accepted from any line', () => {
+    expect(outcome(check('4(w + 1) = 7w + 9', 'w = -5/3', { level: 6 }))).toBe('SOLVE+solved');
+    expect(outcome(check('4w + 4 = 7w + 9', '-5/3 = w', { level: 6 }))).toBe('SOLVE+solved');
+    expect(outcome(check('3a - a = 23 - 3', 'a = 10', { level: 6 }))).toBe('SOLVE+solved');
+    const r = check('3a + 3 = a + 23', 'a = 10', { level: 6 });
+    expect(r.accepted && r.label).toBe('solvedDirect');
+  });
+  it('approved rule: how the answer is written is still checked at level 6', () => {
+    expect(outcome(check('4(w + 1) = 7w + 9', 'w = -10/6', { level: 6 }))).toBe('R-EQ-CHK-5');
+    expect(outcome(check('3x + 1 = 8', 'x = 2.33', { level: 6 }))).toBe('R-EQ-CHK-6');
+  });
+  it('approved rule: a wrong answer or a partial step is checked as usual at level 6', () => {
+    expect(outcome(check('3a + 3 = a + 23', 'a = 11', { level: 6 }))).not.toMatch(/SOLVE/);
+    expect(outcome(check('3a + 3 = a + 23', '3a + a = 23 - 3', { level: 6 }))).toBe('EQ-D4');
+    expect(outcome(check('3a + 3 = a + 23', '2a = 20', { level: 6 }))).toBe('R-EQ-CHK-3');
+  });
+  it('approved rule: levels 1–5 still need every step', () => {
+    for (const level of [1, 2, 3, 4, 5]) {
+      expect(outcome(check('3a + 3 = a + 23', 'a = 10', { level }))).toBe('R-EQ-CHK-3');
+      expect(outcome(check('3a - a = 23 - 3', 'a = 10', { level }))).toBe('R-EQ-CHK-3-SIMPLIFY');
+    }
+  });
+
   it('R-EQ-CHK-4: SIMPLIFY giving a = 20 also solves', () => {
     const r = check('3a - 2a = 23 - 3', 'a = 20');
     expect(outcome(r)).toBe('SIMPLIFY+solved');

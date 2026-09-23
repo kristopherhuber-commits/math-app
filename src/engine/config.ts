@@ -13,6 +13,8 @@ export const config = {
     levels: 6,
     /** R-EQ-CHK-3 */
     allowSkippingDefault: false,
+    /** Approved rule (2026-09-23): at these levels a correct final answer is accepted from any line. */
+    finalAnswerAnyTimeLevels: [6] as readonly number[],
     /** R-EQ-PED-2 */
     shortBalanceAfterCorrectSigns: 10,
     /** R-EQ-PED-2: the parent can re-enable the full animation; off means "shorten after 10". */
