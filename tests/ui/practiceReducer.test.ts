@@ -73,6 +73,42 @@ describe('practiceReducer', () => {
     expect(s.attempt.clean).toBe(false);
   });
 
+  it('a wrong try at H2 highlights the walkthrough but never starts it (R-HELP-2)', () => {
+    let s = startPractice(3, 7);
+    for (let i = 0; i < 4; i++) s = type(s, '1 + 1 = 5');
+    expect(s.hintTier).toBe(2);
+    expect(s.walkOffered).toBe(false);
+    s = type(s, '1 + 1 = 5');
+    s = type(s, '1 + 1 = 5');
+    expect(s.walkOffered).toBe(true);
+    expect(s.walk).toBeNull();
+  });
+
+  it('walkthrough starts from the last accepted line, steps with Next/Back, and counts as done (R-HELP-6)', () => {
+    let s = startPractice(3, 12345);
+    const full = eqWalkthrough(s.question.text, s.question.variable);
+    s = type(s, full[0]!.line);
+    s = practiceReducer(s, { type: 'walkStart' });
+    expect(s.walk!.steps[0]!.before).toBe(full[0]!.line);
+    expect(s.walk!.steps.at(-1)!.line).toBe(s.question.text);
+    expect(s.attempt.maxHint).toBe(3);
+    expect(s.attempt.tries.at(-1)).toMatchObject({ stepType: 'WALKTHROUGH', answer: full[0]!.line });
+    // Typing and help do nothing while the walkthrough runs.
+    expect(practiceReducer(s, { type: 'input', value: '1' })).toBe(s);
+    expect(practiceReducer(s, { type: 'help' })).toBe(s);
+    expect(practiceReducer(s, { type: 'walkBack' })).toBe(s);
+    s = practiceReducer(s, { type: 'walkNext' });
+    expect(s.walk!.index).toBe(1);
+    s = practiceReducer(s, { type: 'walkBack' });
+    expect(s.walk!.index).toBe(0);
+    for (let i = 0; i < s.walk!.steps.length; i++) s = practiceReducer(s, { type: 'walkNext' });
+    expect(s.solved).toBe(true);
+    expect(s.attempt.finishedAt).toBeDefined();
+    expect(s.attempt.clean).toBe(false);
+    const n = practiceReducer(s, { type: 'next', seed: 3 });
+    expect([n.level, n.walk, n.solved]).toEqual([3, null, false]);
+  });
+
   it('next starts a new question at the same level', () => {
     const s = practiceReducer(startPractice(4, 1), { type: 'next', seed: 2 });
     expect(s.level).toBe(4);

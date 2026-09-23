@@ -1,8 +1,8 @@
 // Tile builder model for EQ levels 1–2 (R-EQ-TILE-1…5, R-EQ-PED-1). Pure: the UI only moves
 // tiles around and asks this module what the board means. Each term of the given equation is one
 // tile; a tile that crosses the = flips its sign, and the learner has to choose that sign.
-import { div, eq, formatRational, isZero, neg, ONE, sign, type Rational } from '../rational';
-import { MINUS, sideText, termMagnitude } from './format';
+import { div, eq, formatRational, isZero, neg, ONE, parseRational, sign, type Rational } from '../rational';
+import { MINUS, sideText, termMagnitude, termText } from './format';
 import { allTerms, linearize } from './linear';
 import { parseEquation } from './parse';
 
@@ -267,4 +267,16 @@ export function simplifyPlan(separated: string, variable: string): SimplifyPlan 
     simplified,
     solve: eq(c, ONE) ? null : { divisor: c, answer, line: join(variable, formatRational(answer)) },
   };
+}
+
+/** A number-pad entry equals the expected value, compared exactly (R-ARCH-2). */
+export function entryEquals(entry: string, expected: Rational): boolean {
+  const r = parseRational(entry);
+  return r !== null && eq(r, expected);
+}
+
+/** Text of a tile for records and announcements, as the hints say it: `3a`, `−a`, `+3`, `−7`. */
+export function tileText(t: Tile, v: string): string {
+  if (t.isVar) return termText(t.coef, true, v);
+  return (sign(t.coef) < 0 ? MINUS : '+') + termMagnitude(t.coef, false, v);
 }
