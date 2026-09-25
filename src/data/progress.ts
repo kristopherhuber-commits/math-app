@@ -13,8 +13,10 @@ import {
   type Stars,
 } from '../engine/scoring';
 import { itemProgress, nextSlot } from '../engine/session';
-import { db, PROFILE_ID, type Assignment, type Attempt, type Rewards, type Settings } from './db';
+import { db, PROFILE_ID, type Assignment, type Attempt, type Settings } from './db';
 import { loadSettings } from './settings';
+import { emptyRewards } from './rewards';
+import { newlyUnlocked, spendable } from '../engine/rewards';
 
 /** A local calendar day, 'YYYY-MM-DD' (streaks follow the learner's days, R-RWD-2). */
 export function localDay(d: Date | string = new Date()): string {
@@ -35,14 +37,6 @@ export async function practiceSettings(): Promise<PracticeSettings> {
     reduceMotion: s.reduceMotion,
   };
 }
-
-const emptyRewards = (): Rewards => ({
-  profileId: PROFILE_ID,
-  shells: 0,
-  streak: 0,
-  badges: [],
-  accessories: [],
-});
 
 const topicState = (topic: TopicId) =>
   db.topicStates.where('[profileId+topic]').equals([PROFILE_ID, topic]).first();
@@ -142,8 +136,10 @@ export interface FinishContext {
 
 export interface FinishEvents {
   stars: Stars;
-  /** Shells after this attempt. */
+  /** Shells to spend after this attempt. */
   shells: number;
+  /** Cosmetics this attempt unlocked (worn at once). */
+  unlocked?: string[];
   /** The new level after a promotion (R-ADP-6). Demotions are silent, so they aren't reported. */
   levelUp?: number;
   badges: BadgeId[];
@@ -172,10 +168,10 @@ export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promi
   return db.transaction('rw', [db.attempts, db.topicStates, db.rewards, db.assignments], async () => {
     const stored = await db.attempts.get(attempt.id);
     const rewards = (await db.rewards.get(PROFILE_ID)) ?? emptyRewards();
-    if (stored?.countedAt) return { stars, shells: rewards.shells, badges: [] };
+    if (stored?.countedAt) return { stars, shells: spendable(rewards), badges: [] };
     const now = new Date().toISOString();
     await db.attempts.put({ ...attempt, countedAt: now });
-    if (!ctx.rewarded) return { stars, shells: rewards.shells, badges: [] };
+    if (!ctx.rewarded) return { stars, shells: spendable(rewards), badges: [] };
 
     const events: FinishEvents = { stars, shells: 0, badges: [] };
     const key = { profileId: PROFILE_ID, topic: attempt.topic };
@@ -191,7 +187,13 @@ export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promi
       }
     }
 
+    // Lifetime shells (never go down) unlock cosmetics, which are worn at once (R-RWD-4, M6).
+    const unlocked = newlyUnlocked(rewards.shells, rewards.shells + stars).map((c) => c.id);
     rewards.shells += stars;
+    if (unlocked.length) {
+      rewards.accessories = [...rewards.accessories.filter((a) => !unlocked.includes(a)), ...unlocked];
+      events.unlocked = unlocked;
+    }
 
     // Streak (R-RWD-2) and the assignment's completion.
     let assignmentDone: { perfect: boolean } | undefined;
@@ -242,7 +244,7 @@ export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promi
     rewards.badges.push(...events.badges.map((id) => ({ id, at: now })));
 
     await db.rewards.put(rewards);
-    events.shells = rewards.shells;
+    events.shells = spendable(rewards);
     return events;
   });
 }
@@ -271,7 +273,7 @@ export async function homeSnapshot(): Promise<HomeSnapshot> {
     settings.freePractice === 'always' || (settings.freePractice === 'afterAssignment' && !assignment);
   return {
     ...(assignment ? { assignment, progress: await assignmentProgress(assignment) } : {}),
-    shells: r.shells,
+    shells: spendable(r),
     streak: currentStreak(r, localDay(), intervals(all)),
     freeOpen,
   };
@@ -312,6 +314,8 @@ export async function assignmentSummary(id: string): Promise<Summary | null> {
 
 export const getAssignment = (id: string) => db.assignments.get(id);
 
+/** Shells to spend (the count the learner sees). */
 export async function shellCount(): Promise<number> {
-  return (await db.rewards.get(PROFILE_ID))?.shells ?? 0;
+  const r = await db.rewards.get(PROFILE_ID);
+  return r ? spendable(r) : 0;
 }

@@ -475,7 +475,7 @@ test('data: export, reset, import restores; a bad file changes nothing; the erro
   const saved = info.outputPath('export.json');
   await download.saveAs(saved);
   const exported = JSON.parse(readFileSync(saved, 'utf8'));
-  expect(exported).toMatchObject({ app: 'turtle-penguin-math', schemaVersion: 3 });
+  expect(exported).toMatchObject({ app: 'turtle-penguin-math', schemaVersion: 4 });
   expect(exported.attempts).toHaveLength(1);
 
   // Reset (asked first).
@@ -508,7 +508,7 @@ test('data: export, reset, import restores; a bad file changes nothing; the erro
   // Import the export (asked first).
   await input.setInputFiles(saved);
   await expect(page.getByRole('alertdialog')).toContainText(
-    'This file has 1 answer and 1 assignment (format v3)',
+    'This file has 1 answer and 1 assignment (format v4)',
   );
   await press(page.getByRole('button', { name: 'Replace my data' }), hasTouch);
   await expect(page.getByText('Imported.')).toBeVisible();

@@ -2,7 +2,7 @@
 // child gate, not security: it is stored as a salted SHA-256 hash only so it isn't in plain text.
 import { config, TOPICS, type TopicId } from '../engine/config';
 import { defaultBounds, type LevelBounds } from '../engine/adaptive';
-import { db, PROFILE_ID, type Settings } from './db';
+import { db, defaultShopItems, PROFILE_ID, type Settings } from './db';
 
 export type EditableSettings = Omit<Settings, 'profileId' | 'pinHash'>;
 
@@ -20,6 +20,7 @@ export function defaultSettings(): Settings {
     reduceMotion: false,
     currency: config.settings.currency,
     mascotNames: { ...config.settings.mascotNames },
+    shopItems: defaultShopItems(),
   };
 }
 

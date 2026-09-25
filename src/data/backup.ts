@@ -1,15 +1,18 @@
 // Export, import and reset (R-PAR-6, R-DATA-1). An export holds every table and the schema version;
-// importing checks the version, migrates an older file forward (v1 → v2 → current) and replaces
+// importing checks the version, migrates an older file forward (v1 → v2 → v3 → v4) and replaces
 // everything in one transaction, so a bad file changes nothing. Reset clears progress and assignments
 // but keeps the PIN, names, settings and the error list (parent decision, M5).
 import {
   db,
   SCHEMA_VERSION,
+  defaultShopItems,
   upgradeAssignmentToV2,
+  upgradeRewardsToV4,
   type Assignment,
   type Attempt,
   type ErrorEntry,
   type Profile,
+  type Redemption,
   type Rewards,
   type Settings,
   type TopicState,
@@ -28,6 +31,7 @@ export interface ExportFile {
   attempts: Attempt[];
   rewards: Rewards[];
   errors: ErrorEntry[];
+  redemptions: Redemption[];
 }
 
 const TABLES = [
@@ -38,6 +42,7 @@ const TABLES = [
   'attempts',
   'rewards',
   'errors',
+  'redemptions',
 ] as const;
 
 export async function exportData(now: Date = new Date()): Promise<ExportFile> {
@@ -55,6 +60,7 @@ export async function exportData(now: Date = new Date()): Promise<ExportFile> {
       attempts: await db.attempts.toArray(),
       rewards: await db.rewards.toArray(),
       errors: await db.errors.toArray(),
+      redemptions: await db.redemptions.toArray(),
     }),
   );
 }
@@ -92,6 +98,7 @@ export function parseImport(text: string): ParsedImport {
     ['attempts', ['id', 'topic', 'level', 'seed', 'tries']],
     ['rewards', ['profileId']],
     ['errors', ['at', 'message']],
+    ['redemptions', ['id', 'itemId', 'price', 'status']],
   ];
   if (!shapes.every(([k, keys]) => rowsWith(t(k), keys))) return { ok: false, reason: 'unreadable' };
 
@@ -99,6 +106,13 @@ export function parseImport(text: string): ParsedImport {
   // v1 → v2 (R-DATA-1): activation time and a seed for every assignment.
   if (v < 2) assignments = assignments.map((a) => upgradeAssignmentToV2(a));
   // v2 → v3: the error list is new; nothing else changes.
+  // v3 → v4: nothing spent yet, cosmetics already unlocked are worn, the default shop, no requests.
+  let rewards = t('rewards') as Rewards[];
+  let settings = t('settings') as Settings[];
+  if (v < 4) {
+    rewards = rewards.map((r) => upgradeRewardsToV4(r));
+    settings = settings.map((s) => ({ ...s, shopItems: s.shopItems ?? defaultShopItems() }));
+  }
   return {
     ok: true,
     fromVersion: v,
@@ -107,12 +121,13 @@ export function parseImport(text: string): ParsedImport {
       schemaVersion: SCHEMA_VERSION,
       exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : '',
       profiles: t('profiles') as Profile[],
-      settings: t('settings') as Settings[],
+      settings,
       topicStates: t('topicStates') as TopicState[],
       assignments,
       attempts: t('attempts') as Attempt[],
-      rewards: t('rewards') as Rewards[],
+      rewards,
       errors: (v < 3 ? [] : t('errors')) as ErrorEntry[],
+      redemptions: (v < 4 ? [] : t('redemptions')) as Redemption[],
     },
   };
 }
@@ -136,14 +151,22 @@ export async function importData(data: ExportFile): Promise<void> {
   );
 }
 
-/** R-PAR-6 reset: answers, levels, rewards and assignments go; PIN, names, settings, errors stay. */
+/**
+ * R-PAR-6 reset: answers, levels, rewards (shells, cosmetics, shop requests) and assignments go;
+ * PIN, names, settings and errors stay.
+ */
 export async function resetProgress(): Promise<void> {
-  await db.transaction('rw', [db.attempts, db.topicStates, db.rewards, db.assignments], async () => {
-    await Promise.all([
-      db.attempts.clear(),
-      db.topicStates.clear(),
-      db.rewards.clear(),
-      db.assignments.clear(),
-    ]);
-  });
+  await db.transaction(
+    'rw',
+    [db.attempts, db.topicStates, db.rewards, db.assignments, db.redemptions],
+    async () => {
+      await Promise.all([
+        db.attempts.clear(),
+        db.topicStates.clear(),
+        db.rewards.clear(),
+        db.assignments.clear(),
+        db.redemptions.clear(),
+      ]);
+    },
+  );
 }

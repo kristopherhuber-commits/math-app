@@ -27,8 +27,8 @@ describe('schema upgrades (R-DATA-1)', () => {
   it('a new database starts at the current version', async () => {
     const db = new MathDb('fresh-db');
     await db.open();
-    expect(SCHEMA_VERSION).toBe(3);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 3 });
+    expect(SCHEMA_VERSION).toBe(4);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 4 });
     expect(await db.errors.count()).toBe(0);
     db.close();
   });
@@ -45,8 +45,8 @@ describe('schema upgrades (R-DATA-1)', () => {
 
     const db = new MathDb(name);
     await db.open();
-    expect(db.verno).toBe(3);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 3 });
+    expect(db.verno).toBe(4);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 4 });
     const [a1, a2] = [await db.assignments.get('a1'), await db.assignments.get('a2')];
     expect(a1?.activatedAt).toBe('2026-09-20T10:00:00.000Z');
     expect(a2?.activatedAt).toBeUndefined();
@@ -70,8 +70,8 @@ describe('schema upgrades (R-DATA-1)', () => {
 
     const db = new MathDb(name);
     await db.open();
-    expect(db.verno).toBe(3);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 3 });
+    expect(db.verno).toBe(4);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 4 });
     expect(await db.assignments.get('a1')).toEqual(a);
     expect(await db.settings.get('default')).toMatchObject({ pinHash: 'h', freePractice: 'never' });
     expect(await db.errors.count()).toBe(0);

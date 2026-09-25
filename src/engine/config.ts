@@ -135,6 +135,38 @@ export const config = {
     /** R-RWD-7: mascot names. */
     maxNameLength: 16,
   },
+  /**
+   * The shop (parent decision, M6): real rewards bought with shells to spend; the parent gives them.
+   * Default names and prices; the parent can change prices, and M7 makes the list editable.
+   */
+  shop: {
+    items: [
+      { id: 'treat', name: 'Starbucks treat', price: 150 },
+      { id: 'robux', name: 'Roblox gift card, 2,000 Robux', price: 1500 },
+    ] as readonly { id: string; name: string; price: number }[],
+    maxPrice: 100_000,
+  },
+  /**
+   * Cosmetics (R-RWD-4 as the parent reshaped it): each unlocks when the lifetime shell count reaches
+   * `at`, and is worn at once. Alternating turtle and penguin.
+   */
+  cosmetics: [
+    { id: 'turtle-hat', mascot: 'turtle', kind: 'hat', at: 20 },
+    { id: 'penguin-scarf', mascot: 'penguin', kind: 'scarf', at: 50 },
+    { id: 'turtle-sunglasses', mascot: 'turtle', kind: 'sunglasses', at: 100 },
+    { id: 'penguin-hat', mascot: 'penguin', kind: 'hat', at: 175 },
+    { id: 'turtle-scarf', mascot: 'turtle', kind: 'scarf', at: 275 },
+    { id: 'penguin-sunglasses', mascot: 'penguin', kind: 'sunglasses', at: 400 },
+    { id: 'turtle-bowtie', mascot: 'turtle', kind: 'bowtie', at: 550 },
+    { id: 'penguin-bowtie', mascot: 'penguin', kind: 'bowtie', at: 750 },
+  ] as readonly {
+    id: string;
+    mascot: 'turtle' | 'penguin';
+    kind: 'hat' | 'scarf' | 'sunglasses' | 'bowtie';
+    at: number;
+  }[],
+  /** Home beach: at most this many shells drawn on the sand (design.md §7.1). */
+  beachShellsMax: 12,
   /** R-RWD-2/3/5 */
   rewards: {
     /** Streak lengths that get the full-screen celebration; after the last, every `streakEvery`. */
