@@ -1003,7 +1003,7 @@ export const parentStrings = {
     currency: 'Currency symbol',
     comfort: 'Sound and motion',
     sound: 'Sounds',
-    soundSub: 'Sounds arrive in a later version.',
+    soundSub: 'Short, soft sounds for choosing, right answers and level ups.',
     reduceMotion: 'Reduce motion',
     reduceMotionSub: 'Also on when the device asks for reduced motion.',
     names: 'Character names',

@@ -11,6 +11,7 @@ import { Turtle } from '../mascots/Turtle';
 import { numStrings, numText, strings, topicStrings } from '../strings';
 import { MC_TOPICS, mcReducer, startMc } from '../practice/mcReducer';
 import { CelebrationSlot, useReportAttempt, type QuestionProps } from '../practice/question';
+import { useSound } from '../sound';
 
 interface Props extends QuestionProps {
   topic: McTopic;
@@ -24,6 +25,15 @@ export function McPractice({ topic, level, seed, currency, onSave, onSolved, onN
 
   // R-SES-5: save after every answer.
   useReportAttempt(s, onSave, onSolved);
+
+  // design.md §8: a tick on choosing, one soft low note on "Not quite".
+  const play = useSound();
+  useEffect(() => {
+    if (s.selected !== null) play('select');
+  }, [s.selected, play]);
+  useEffect(() => {
+    if (s.feedback) play('notQuite');
+  }, [s.feedback, play]);
 
   useEffect(() => {
     if (s.solved && !s.walk) nextRef.current?.focus();

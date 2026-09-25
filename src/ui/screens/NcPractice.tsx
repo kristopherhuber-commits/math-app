@@ -7,6 +7,7 @@ import { ncHint } from '../../engine/topics/nc/hints';
 import { HintPanel } from '../components/HintPanel';
 import { Tex } from '../components/Math';
 import { FeedbackToast, MathHero } from '../components/Numbers';
+import { useSound } from '../sound';
 import { NumberWalkthrough } from '../components/NumberWalkthrough';
 import { SetCheckbox, SetsMap } from '../components/SetsMap';
 import { Turtle } from '../mascots/Turtle';
@@ -57,6 +58,12 @@ export function NcPractice({ level, seed, naturalIncludesZero, onSave, onSolved,
 
   // R-SES-5: save after every answer.
   useReportAttempt(s, onSave, onSolved);
+
+  // design.md §8: one soft low note on "Not quite".
+  const play = useSound();
+  useEffect(() => {
+    if (s.feedback) play('notQuite');
+  }, [s.feedback, play]);
 
   useEffect(() => {
     if (s.solved && !s.walk) nextRef.current?.focus();

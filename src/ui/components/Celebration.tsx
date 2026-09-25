@@ -7,6 +7,7 @@ import type { FinishEvents } from '../../data/progress';
 import { Penguin } from '../mascots/Penguin';
 import { cosmetic } from '../../engine/rewards';
 import { useSettings } from '../settings';
+import { useSound } from '../sound';
 import { rewardStrings } from '../strings';
 import { color } from '../theme/tokens';
 import { StarIcon } from './TopBar';
@@ -46,6 +47,14 @@ export function Celebration({
 }) {
   const [skipped, setSkipped] = useState(false);
   const names = useSettings().mascotNames;
+  const play = useSound();
+  // design.md §8: the chime, a sparkle per star, and the arpeggio for a level up. Once, on arrival.
+  useEffect(() => {
+    play('correct');
+    play('stars', events.stars);
+    if (events.levelUp !== undefined) play('levelUp');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const s = rewardStrings.celebrate;
   const big = events.stars === 3;
   const pose = events.levelUp ? 'hop' : big ? 'cheer' : 'clap';

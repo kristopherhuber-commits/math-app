@@ -7,6 +7,7 @@ import { Walkthrough } from '../components/Walkthrough';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { Turtle } from '../mascots/Turtle';
 import { feedbackText, hintText, strings } from '../strings';
+import { useSound } from '../sound';
 import { practiceReducer, startPractice } from '../practice/practiceReducer';
 import { CelebrationSlot, useReportAttempt, type QuestionProps } from '../practice/question';
 import { useSettings } from '../settings';
@@ -24,6 +25,12 @@ export function EquationPractice({ level, seed, onSave, onSolved, onNext }: Ques
 
   // R-SES-5: save after every step.
   useReportAttempt(s, onSave, onSolved);
+
+  // design.md §8: one soft low note on "Not quite".
+  const play = useSound();
+  useEffect(() => {
+    if (s.feedback) play('notQuite');
+  }, [s.feedback, play]);
 
   useEffect(() => {
     if (s.walk) return;

@@ -14,6 +14,7 @@ import { Walkthrough } from '../components/Walkthrough';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { Turtle } from '../mascots/Turtle';
 import { feedbackText, hintText, strings } from '../strings';
+import { useSound } from '../sound';
 import { startTiles, tileReducer, type TilePhase, type TileState } from '../practice/tileReducer';
 import { CelebrationSlot, useReportAttempt, type QuestionProps } from '../practice/question';
 
@@ -89,6 +90,7 @@ function LineTiles({ s }: { s: TileState }) {
 
 export function TileEquation({ level, seed, onSave, onSolved, onNext }: QuestionProps) {
   const [s, dispatch] = useReducer(tileReducer, undefined, () => startTiles(level, seed));
+  const play = useSound();
   const reduced = useReducedMotion();
   const [prefs, setPrefs] = useState<{ storedSigns: number; fullAnim: boolean }>({
     storedSigns: 0,
@@ -180,7 +182,10 @@ export function TileEquation({ level, seed, onSave, onSolved, onNext }: Question
               <TileBoard
                 board={s.board}
                 disabled={s.solved}
-                onDrop={(id, to) => dispatch({ type: 'drop', id, to })}
+                onDrop={(id, to) => {
+                  play('tileSnap');
+                  dispatch({ type: 'drop', id, to });
+                }}
                 onSign={(sign) => dispatch({ type: 'sign', sign })}
                 onSwap={() => dispatch({ type: 'swap' })}
                 announce={setAnnouncement}
