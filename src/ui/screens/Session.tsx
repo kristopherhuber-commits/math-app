@@ -4,6 +4,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { TopicId } from '../../engine/config';
 import { newSeed } from '../../engine/rng';
+import { freeAdapt, freeStart, rightFirstTime, type FreeState } from '../../engine/adaptive';
+import { useSettings } from '../settings';
 import { saveAttempt } from '../../data/attempts';
 import { logError } from '../../data/errors';
 import type { Attempt } from '../../data/db';
@@ -14,7 +16,6 @@ import {
   nextAssignmentQuestion,
   practiceSettings,
   shellCount,
-  topicLevel,
   type FinishEvents,
 } from '../../data/progress';
 import { TopBar, type TopBarProgress } from '../components/TopBar';
@@ -30,7 +31,8 @@ import { TileEquation } from './TileEquation';
 
 export type SessionKind =
   | { kind: 'assignment'; id: string }
-  | { kind: 'free'; topic: TopicId }
+  /** Free practice: a level the learner picked, or Adaptive (starts at 3, faster rules; parent decision). */
+  | { kind: 'free'; topic: TopicId; level: number | 'adaptive' }
   /** `?topic=…&level=…[&seed=…]`: for the parent and tests; no adaptive or reward changes. */
   | { kind: 'fixed'; topic: TopicId; level: number; seed?: number };
 
@@ -65,6 +67,11 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
   const started = useRef(0);
   /** Free practice, R-HELP-6: the level to stay at after a walkthrough. */
   const stayAt = useRef<number | null>(null);
+  const bounds = useSettings().levelBounds;
+  /** Adaptive free practice: this session's own level and window (the stored level is left alone). */
+  const free = useRef<FreeState | null>(
+    kind.kind === 'free' && kind.level === 'adaptive' ? freeStart(bounds[kind.topic]) : null,
+  );
   /** The solved question's finishAttempt; Next waits for it so progress is stored first. */
   const pending = useRef<Promise<FinishEvents> | null>(null);
   const advancing = useRef(false);
@@ -95,12 +102,13 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
       };
     }
     if (kind.kind === 'free') {
-      const level = stayAt.current ?? (await topicLevel(kind.topic));
+      const level = stayAt.current ?? (kind.level === 'adaptive' ? free.current!.level : kind.level);
       return {
         topic: kind.topic,
         level,
         seed: newSeed(),
-        adaptive: true,
+        // The stored (assignment) level only moves in assignments; free practice keeps its own.
+        adaptive: false,
         rewarded: true,
         progress: { n },
         key: n,
@@ -156,7 +164,20 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
   const onSolved = useCallback(
     (a: Attempt) => {
       if (!cur) return;
-      if (kind.kind === 'free') stayAt.current = a.maxHint === 3 ? a.level : null;
+      let levelUp: number | undefined;
+      if (kind.kind === 'free') {
+        // R-HELP-6: after a walkthrough, the same level next; a level change applies after that.
+        stayAt.current = a.maxHint === 3 ? a.level : null;
+        if (free.current && a.level === free.current.level) {
+          const r = freeAdapt(
+            free.current,
+            rightFirstTime({ maxHint: a.maxHint, wrongTries: a.wrongTries ?? 0 }),
+            bounds[kind.topic],
+          );
+          free.current = { level: r.level, recent: r.recent };
+          if (r.change === 'promote') levelUp = r.level;
+        }
+      }
       const fallback: FinishEvents = { stars: a.stars ?? 1, shells, badges: [] };
       pending.current = finishAttempt(tag(a), { adaptive: cur.adaptive, rewarded: cur.rewarded }).catch(
         (e: unknown) => {
@@ -166,13 +187,13 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
         },
       );
       void pending.current.then((e) => {
-        setEvents(e);
+        setEvents(levelUp !== undefined ? { ...e, levelUp } : e);
         if (e.streak?.milestone) setStreak(e.streak.days);
         setStars((s) => s + e.stars);
         if (cur.rewarded) setShells(e.shells);
       });
     },
-    [cur, kind, shells, tag],
+    [cur, kind, shells, tag, bounds],
   );
 
   const onNext = useCallback(() => {

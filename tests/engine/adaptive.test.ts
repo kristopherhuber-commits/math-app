@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import {
   adapt,
+  freeAdapt,
+  freeStart,
+  rightFirstTime,
+  type FreeState,
   clampLevel,
   initialState,
   summarize,
@@ -112,5 +116,77 @@ describe('initialState', () => {
     expect(initialState('PC')).toEqual({ level: 1, window: [] });
     expect(initialState('EQ', { min: 1, max: 2 }).level).toBe(2);
     expect(initialState('NC', { min: 2, max: 5 }).level).toBe(2);
+  });
+});
+
+// Free practice, Adaptive (parent decision 2026-09-25): start at 3, up after 3 right in a row,
+// down when 2 of the last 3 had a mistake or help.
+describe('free-practice adaptive', () => {
+  const B: LevelBounds = { min: 1, max: 5 };
+  /** Run a sequence of right (R) / not right (x) answers from a state. */
+  const run = (seq: string, from: FreeState = freeStart(B), bounds = B) => {
+    const levels: number[] = [];
+    let s = from;
+    for (const c of seq) {
+      s = freeAdapt(s, c === 'R', bounds);
+      levels.push(s.level);
+    }
+    return { s, levels };
+  };
+
+  it('starts at level 3, within the bounds', () => {
+    expect(freeStart(B)).toEqual({ level: 3, recent: [] });
+    expect(freeStart({ min: 1, max: 2 }).level).toBe(2);
+    expect(freeStart({ min: 4, max: 6 }).level).toBe(4);
+  });
+
+  it.each([
+    ['RRR', [3, 3, 4]],
+    ['RRRRRR', [3, 3, 4, 4, 4, 5]],
+    ['xx', [3, 2]],
+    ['xRx', [3, 3, 2]],
+    ['RxR', [3, 3, 3]],
+    ['RxRR', [3, 3, 3, 3]],
+    ['RxRRR', [3, 3, 3, 3, 4]],
+    ['xRRx', [3, 3, 3, 3]],
+    ['RRxRR', [3, 3, 3, 3, 3]],
+    ['xxxx', [3, 2, 2, 1]],
+    ['RRRRRRRRRR', [3, 3, 4, 4, 4, 5, 5, 5, 5, 5]],
+  ])('%s → levels %o', (seq, levels) => {
+    expect(run(seq).levels).toEqual(levels);
+  });
+
+  it('a change starts a new window: one miss right after a promotion does not demote', () => {
+    expect(run('RRRx').levels).toEqual([3, 3, 4, 4]);
+    expect(run('xxRx').levels).toEqual([3, 2, 2, 2]);
+  });
+
+  it('right means first try with no hint at all (H1 counts as help)', () => {
+    expect(rightFirstTime({ maxHint: 0, wrongTries: 0 })).toBe(true);
+    expect(rightFirstTime({ maxHint: 1, wrongTries: 0 })).toBe(false);
+    expect(rightFirstTime({ maxHint: 0, wrongTries: 1 })).toBe(false);
+    expect(rightFirstTime({ maxHint: 3, wrongTries: 0 })).toBe(false);
+  });
+
+  it('property: the level stays in bounds, moves by at most one, and the window holds at most 3', () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.boolean(), { maxLength: 60 }),
+        fc.integer({ min: 1, max: 6 }),
+        (answers, max) => {
+          const bounds = { min: 1, max };
+          let s = freeStart(bounds);
+          for (const a of answers) {
+            const next = freeAdapt(s, a, bounds);
+            expect(Math.abs(next.level - s.level)).toBeLessThanOrEqual(1);
+            expect(next.level).toBeGreaterThanOrEqual(1);
+            expect(next.level).toBeLessThanOrEqual(max);
+            expect(next.recent.length).toBeLessThanOrEqual(3);
+            s = next;
+          }
+        },
+      ),
+      { numRuns: 1000 },
+    );
   });
 });

@@ -13,6 +13,12 @@ export const config = {
     /** Starting level per topic (parent decision, M4): EQ starts at typed steps. */
     startLevel: { NC: 1, RD: 1, FDP: 1, PC: 1, EQ: 3 },
   },
+  /**
+   * Adaptive free practice (parent decision, 2026-09-25; assignments keep R-ADP-2/3): start at
+   * level 3; up after 3 right in a row (first try, no hint); down when 2 of the last 3 had a
+   * mistake or needed help.
+   */
+  freeAdaptive: { startLevel: 3, window: 3, promoteRight: 3, demoteStruggled: 2 },
   eq: {
     levels: 6,
     /** R-EQ-CHK-3 */

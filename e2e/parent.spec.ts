@@ -49,6 +49,7 @@ test('first run: the parent sets a PIN, the learner names the friends, Home uses
 
   // The turtle's name in the hint panel.
   await press(page.getByRole('button', { name: 'Equations', exact: true }), hasTouch);
+  await press(page.getByRole('button', { name: /^Adaptive/ }), hasTouch);
   await press(page.getByRole('button', { name: 'Help' }), hasTouch);
   await expect(page.locator('.hint-name')).toContainText('Mossy');
 });

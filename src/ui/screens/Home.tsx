@@ -2,9 +2,10 @@
 // (R-SES-5: Keep going resumes where the learner left off), Pip and Shelly on the beach, and the
 // free-practice topic tiles, locked until the assignment is done (R-SES-6). No percentages.
 import { useEffect, useRef, useState } from 'react';
-import { TOPICS, type TopicId } from '../../engine/config';
+import { config, TOPICS, type TopicId } from '../../engine/config';
 import { logError } from '../../data/errors';
 import { homeSnapshot, type HomeSnapshot } from '../../data/progress';
+import { LevelExample } from '../components/LevelExample';
 import { MathText } from '../components/Math';
 import { ShellIcon } from '../components/TopBar';
 import { Penguin } from '../mascots/Penguin';
@@ -28,6 +29,63 @@ function LockIcon() {
       <path className="lock-shackle" d="M5 12V8a6 6 0 0 1 12 0v4" />
       <rect x="2" y="11" width="18" height="14" rx="3" />
     </svg>
+  );
+}
+
+/** Free practice: Adaptive (first, and focused) or a level within the parent's range (R-ADP-5). */
+function LevelPicker({
+  topic,
+  bounds,
+  onPick,
+  onClose,
+}: {
+  topic: TopicId;
+  bounds: { min: number; max: number };
+  onPick: (level: number | 'adaptive') => void;
+  onClose: () => void;
+}) {
+  const first = useRef<HTMLButtonElement>(null);
+  useEffect(() => first.current?.focus(), [topic]);
+  const levels = Array.from({ length: config.levels[topic] }, (_, i) => i + 1).filter(
+    (n) => n >= bounds.min && n <= bounds.max,
+  );
+  return (
+    <div
+      className="card level-picker"
+      role="group"
+      aria-labelledby="level-picker-title"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
+    >
+      <h3 id="level-picker-title" className="title">
+        {h.pickLevel(topicStrings.name[topic])}
+      </h3>
+      <div className="level-grid">
+        <button
+          ref={first}
+          type="button"
+          className="level-option adaptive"
+          onClick={() => onPick('adaptive')}
+        >
+          <span className="level-name">{h.adaptive}</span>
+          <span className="level-example">{h.adaptiveSub}</span>
+        </button>
+        {levels.map((n) => (
+          <button key={n} type="button" className="level-option" onClick={() => onPick(n)}>
+            <span className="level-name">{h.level(n)}</span>
+            <span className="level-example">
+              <LevelExample topic={topic} level={n} />
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="actions end">
+        <button type="button" className="btn btn-outline btn-small" onClick={onClose}>
+          {h.pickClose}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -109,13 +167,15 @@ export function Home({
 }: {
   onParent: () => void;
   onStartAssignment: (id: string) => void;
-  onFreePractice: (topic: TopicId) => void;
+  /** Free practice at a level the learner picked, or Adaptive (parent decision, 2026-09-25). */
+  onFreePractice: (topic: TopicId, level: number | 'adaptive') => void;
   /** Coming from the summary's "Free practice ›": focus the first topic tile. */
   focusFree?: boolean;
 }) {
   const settings = useSettings();
   const [snap, setSnap] = useState<HomeSnapshot | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+  const [picking, setPicking] = useState<TopicId | null>(null);
   useEffect(() => {
     if (snap && focusFree)
       gridRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
@@ -180,7 +240,8 @@ export function Home({
               disabled={!snap.freeOpen}
               aria-label={snap.freeOpen ? topicStrings.name[t] : h.locked(topicStrings.name[t])}
               {...(snap.freeOpen ? {} : { 'aria-describedby': 'free-note' })}
-              onClick={() => onFreePractice(t)}
+              aria-expanded={picking === t}
+              onClick={() => setPicking((p) => (p === t ? null : t))}
             >
               {!snap.freeOpen && <LockIcon />}
               <span className="topic-glyph" aria-hidden="true">
@@ -190,6 +251,14 @@ export function Home({
             </button>
           ))}
         </div>
+        {picking && snap.freeOpen && (
+          <LevelPicker
+            topic={picking}
+            bounds={settings.levelBounds[picking]}
+            onPick={(level) => onFreePractice(picking, level)}
+            onClose={() => setPicking(null)}
+          />
+        )}
       </section>
       <p className="parent-link">
         <button type="button" className="link-btn" onClick={onParent}>

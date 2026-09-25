@@ -2,7 +2,7 @@
 // popover (Adaptive / Level n), count stepper, remove. Order toggle and optional due date. The queue:
 // the active assignment with its progress, then the queued ones in order (drag or ↑/↓ to reorder).
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { config, TOPICS, type TopicId } from '../../engine/config';
+import { config, TOPICS } from '../../engine/config';
 import { MAX_ITEM_COUNT, type AssignmentDraft, type AssignmentItem, type Order } from '../../engine/session';
 import type { Assignment } from '../../data/db';
 import {
@@ -17,9 +17,9 @@ import {
   type QueueEntry,
 } from '../../data/assignments';
 import { logError } from '../../data/errors';
-import { Rich, Tex } from '../components/Math';
+import { LevelExample } from '../components/LevelExample';
 import { useSettings } from '../settings';
-import { parentStrings, strings, topicStrings } from '../strings';
+import { parentStrings, topicStrings } from '../strings';
 import { moved, ReorderHandle } from './Reorder';
 
 const s = parentStrings.assign;
@@ -72,11 +72,6 @@ function toDraft(e: Editing): AssignmentDraft {
 }
 
 const titleOf = (a: Assignment) => a.title ?? s.untitled;
-
-function LevelExample({ topic, level }: { topic: TopicId; level: number }) {
-  if (topic === 'EQ') return <Rich text={strings.home.levelExamples[level] ?? ''} />;
-  return <Tex text={topicStrings.levelExamples[topic]?.[level - 1] ?? ''} />;
-}
 
 function LockPopover({
   item,

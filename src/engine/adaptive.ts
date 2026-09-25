@@ -74,3 +74,40 @@ export function adapt(
     return { level: level - 1, window: [], change: 'demote' };
   return { level, window, change: null };
 }
+
+// ---------------------------------------------------------------------------------------------
+// Free practice (parent decision, 2026-09-25): the learner picks a level, or Adaptive, which starts
+// at level 3 each time and moves faster than R-ADP-2/3. Assignments keep the rules above.
+
+export interface FreeState {
+  level: number;
+  /** The last questions at `level`, oldest first: true when right (first try, no hint). */
+  recent: boolean[];
+}
+
+/** A question counts as right when it was correct on the first try with no hint at all. */
+export const rightFirstTime = (o: Pick<Outcome, 'maxHint' | 'wrongTries'>): boolean =>
+  o.maxHint === 0 && o.wrongTries === 0;
+
+export function freeStart(bounds: LevelBounds): FreeState {
+  return { level: clampLevel(config.freeAdaptive.startLevel, bounds), recent: [] };
+}
+
+/**
+ * Up one level after `promoteRight` right in a row; down one when `demoteStruggled` of the last
+ * `window` questions had a mistake or needed help. Any change starts a new window.
+ */
+export function freeAdapt(
+  state: FreeState,
+  right: boolean,
+  bounds: LevelBounds,
+): FreeState & { change: LevelChange } {
+  const f = config.freeAdaptive;
+  const level = clampLevel(state.level, bounds);
+  const recent = [...(level === state.level ? state.recent : []), right].slice(-f.window);
+  const rightRun = recent.length >= f.promoteRight && recent.slice(-f.promoteRight).every((r) => r);
+  if (rightRun && level < bounds.max) return { level: level + 1, recent: [], change: 'promote' };
+  if (recent.filter((r) => !r).length >= f.demoteStruggled && level > bounds.min)
+    return { level: level - 1, recent: [], change: 'demote' };
+  return { level, recent, change: null };
+}

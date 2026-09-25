@@ -510,3 +510,12 @@
     animation: none;
   }
 }
+
+/* Free-practice level picker (parent decision, 2026-09-25): Adaptive first, then the levels. */
+.level-picker {
+  margin-top: var(--space-5);
+}
+.level-option.adaptive {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}

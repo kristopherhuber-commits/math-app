@@ -22,10 +22,12 @@ test('live site loads, is installable and works offline', async ({ page, context
   await context.setOffline(true);
   await page.reload();
   await page.getByRole('button', { name: 'Equations', exact: true }).click();
+  await page.getByRole('button', { name: /^Adaptive/ }).click();
   await expect(page.getByRole('heading', { name: /Solve for/ })).toBeVisible();
   // M3: a number topic works offline too.
   await page.getByRole('button', { name: '‹ Home' }).click();
   await page.getByRole('button', { name: 'Repeating decimals', exact: true }).click();
+  await page.getByRole('button', { name: /^Level 1/ }).click();
   await expect(page.getByRole('heading', { name: /Write this/ })).toBeVisible();
   await context.setOffline(false);
 });

@@ -139,13 +139,34 @@ test('NC: the second wrong Check outlines the mismatched cards (R-NC-3)', async 
   await expect(page.getByLabel('Hint 1 of 3')).toBeVisible();
 });
 
-test('Home: with no assignment, a topic tile opens free practice at level 1 (R-SES-6)', async ({ page }) => {
+test('Home: a topic tile offers Adaptive and each level; the pick opens free practice (R-SES-6)', async ({
+  page,
+}) => {
   await openHome(page);
   await expect(page.getByText('No assignment right now.')).toBeVisible();
   await page.getByRole('button', { name: 'Price changes', exact: true }).click();
+  const picker = page.getByRole('group', { name: 'Price changes: how hard?' });
+  await expect(picker.getByRole('button')).toHaveText([
+    /^Adaptive/,
+    /^Level 1/,
+    /^Level 2/,
+    /^Level 3/,
+    /^Level 4/,
+    /^Level 5/,
+    'Close',
+  ]);
+  await expect(picker.getByRole('button', { name: /^Adaptive/ })).toBeFocused();
+  await picker.getByRole('button', { name: /^Level 1/ }).click();
   await expect(page.getByText('Price changes · Level 1')).toBeVisible();
   await expect(page.getByText('Question 1', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '‹ Home' }).click();
+  await page.getByRole('button', { name: 'Equations', exact: true }).click();
+  await expect(
+    page.getByRole('group', { name: 'Equations: how hard?' }).getByRole('button', { name: /^Level/ }),
+  ).toHaveCount(6);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('group', { name: /how hard/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Number sets', exact: true }).click();
-  await expect(page.getByText('Number sets · Level 1')).toBeVisible();
+  await page.getByRole('button', { name: /^Adaptive/ }).click();
+  await expect(page.getByText('Number sets · Level 3')).toBeVisible();
 });

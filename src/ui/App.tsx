@@ -96,7 +96,7 @@ export function App() {
             key={route.key}
             focusFree={route.focusFree ?? false}
             onStartAssignment={(id) => start({ kind: 'assignment', id })}
-            onFreePractice={(topic) => start({ kind: 'free', topic })}
+            onFreePractice={(topic, level) => start({ kind: 'free', topic, level })}
             onParent={() => setRoute({ name: 'parent' })}
           />
         );

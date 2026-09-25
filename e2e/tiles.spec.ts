@@ -157,10 +157,10 @@ test('a wrong sign shows the balance explanation and is stored as EQ-D4; Esc can
   await expect(page.locator('.balance-explainer')).toBeVisible();
 });
 
-test('free practice at a stored EQ level 2 opens the tile builder (R-ADP, R-ANS-5)', async ({ page }) => {
-  // As if the learner had been moved down to level 2 (demotion is silent, R-ADP-6).
-  await openHome(page, { topicStates: [{ profileId: 'default', topic: 'EQ', level: 2, window: [] }] });
+test('free practice at a picked EQ level 2 opens the tile builder (R-ANS-5)', async ({ page }) => {
+  await openHome(page);
   await page.getByRole('button', { name: 'Equations', exact: true }).click();
+  await page.getByRole('button', { name: /^Level 2/ }).click();
   await expect(page.getByText('Equations · Level 2')).toBeVisible();
   await expect(page.locator('.tile-board')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Your next line' })).toHaveCount(0);

@@ -758,6 +758,11 @@ export const rewardStrings = {
     freeLocked: "unlocks when today's assignment is done",
     freeNever: 'not open right now',
     locked: (topic: string) => `${topic}, locked`,
+    pickLevel: (topic: string) => `${topic}: how hard?`,
+    adaptive: 'Adaptive',
+    adaptiveSub: 'Starts at level 3 and changes as you go',
+    level: (n: number) => `Level ${n}`,
+    pickClose: 'Close',
   },
   summary: {
     title: 'Assignment done!',
