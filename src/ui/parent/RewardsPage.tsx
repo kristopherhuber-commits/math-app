@@ -23,7 +23,7 @@ const s = parentStrings.rewards;
 const when = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
-/** The shells she has to spend, set by hand (the lifetime total and its cosmetics stay as earned). */
+/** The learner's shells to spend, set by hand (the lifetime total and its cosmetics stay as earned). */
 function BalanceForm({ balance, onSaved }: { balance: number; onSaved: () => void }) {
   const [text, setText] = useState(String(balance));
   const [note, setNote] = useState('');

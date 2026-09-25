@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | v1 design, ready for implementation |
+| Status | **v1 built** (M0–M6, 2026-09-25). Updated to show what was built; the mockups are unchanged, so §12 lists where the app differs from them. |
 | Requirements | `docs/requirements.md` (requirement IDs `R-…` are referenced below) |
 | Mockups | `docs/design/mockups/*.svg` (the source) + `*.png` (renders of the same) |
 | Mockup generator | `docs/design/mockups/_src/` (Python; regenerate after token changes) |
@@ -10,7 +10,7 @@
 | Build brief | `cc-develop-handoff.md` (the original Claude Code instructions for M0–M2; historical) |
 | Milestone reports | `docs/milestones/M<n>-report.md` |
 | Project checkpoint | `progress.md` (status, decisions, Q&A, assumptions, next steps) |
-| Last updated | 2026-09-21 |
+| Last updated | 2026-09-25 |
 
 **For Claude Code:** the mockups show layout, hierarchy and state. They are not pixel specs; the tokens and component specs below are the source of truth. Purple numbered circles in the mockups are **annotations**. They are not UI. Each one is explained in §7 under that screen.
 
@@ -59,7 +59,9 @@ All text/background pairs were checked: every pair listed is ≥ 4.5:1 (most are
 | `--parent-bg` / `--parent-nav` | `#F4F6F8` / `#1E3448` | `#0B141B` / `#0B141B` | Parent area (deliberately cooler and more "grown-up") |
 | `--annotation` | `#7C3AED` | n/a | Mockups only. Never ship. |
 
-Dark mode follows `prefers-color-scheme` and a parent setting (`auto | light | dark`). Dark mode is not in requirements.md but costs little once everything uses tokens. **SHOULD, v1.1.**
+Dark mode follows `prefers-color-scheme` and a parent setting (`auto | light | dark`). Dark mode is not in requirements.md but costs little once everything uses tokens. **SHOULD, v1.1.** *(As built: the dark values are in `tokens.css` and every screen passes axe in both themes, but there is no switch yet.)*
+
+*As built, the parent nav also uses `--on-parent-nav` (#FFFFFF), `--on-parent-nav-muted` (#B8C6D3) and `--parent-nav-active` (#2E4A63 light, #1E3240 dark).*
 
 ### 2.2 Typography
 
@@ -157,7 +159,7 @@ Dark mode follows `prefers-color-scheme` and a parent setting (`auto | light | d
 
 - Both characters are **original, simple geometric SVGs** (see the mockups): flat colours, no outlines except the dark-mode rim, round shapes, blush cheeks. Build them as React components with named parts (`<Head>`, `<Flipper side="left">`) so poses are just transforms. Don't use raster images.
 - **First-run naming (R-RWD-7):** after the parent sets the PIN, the learner sees both characters and can rename them (defaults "Shelly" and "Pip"). This is a small touch that increases ownership. Store the names in `Settings.mascotNames`.
-- Accessories (R-RWD-4): hat, scarf, sunglasses and bow tie as overlay SVG groups anchored to the head.
+- Accessories (R-RWD-4): hat, scarf, sunglasses and bow tie as overlay SVG groups anchored to the head. *As built:* each mascot has all four; they unlock automatically from lifetime shells (20, 50, 100, 175, 275, 400, 550, 750, alternating turtle and penguin), are announced in the celebration ("New for Shelly: a hat!") and worn at once, and the learner takes them off or puts them on under **Dress up** on Home. They show wherever the mascots do.
 
 ---
 
@@ -171,12 +173,12 @@ Names match the intended React components. "States" lists every visual state tha
 | **TopicChip** | Pill, 30 px high, `label` text. EQ/NC/RD/FDP use `--primary-soft`/`--var-ink`; PC uses `--const-bg`/`--const-ink` | — |
 | **MathHero** | KaTeX, `math-hero`, centred, with an optional caption below (`label`, muted), e.g. "the block 24 repeats forever" | — |
 | **McOption** | 196×136 (desktop row of 5) or 2-column on portrait. Radius 18. Content centred: `math-lg` or `money` | `idle` (surface, 2 px `--line`) · `hover` (border `--primary` 2 px) · `selected` (`--primary-soft`, 4 px `--primary`, ✓ badge top-right) · `wrong` (sunken fill, 45% veil, ✕ in amber, **disabled**) · `correct` (`--success-soft`, 4 px `--success`) · `focus-visible` (3 px outline `--primary`, 3 px offset) |
-| **SetCheckbox** (NC) | 166×132 card: a 30 px checkbox, the set name (`title`/21), and an example line (e.g. "0, 1, 2, …"). The whole card toggles | `off` · `on` (`--primary-soft`, 4 px `--primary`, white ✓ in a filled box) · `flagged` (after the 2nd wrong try: dashed 3 px `--amber` outline, with no hint of which way it's wrong, R-NC-3) |
+| **SetCheckbox** (NC) | **Five** cards, no Real (parent decision 2026-09-25). 166×132 card: a 30 px checkbox, the set name (`title`/21), and an example line (e.g. "0, 1, 2, …"). The whole card toggles | `off` · `on` (`--primary-soft`, 4 px `--primary`, white ✓ in a filled box) · `flagged` (after the 2nd wrong try: dashed 3 px `--amber` outline, with no hint of which way it's wrong, R-NC-3) |
 | **SetsMap** | Nested rounded rectangles: Real ⊃ (Rational ⊃ Integer ⊃ Whole ⊃ Natural) and Irrational beside Rational. The rational chain uses progressively deeper teal tints; Irrational uses the constant tint. Full-size version in a modal; in H3 the current number animates into its innermost box and each enclosing box lights up in turn | `static` · `highlight(set)` |
 | **HelpButton** | 200×56, `--help-bg`, 2 px `--turtle`, turtle icon + "Help" | `idle` · `pressed` · `pulsing` (a gentle 2 s glow after the 2nd wrong try, R-HELP-2) |
 | **CheckButton** | 176×56 primary | `disabled` (nothing selected yet; `--surface-sunken` fill, `--ink-muted` label, 5.5:1) · `enabled` · `busy` (≤ 100 ms, no spinner needed) |
 | **FeedbackToast** | Inline under the answer area (not floating). `--amber-soft` bg, `--amber` text, `body`/17 800. Shows "Not quite." plus an optional **misconception-specific line** (see §9) | `enter` (slide up 8 px + fade, `--dur-base`) · `exit` |
-| **HintDrawer** | 368 px, `--help-bg`, 2 px `--turtle`, radius 28. Header: turtle (pose by tier), name, "Hint n of 3", 3 ladder dots. Body: white card with the hint text. Footer: "Show me step by step" (goes to H3), a note "Walkthrough = 1 star, and that's OK!", and Close | `H1` · `H2` · `closed`. Slides in from the right (`--dur-slow`); a bottom sheet on portrait |
+| **HintDrawer** | *As built: a panel inside the question card, not a docked drawer (parent approved, M3).* `--help-bg`, 2 px `--turtle`, radius 28. Header: turtle (pose by tier), name, "Hint n of 3", 3 ladder dots. Body: white card with the hint text. Footer: "Show me step by step" (goes to H3), a note "Walkthrough = 1 star, and that's OK!", and Close | `H1` · `H2` · `closed`. Slides in from the right (`--dur-slow`); a bottom sheet on portrait |
 | **Walkthrough** | Takes over the question card area, `--help-bg`. Header: turtle + "Let's do it together" + "step k of n" + a segmented progress bar. Body: numbered step lines accumulate (done steps muted, the current step in `--primary`). Supports **inline mini-questions** (3 choice chips) that gate **Next** (R-HELP-4). Supports aligned column arithmetic (e.g. the x-method subtraction) with a highlight band. The final step of EQ walkthroughs is the substitution check | `step(k)` · `awaitingMini` · `done` |
 | **StepRail** (EQ) | Vertical list: Move / Simplify / Solve (plus Expand and Clear fractions when relevant, inserted at the top). 188×84 items | `todo` · `active` · `done` (✓, `--success`) |
 | **TermTile** | **Variable terms are pill-shaped; constants have 10 px corners.** Shape plus colour, so the meaning survives colour blindness. `math-md`, min 76×64 | `resting` · `dragging` (scale 1.06, `--shadow-lift`) · `ghost` (the dashed outline left where it came from) · `awaitingSign` (shows `?` in place of the sign) · `locked` |
@@ -190,8 +192,12 @@ Names match the intended React components. "States" lists every visual state tha
 | **Celebration** | Pip `cheer` + 3 stars popping in sequence (`--ease-pop`, 80 ms stagger) + confetti rectangles. Text "3 stars! Brilliant!" + "+3 shells". 1-star and 2-star versions are smaller: 1 or 2 stars, Pip `clap` | `3★` · `2★` · `1★` · `levelUp` · `streak` (full screen) |
 | **StarCounter / ShellCounter** | Pills. When they increment, the number rolls up and the icon pulses | — |
 | **AssignmentCard** (Home) | Overline, title, one row per item (name, n / N, progress bar, ✓ when done), a primary **Keep going ›** button and "x of N done" | `notStarted` ("Start ›") · `inProgress` · `done` |
-| **TopicTile** (Home free practice) | 216×136, glyph (math face) + name | `locked` (55% veil + padlock) · `open` · `hover` |
-| **Parent: NavRail, StatCard, Sparkline, HintBar, AttentionCard, AssignmentItemRow, Stepper, SegmentedToggle** | See mockups 10 and 11. The parent area uses the same fonts and radii with the cooler `--parent-*` palette, and denser type (`body` 15–17) | — |
+| **TopicTile** (Home free practice) | 216×136, glyph (math face) + name. Tapping it opens the LevelPicker | `locked` (55% veil + padlock) · `open` · `hover` |
+| **LevelPicker** *(as built)* | Card under the tiles: "Equations: how hard?", **Adaptive** first (focused; "Starts at level 3 and changes as you go"), then Level 1…N with an example each, only within the parent's range; Close / Esc | — |
+| **Shop card** *(as built)* | Picture (an original cartoon, or the parent's own picture), name, a line saying what the real reward is, price in shells, then **Buy** (asks "Buy … for n shells?") or "n more shells to go" | `can buy` · `short` · `confirming` |
+| **Dress up, Badge shelf, Beach shells** *(as built)* | Home: pill toggles for unlocked cosmetics plus "Next to unlock: …"; a grid of the 12 badges (earned highlighted, the rest greyed); up to 12 shells drawn on the sand = shells to spend | — |
+| **PinPad** *(as built)* | 4 dots and a 3×4 pad (1–9, 0, ⌫) reusing the keypad keys; physical digits and Backspace work | `entering` · `not it` |
+| **Parent: NavRail, StatCard, Sparkline, HintBar, AttentionCard, AssignmentItemRow, Stepper, SegmentedToggle** | See mockups 10 and 11. The parent area uses the same fonts and radii with the cooler `--parent-*` palette, and denser type (`body` 15–17). *As built, the nav rail has Assignments, Progress, Missed questions, **Rewards**, Settings and Data, and "‹ Back to learner"; segmented toggles are 48 px high* | — |
 
 ---
 
@@ -252,7 +258,7 @@ Each mockup is at `docs/design/mockups/NN-name.svg` with a PNG render beside it.
 1. **Streak and shells**: counters only. There are no percentages anywhere in the learner UI.
 2. **Today's assignment**: one row per item with progress. The primary button resumes exactly where the learner left off (R-SES-5).
 3. **Beach scene**: Pip speaks (context-aware line: the topic of the day, or the streak). Shelly sits calmly nearby. Shells scattered on the sand reflect the learner's shell count (up to ~12 visible). Accessories show here when bought.
-4. **Free practice** tiles, locked until the assignment is done (R-SES-6 default). When the policy is `always`, there is no veil.
+4. **Free practice** tiles, locked until the assignment is done (R-SES-6 default). When the policy is `always`, there is no veil. *As built: `always` is the default, and a tile opens the level picker (Adaptive or a level). Home also has a **Shop** button by the counters, "n rewards waiting for a grown-up" when there are requests, and **Dress up** and the **badge shelf** below the tiles.*
 5. **Parent** link: deliberately small, bottom-right, and opens the PIN pad.
 
 ### 7.2 Multiple-choice question: `02-question-multiple-choice.svg`
@@ -270,7 +276,7 @@ Each mockup is at `docs/design/mockups/NN-name.svg` with a PNG render beside it.
 
 ### 7.4 Number classification: `04-number-classification.svg`
 ![NC](design/mockups/04-number-classification.png)
-1. **Six set cards**, always in the same order. The state shown is the learner's in-progress answer, with the common "a fraction can't be rational/integer" confusion: Rational is still unticked.
+1. **Six set cards** *(as built: five; Real is only the outer frame of the sets map)*, always in the same order. The state shown is the learner's in-progress answer, with the common "a fraction can't be rational/integer" confusion: Rational is still unticked.
 2. **Sets map** button opens the full SetsMap modal (a reference; using it is not a hint).
 3. **SetsMap preview** (optional at desktop width; hidden on portrait).
 
@@ -319,13 +325,15 @@ Each mockup is at `docs/design/mockups/NN-name.svg` with a PNG render beside it.
 ![Portrait](design/mockups/12-tablet-portrait.png)
 1. **Two-column options**, with the 5th option spanning both columns. Actions are sticky at the bottom of the card. The mixed number is rendered as whole + stacked fraction (R-DISP-2). Options: 225% ✓, 25% (FDP-M7), 2.25% (FDP-M1), 214% (digits juxtaposed), 22.5% (FDP-M1).
 
-**Screens not mocked**, which follow the same patterns: the PIN pad (4 large dots + a 3×4 number pad, reusing MathKeypad keys), first-run setup (PIN, then character naming), Missed-question review (a list on the left, and on the right a replay of the learner's lines including rejected ones with their diagnostic codes, using StepLine + ErrorMark), Settings (a grouped list of toggles and steppers), Data (Export / Import / Reset, each with a confirmation dialog), the badge shelf, and the accessory shop (a grid of accessory cards with shell prices).
+**Screens not mocked** *(all built in M5–M6, as described here, except that the "accessory shop" became a shop of real rewards: see §5 Shop card and §12)*, which follow the same patterns: the PIN pad (4 large dots + a 3×4 number pad, reusing MathKeypad keys), first-run setup (PIN, then character naming), Missed-question review (a list on the left, and on the right a replay of the learner's lines including rejected ones with their diagnostic codes, using StepLine + ErrorMark), Settings (a grouped list of toggles and steppers), Data (Export / Import / Reset, each with a confirmation dialog), the badge shelf, and the accessory shop (a grid of accessory cards with shell prices).
 
 ---
 
 ## 8. Sound (optional, off-able: R-PAR-5)
 
 Short, soft sounds under 300 ms, at a low default volume: `select` (soft tick), `correct` (two-note chime, rising), `stars` (sparkle per star), `notQuite` (a single soft low note, never a buzzer), `tileSnap` (wooden click), `levelUp` (short arpeggio). Ship them as small OGG/MP3 files, preloaded, and play them through a single `AudioContext`.
+
+*As built: the sounds are synthesised with Web Audio oscillators through one `AudioContext` (no audio files to license or cache), and they are **off by default**; the parent turns them on in Settings.*
 
 ---
 
@@ -368,3 +376,20 @@ All strings live in `src/ui/strings.ts` (R-NF-4).
 - Animations: use CSS transitions and keyframes for everything except tile dragging and the balance scale. For those, use a small spring (Framer Motion is acceptable if the bundle budget R-NF-2 holds; otherwise hand-written `requestAnimationFrame`).
 - Do not ship the purple annotation markers.
 - If anything in the mockups conflicts with requirements.md, **requirements.md wins**. Flag the conflict in the PR description.
+
+---
+
+## 12. As built (v1, 2026-09-25)
+
+The app follows this document, with the changes below. The mockups were not redrawn.
+
+| Area | Mockup / section | As built |
+|---|---|---|
+| Hints | mockup 03, §5 HintDrawer | A panel inside the question card, not a docked drawer (parent approved, M3). |
+| Number sets | mockup 04, §7.4 | Five set cards; Real is the outer frame of the sets map only. |
+| Home | mockup 01, §7.1 | Free practice open by default; a level picker (Adaptive or a level) on each tile; Shop button; waiting-for-a-grown-up note; Dress up; badge shelf; shells on the sand = shells to spend. |
+| Rewards | §4.3, §7 "accessory shop" | Cosmetics unlock from lifetime shells (no shop for them). The shop sells real rewards for shells to spend, with original cartoon pictures and a line saying what each reward is; the parent gives or cancels them in Parent › Rewards. |
+| Parent area | mockups 10, 11 | Adds a Rewards page and "Edit assignment" from a queue card; Missed questions, Settings and Data as described in §7. |
+| Sound | §8 | Synthesised, off by default. |
+| Motion | §2.4, §5 | As specified, plus pop-ins for badges and new accessories; everything stops with reduced motion or the parent's setting. |
+| Tablet | §3.1 | The learner's tablet is a Surface Pro (Chrome or Edge). The compact portrait keypad for typed equations is not built yet. |

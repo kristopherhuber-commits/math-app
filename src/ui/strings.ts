@@ -976,7 +976,7 @@ export const parentStrings = {
     priceSaved: 'Saved.',
     priceInvalid: 'A whole number from 1 to 100,000.',
     shells: 'Shells',
-    shellsSub: 'Change what she has to spend. Cosmetics still unlock from the shells she earned.',
+    shellsSub: 'Change the shells to spend. Cosmetics still unlock from the shells actually earned.',
     balance: 'Shells to spend now',
     balanceInvalid: 'A whole number from 0 to 1,000,000.',
     saved: 'Saved.',

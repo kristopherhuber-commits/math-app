@@ -27,7 +27,7 @@ async function unlock(page: Page, touch: boolean) {
   await press(page.getByRole('navigation').getByRole('button', { name: 'Rewards' }), touch);
 }
 
-test('crossing 20 lifetime shells unlocks a hat for Shelly, worn at once; she can take it off', async ({
+test('crossing 20 lifetime shells unlocks a hat for Shelly, worn at once; the learner can take it off', async ({
   page,
   hasTouch,
 }) => {
@@ -176,7 +176,7 @@ test('the parent adds a picture; the shop shows it; it can be removed', async ({
   await expect(pictures.getByText('Removed.')).toBeVisible();
 });
 
-test('the parent sets her shells and the shells per answer; the next answer earns the new amount', async ({
+test("the parent sets the learner's shells and the shells per answer; the next answer earns the new amount", async ({
   page,
   hasTouch,
 }) => {

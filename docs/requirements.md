@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| Status | v1 spec, ready for design and implementation |
+| Status | **v1 built** (milestones M0–M6, 2026-09-25). This file now describes what was built: changes the parent approved during the build are written into the requirements below and listed in §15. |
 | Owner | The parent (product owner) |
 | Learner | One child |
 | Companion doc | `docs/design.md` (visual design, screens, mockups in `docs/design/`) |
-| Last updated | 2026-09-21 |
+| Last updated | 2026-09-25 |
 
 Requirement IDs (`R-…`) are stable. Reference them in commits, tests and PRs. **MUST** / **SHOULD** / **MAY** follow RFC 2119. Any value marked *(default)* is a tunable constant; keep it in `src/engine/config.ts`, not scattered through the code.
 
@@ -35,7 +35,7 @@ Cloud sync, multiple learner profiles, text-to-speech, handwriting input, roots 
 ## 2. Platform and architecture
 
 - **R-PLAT-1** The app MUST be a Progressive Web App built with **TypeScript + React + Vite**.
-- **R-PLAT-2** It MUST run in current Chrome, Edge, Firefox and Safari (desktop), and on iPad Safari and Android Chrome tablets.
+- **R-PLAT-2** It MUST run in current **Chrome and Edge** on desktop and on the learner's tablet, a **Microsoft Surface Pro** (Windows, touch). *(Parent decision, 2026-09-25: Firefox, Safari, iPad and Android tablets are not required; the automated tests run in Chromium.)*
 - **R-PLAT-3** It MUST be installable (web app manifest + service worker) and fully functional **offline** after the first load. There are no network calls at runtime: no analytics, no fonts from a CDN at runtime (self-host them), no accounts.
 - **R-PLAT-4** Layout targets are desktop ≥ 1280×720, tablet landscape 1024×768, and tablet portrait 768×1024. Phone widths MAY degrade gracefully but are not a target.
 - **R-PLAT-5** Input methods are mouse + keyboard, and touch. Every interaction MUST work with touch alone (drag-and-drop included), and with keyboard alone on desktop.
@@ -81,17 +81,18 @@ tests/ ...
 
 ## 4. Session model: assignments + adaptive difficulty
 
-- **R-SES-1** The parent creates an **assignment**: an ordered list of `{topic, count, levelLock?}` items, e.g. `[{EQ, 10}, {PC, 5}]`, with an optional title and due date.
+- **R-SES-1** The parent creates an **assignment** in the parent area (R-PAR-2): an ordered list of `{topic, count, levelLock?}` items, e.g. `[{EQ, 10}, {PC, 5}]`, with an optional title, due date and question order. *(As built: there is no assignment link; assignments come only from the parent area.)*
 - **R-SES-2** Only one assignment is **active** at a time. Any others wait in a queue in the order the parent set.
 - **R-SES-3** Within an assignment item, the **app chooses the level** using the adaptive rules (§4.1), unless the parent set `levelLock` for that item.
-- **R-SES-4** The parent chooses the question order: **grouped** (all EQ, then all PC) or **mixed** (interleaved) *(default: grouped)*.
+- **R-SES-4** The parent chooses the question order per assignment: **grouped** (all EQ, then all PC) or **mixed** (interleaved) *(default: grouped; the default is a setting)*. The order is fixed once the assignment has started.
 - **R-SES-5** The learner can leave mid-assignment and resume later with nothing lost. Progress is saved after every answer.
-- **R-SES-6** **Free practice**: once the active assignment is done, the learner can practice any topic, and adaptive rules apply. A parent setting controls free practice: `always | after assignment | never` *(default: after assignment)*.
+- **R-SES-6** **Free practice**: the learner can practice any topic. A parent setting controls when: `always | after assignment | never` *(default: **always**, parent decision M5)*.
+- **R-SES-8** *(added 2026-09-25)* Choosing a topic for free practice asks **how hard**: **Adaptive** (first) or a fixed **Level 1…N** (number topics 1–5, Equations 1–6), limited to the parent's level range (R-ADP-5). A picked level stays fixed for that session. Adaptive follows R-ADP-7.
 - **R-SES-7** A finished assignment gets a summary screen: stars earned and a penguin celebration. No percentages.
 
 ### 4.1 Adaptive levels (per topic)
 
-Each topic has levels 1…N (defined per topic in §6–7). A learner has one current level per topic.
+Each topic has levels 1…N (defined per topic in §6–7). A learner has one current level per topic, used by **assignments**. R-ADP-1…6 apply to assignments; free practice has its own rule (R-ADP-7) and does not move the stored level. *(Start levels: Equations 3, the other topics 1.)*
 
 - **R-ADP-1** Define a **clean solve** as correct on the first try, with no hint tier above H1.
 - **R-ADP-2** **Promote** by one level when at least 4 of the learner's last 5 attempts at the current level are clean solves *(default: window 5, threshold 4)*, and there are at least 5 attempts at that level.
@@ -99,6 +100,7 @@ Each topic has levels 1…N (defined per topic in §6–7). A learner has one cu
 - **R-ADP-4** The attempt window resets on any level change.
 - **R-ADP-5** The parent can set a per-topic **min/max level**. Adaptation stays within those bounds.
 - **R-ADP-6** A level change MUST be shown gently. Promotion: the penguin says "Level up!" Demotion is **silent**; the questions just get easier. There are no "level down" messages.
+- **R-ADP-7** *(added 2026-09-25)* **Adaptive free practice** starts at **level 3** every time (within the parent's range), goes **up one level after 3 right in a row**, and **down one level when 2 of the last 3 questions had a mistake or needed help**. "Right" means correct on the first try with no hint at all. Any change starts a new window of 3. After a walkthrough the next question stays at the same level (R-HELP-6); the change applies after that.
 
 ---
 
@@ -146,7 +148,7 @@ For each topic, the tables below define the levels. Every generator MUST satisfy
 
 ### 6.1 NC — Number classification
 
-**Question:** "Which sets does this number belong to? Tick all that apply." There are six checkboxes, always in this order: **Natural · Whole · Integer · Rational · Irrational · Real**.
+**Question:** "Which sets does this number belong to? Tick all that apply." There are **five** checkboxes, always in this order: **Natural · Whole · Integer · Rational · Irrational**. *(Parent decision 2026-09-25: Real is not a checkbox, since every number shown is real. The sets map still draws Real as the outer frame.)*
 
 **Definitions (shown in help, used by the checker):**
 
@@ -155,7 +157,7 @@ For each topic, the tables below define the levels. Every generator MUST satisfy
 - Integer ℤ = {…, −2, −1, 0, 1, 2, …}
 - Rational ℚ = numbers that can be written p/q with integers p, q and q ≠ 0. Equivalently: the decimal terminates or repeats.
 - Irrational = real numbers that are not rational. Equivalently: the decimal never terminates and never repeats.
-- Real ℝ = all of the above.
+- Real ℝ = all of the above (shown as the frame of the sets map, not as a checkbox).
 
 | Level | Numbers shown | Examples |
 |---|---|---|
@@ -163,7 +165,7 @@ For each topic, the tables below define the levels. Every generator MUST satisfy
 | 2 | Negative integers, negative fractions and decimals, repeating decimals | −12, −5/8, −0.4, 0.333… |
 | 3 | **Disguised** forms: fractions and decimals that are integers | 12/4, 6/3, −8/−2 (display as \(\frac{-8}{-2}\)), 3.0, −0/5, 15/5 |
 | 4 | **Irrational** patterned decimals, mixed with all of the above | 0.1010010001…, 0.123456789101112…, 2.020020002… |
-| 5 (challenge) | Mixed, including 0.999… (= 1, so natural, whole, integer, rational, real) | 0.999…, 4.24242…, −3.000 |
+| 5 (challenge) | Mixed, including 0.999… (= 1, so natural, whole, integer, rational) | 0.999…, 4.24242…, −3.000 |
 
 - **R-NC-1** The checker computes the correct set membership from the number's exact value (a `Rational`, or a tagged `IrrationalPattern`). Disguised forms are reduced first.
 - **R-NC-2** A correct answer means **exactly** the correct set of boxes is ticked.
@@ -176,7 +178,7 @@ For each topic, the tables below define the levels. Every generator MUST satisfy
 **Hints:**
 - H1: "Start at the smallest set. Is this number a counting number (1, 2, 3, …)?"
 - H2: number-specific, e.g. "12/4 simplifies. What is 12 ÷ 4?"
-- H3: a walkthrough over the **nested-sets diagram** (see design.md). It places the number in its innermost set, then shows that every set containing that one is also ticked.
+- H3: a walkthrough over the **nested-sets diagram** (see design.md). It places the number in its innermost set, then shows which enclosing sets are also ticked.
 
 ### 6.2 RD — Repeating decimals
 
@@ -246,7 +248,7 @@ Six directions: F→D, F→P, D→F, D→P, P→F, P→D. The prompt names the t
 
 - **R-FDP-1** Fraction answers MUST be in **lowest terms**.
 - **R-FDP-2** When the value is > 1, the prompt specifies the target form: "as a mixed number" or "as an improper fraction". Both appear, split 50/50. The options use only the requested form.
-- **R-FDP-3** Repeating percents display like decimals: `33.3…%`, and from level 4 `33.\overline{3}%`. Mixed-number percents such as 33⅓% are **not** used in v1.
+- **R-FDP-3** Repeating percents display like decimals, with the block shown three times per R-DISP-3: `33.333…%`, and from level 4 also `33.\overline{3}%`. Mixed-number percents such as 33⅓% are **not** used in v1. *(Parent decision M3: R-DISP-3 wins over the shorter `33.3…%`.)*
 - **R-FDP-4** Help teaches: F→D by division; D→P by multiplying by 100 (the decimal point moves 2 places right); P→D by dividing by 100; D→F by writing over a power of ten and simplifying with the gcd; P→F by writing over 100 and simplifying.
 
 **Distractors:**
@@ -367,6 +369,7 @@ Additional rules:
   - if the parent setting `allowSkipping` is **off** (*default*), respond "That's right, but show the moving step first: write the equation with the *a* terms on one side and numbers on the other." Do not append.
   - if it is **on**, accept and append with the label "Moved + simplified ✔".
   - The Solve step can never be skipped at levels 3–4. At levels 5–6, when `allowSkipping` is on, `c·v = d → v = q` can be merged with Simplify.
+  - *As built (approved rule, 2026-09-23):* at **level 6** a correct final answer `v = q` entered on any line ends the question ("Solved ✓ (straight to the answer)"); how q is written is still checked (R-EQ-CHK-5, R-EQ-CHK-6). Levels 1–5 still require every step.
 - **R-EQ-CHK-4 Coefficient ±1.** If SIMPLIFY yields `a = 20` (c = 1), it counts as both SIMPLIFY and SOLVE. If it yields `−a = −20`, a SOLVE step is still required.
 - **R-EQ-CHK-5 Not lowest terms.** A SOLVE with the right value but not in lowest terms (`x = 14/6`): "Right value! Can you simplify 14/6?" Not appended.
 - **R-EQ-CHK-6 Decimals.** A SOLVE with an inexact decimal (`x = 2.33`) is not accepted: "Keep it exact, use a fraction." An exact terminating decimal (`x = 2.5` for 5/2) is accepted with a note that 5/2 is also fine.
@@ -378,7 +381,7 @@ Additional rules:
 | EQ-D1 | Parse error | "I can't read that line. Check for a missing number or sign." (highlight the position) |
 | EQ-D2 | No `=` or more than one | "An equation needs exactly one = sign." |
 | EQ-D3 | Wrong variable letter | "This problem uses *a*." |
-| EQ-D4 | **Sign error on one transposed term**: separated form holds, and flipping the sign of exactly one term of N makes the multiset equal to ±Terms(P) (after N's own partial combining is undone, where possible) | "Look at the {term}. When it moved across the =, did its sign change?" |
+| EQ-D4 | **Sign error on one transposed term**. *As built (approved rule, M1):* fires at the SEPARATE stage when N is separated and some term t of Terms(P) (signed, moved to the left) gives D(N) = ±(D(P) − 2t); when several terms qualify, it names one that crossed the `=`. | "Look at the {term}. When it moved across the =, did its sign change?" |
 | EQ-D5 | **Term lost or duplicated**: Terms(N) differs from ±Terms(P) by a missing or extra term | "One of the terms went missing. Check that every term from the last line is here." |
 | EQ-D6 | **Scaled too early**: D(N) = k·D(P), k ∉ {±1}, at the SEPARATE stage | "You divided (or multiplied) already. First get the unknowns on one side and numbers on the other." |
 | EQ-D7 | **Arithmetic error in SIMPLIFY**: form OK, D(N) ≠ ±D(P) | "Check your adding: {unknown side of P} = ?" (points at the side whose value is wrong) |
@@ -435,23 +438,29 @@ EQ uses no multiple choice. Every step is produced by the learner, either throug
 - **R-RWD-1** **Stars per question:** 3 ★ = correct on the first try with no hints; 2 ★ = correct on the second try, or with H1 only; 1 ★ = needed H2 or H3, or more than 2 tries. There are no zero-star outcomes; completing always earns at least 1.
 - **R-RWD-2** **Streak:** the number of consecutive days on which the learner completed at least one assigned question set, or finished the active assignment *(default: ≥ 1 assignment question answered on a day that had an active assignment)*. Days with **no active assignment do not break** the streak.
 - **R-RWD-3** **Badges** (small, one-time): first question solved; first perfect assignment (all 3 ★); 10 EQ questions without H3; first delayed repeating decimal; first successive-change problem; 7-day streak; 30-day streak; each topic's max level reached.
-- **R-RWD-4** **Shell collection**: stars convert into shells (1 ★ = 1 shell), displayed on a beach scene on Home. The turtle and penguin can be given simple accessories (a hat, scarf or sunglasses) bought with shells. This is cosmetic only *(SHOULD; can slip to v1.1)*.
+- **R-RWD-4** **Shells** *(as built, parent decisions M6 and 2026-09-25)*. Each answer earns shells by its stars *(default 3 ★ = 3, 2 ★ = 2, 1 ★ = 1; the parent can change the table)*. There are two counts:
+  - **Lifetime shells** (never go down; not shown to the learner) **unlock cosmetics automatically**: a hat, scarf, sunglasses and bow tie for each mascot, at 20, 50, 100, 175, 275, 400, 550 and 750 shells, alternating turtle and penguin. A new one is announced and worn at once; the learner can take them off or put them back on (Home › Dress up).
+  - **Shells to spend** (shown on Home, in the top bar and in the shop; up to 12 drawn on the beach) buy **real rewards** in the **shop**: a Strawberry Açaí Lemonade Refresher (150) and a Roblox gift card, 2,000 Robux (1,500). Each shop card has an original cartoon picture (no brand photos or logos) and a line saying what the real reward is. Buying asks first, takes the shells at once, and leaves a request "waiting for a grown-up"; the parent marks it given or cancels it, which refunds the shells (R-PAR-7).
 - **R-RWD-5** The penguin celebrates correct answers with short animations (< 1.2 s, skippable, and never blocking input for more than 600 ms). A 3 ★ answer gets a slightly bigger celebration. Streak milestones get a full-screen celebration (skippable).
-- **R-RWD-6** No leaderboards, no timers, no speed scoring, no loss of shells.
+- **R-RWD-6** No leaderboards, no timers, no speed scoring, and shells are never taken away as a penalty. *(Shells go down only when the learner chooses to buy a reward, or when the parent sets the count.)*
 - **R-RWD-7** **Character naming:** on first run, after the parent sets the PIN, the learner can name the turtle and the penguin (defaults "Shelly" and "Pip"). The names are stored in `Settings.mascotNames` and can be changed later from the parent area.
+- **R-RWD-8** *(added M6)* **Badge shelf** on Home: the badges earned so far, and the rest greyed out with their names.
 
 ---
 
 ## 9. Parent area
 
-- **R-PAR-1** Access is a small "Parent" link on Home, then a 4-digit PIN (set on first launch; **not** a security boundary, just a child gate). There is a PIN-reset path: answer a simple arithmetic challenge (e.g. 47 × 13) and set a new PIN.
-- **R-PAR-2** **Assignments:** create, edit, reorder, delete; see the active one's progress; mark it complete early.
+- **R-PAR-1** Access is a small "Parent" link on Home, then a 4-digit PIN (set on first launch, which is required before Home; **not** a security boundary, just a child gate). There is a PIN-reset path: answer a simple arithmetic challenge (e.g. 47 × 13) and set a new PIN. The parent area locks again on leaving and after 10 minutes without input.
+- **R-PAR-2** **Assignments:** create ("Save & make active" puts it first and sends the active one back to the front of the queue; "Add to queue" puts it last), edit (once started: stored items stay, counts can't go below what's done, new items append), reorder (drag or ↑/↓), delete; see the active one's progress; mark it complete early.
 - **R-PAR-3** **Progress dashboard.** For each topic: current level, attempts, clean-solve rate, hint usage by tier, average tries, time spent, and a trend over the last 30 days (small line chart). Plus a **daily activity** strip (minutes per day).
 - **R-PAR-4** **Missed-question review:** a list of attempts that needed H2/H3 or two or more wrong tries. Each can be opened to show the question (regenerated from its seed), the learner's answers in order, and for EQ **every line they tried, including rejected lines with their diagnostic codes**. Filter by topic and date.
-- **R-PAR-5** **Settings:** PIN; free-practice policy (R-SES-6); question order (R-SES-4); per-topic min/max level (R-ADP-5); `allowSkipping` for EQ (R-EQ-CHK-3); full balance animation on/off (R-EQ-PED-2); natural numbers include 0 (§6.1); sounds on/off; reduce motion (also honours the OS `prefers-reduced-motion`); currency symbol.
-- **R-PAR-6** **Data:** export all data to a JSON file; import a JSON file (with a confirmation step and a schema-version check); reset all progress (with a confirmation step).
+- **R-PAR-5** **Settings:** PIN; free-practice policy (R-SES-6); question order (R-SES-4); per-topic min/max level (R-ADP-5); `allowSkipping` for EQ (R-EQ-CHK-3); full balance animation on/off (R-EQ-PED-2); natural numbers include 0 (§6.1); sounds on/off *(default **off**, parent decision 2026-09-25)*; reduce motion (also honours the OS `prefers-reduced-motion`); currency symbol; the mascots' names (R-RWD-7).
+- **R-PAR-6** **Data:** export all data to a JSON file; import a JSON file (with a confirmation step and a schema-version check; older files are migrated, newer ones refused); reset all progress (with a confirmation step; it clears answers, levels, shells, streak, badges, cosmetics, shop requests and all assignments, and keeps the PIN, names, settings and the error list). The in-app error list (R-NF-5) is on this page.
+- **R-PAR-7** *(added M6)* **Rewards:** shop requests to **mark given** or **cancel and refund**; the history; shells to spend and lifetime shells; set the learner's **shells to spend** (the lifetime total and its cosmetics stay as earned); **shells per 3 / 2 / 1 star answer**; each item's **price**; and an optional **picture** per item, kept on the device only (never uploaded).
 
-### 9.1 Data model (Dexie, schema v1)
+### 9.1 Data model (Dexie; built as schema v4)
+
+The model below is the original v1. As built (see `src/data/db.ts`): v2 adds `Attempt.wrongTries / itemIndex / countedAt` and `Assignment.activatedAt / seed / order`; v3 adds the `errors` store and `Attempt.fixed`; v4 adds `Rewards.spent`, `Settings.shopItems` and the `redemptions` store. Optional fields added later without a schema bump: `Settings.shellsPerStars`, `ShopItem.note / image`, `Attempt.shellsEarned`.
 
 ```ts
 type TopicId = 'NC' | 'RD' | 'FDP' | 'PC' | 'EQ';
@@ -490,7 +499,7 @@ interface Meta         { key: 'schemaVersion'; value: number; }
   - the same seed gives an identical question.
 - **R-TEST-3** **Step checker**: every example in §7.5 is a named test case, and every diagnostic EQ-D1…D11 has at least 2 positive and 2 negative tests.
 - **R-TEST-4** **Adaptive logic**: table-driven tests for promote/demote and window reset.
-- **R-TEST-5** **UI**: Playwright smoke tests for completing one question per topic by mouse, completing the tile builder by touch emulation, completing a typed EQ, the hint ladder reaching H3, and the parent PIN plus assignment creation.
+- **R-TEST-5** **UI**: Playwright smoke tests for completing one question per topic by mouse, completing the tile builder by touch emulation, completing a typed EQ, the hint ladder reaching H3, and the parent PIN plus assignment creation. *(As built: every spec runs on a desktop and a touch tablet profile in Chromium.)*
 - **R-TEST-6** **Accessibility**: the automated axe check passes on every screen; all interactive targets ≥ 48×48 px; body text contrast ≥ 4.5:1 in both themes.
 - **R-TEST-7** **Offline**: a Playwright test loads the app, goes offline, reloads, and completes a question.
 
@@ -498,7 +507,7 @@ interface Meta         { key: 'schemaVersion'; value: number; }
 
 ## 11. Non-functional
 
-- **R-NF-1** Cold load ≤ 2 s on a mid-range tablet over a local network; interactions respond within 100 ms; the step checker returns in < 20 ms.
+- **R-NF-1** Cold load ≤ 2 s on a mid-range tablet over a local network; interactions respond within 100 ms; the step checker returns in < 20 ms. *(Measured on the local production preview at 4× CPU throttling: about 0.5 s cold, 35 ms for a tap.)*
 - **R-NF-2** Bundle ≤ 1 MB gzipped, excluding fonts and illustrations.
 - **R-NF-3** Respects `prefers-reduced-motion`: celebrations become static, and the balance animation becomes a two-frame before/after.
 - **R-NF-4** All learner-facing text lives in one strings module (`src/ui/strings.ts`) so the tone can be edited in one place. v1 is English only.
@@ -517,6 +526,9 @@ interface Meta         { key: 'schemaVersion'; value: number; }
 | **M4 Sessions + adaptive + rewards** | assignments, adaptive levels, stars, streaks, badges, penguin celebrations | R-TEST-4 green; assignment completes with summary |
 | **M5 Parent area** | PIN, assignment builder, dashboard, missed-question review, settings, export/import | R-TEST-5 parent flow green |
 | **M6 Polish** | shells + accessories (R-RWD-4), animations, a11y pass, offline test, performance budget | R-TEST-6, R-TEST-7, R-NF-1/2 met |
+| *M7 (deferred)* | *An editable shop list in the parent area: add, rename and remove rewards* | *Not scheduled* |
+
+**Status:** M0–M6 done and deployed (2026-09-25); v1 is complete. Reports: `docs/milestones/`.
 
 ---
 
@@ -524,12 +536,13 @@ interface Meta         { key: 'schemaVersion'; value: number; }
 
 1. App name "Turtle & Penguin Math" is a placeholder.
 2. Natural numbers start at 1 (a common school convention). This is a parent setting.
-3. Promote at 4 of the last 5 clean; demote at 3 of the last 5 needing a walkthrough.
+3. Assignments: promote at 4 of the last 5 clean; demote at 3 of the last 5 needing a walkthrough. Free practice (Adaptive): R-ADP-7.
 4. Step skipping in EQ is off by default.
 5. Currency is `$`; no rounding problems in v1.
 6. Streak counts only days that had an active assignment.
-7. Mixed-number percents (33⅓%) are not used; repeating percents use `33.3…%` / bar notation.
+7. Mixed-number percents (33⅓%) are not used; repeating percents show the block three times (`33.333…%`) and bar notation from FDP level 4.
 8. EQ levels 1–2 use tiles, levels 3–6 use typed steps. The parent can override with `levelLock`.
+9. Free practice is always open by default; sounds are off by default.
 
 ## 14. Glossary
 
@@ -537,3 +550,20 @@ interface Meta         { key: 'schemaVersion'; value: number; }
 - **Hint ladder**: H1 nudge → H2 next move → H3 walkthrough.
 - **Separated form**: an equation with only variable terms on one side and only constants on the other.
 - **Distractor**: a wrong multiple-choice option built from a specific misconception.
+
+## 15. Changes approved during the build
+
+Everything below is written into the requirements above; `progress.md` §4 has the date and the reasoning for each.
+
+| When | Requirement | Change |
+|---|---|---|
+| M1 | EQ-D4 | Detection rule made precise (approved rule). |
+| 2026-09-23 | R-EQ-CHK-3 | Level 6 accepts a correct final answer from any line (approved rule). |
+| M3 | R-FDP-3 | Repeating percents show the block three times (R-DISP-3). |
+| M4 | R-SES-1, R-ADP | Start levels Equations 3, others 1; after a walkthrough the same topic and level, a demotion after that. |
+| M5 | R-SES-1, R-SES-6, R-PAR-1/2 | Assignments only from the parent area (no link); free practice always open by default; first-run setup required. |
+| 2026-09-25 | §6.1 | No Real checkbox; five sets. |
+| 2026-09-25 | R-SES-8, R-ADP-7 | Free-practice level picker and its Adaptive rule; assignments keep R-ADP-1…6. |
+| M6 | R-RWD-4, R-RWD-6, R-RWD-8, R-PAR-7 | Lifetime shells unlock cosmetics; shells to spend buy real rewards the parent gives; badge shelf; Parent › Rewards. |
+| 2026-09-25 | R-RWD-4, R-PAR-5, R-PAR-7 | Cartoon shop pictures; sounds off by default; the parent sets shells and shells per star. |
+| 2026-09-25 | R-PLAT-2 | Chrome and Edge, on desktop and the Surface Pro, are the required browsers. |

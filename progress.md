@@ -2,14 +2,14 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-25 · Current state: **M0–M6 done and deployed (v1 complete). Next: M7 (editable shop catalogue), when the parent says go.**
+Last updated: 2026-09-25 · Current state: **v1 finished (M0–M6 done and deployed, docs brought up to date, 2026-09-25). M7 (editable shop list) is deferred.**
 
 ---
 
 ## 1. How to work on this project
 
 - **Read first:** `docs/requirements.md`, `docs/design.md`, then this file. Milestone reports with full detail: `docs/milestones/M1-report.md` (M0 + M1), `docs/milestones/M2-report.md`, `docs/milestones/M3-report.md`, `docs/milestones/M4-report.md`, `docs/milestones/M5-report.md`, `docs/milestones/M6-report.md`.
-- **Precedence:** `requirements.md` > `design.md` > mockups > anything else, except the approved rules and deviations in §4. Report any other conflict; implement the higher-precedence source.
+- **Precedence:** `requirements.md` > `design.md` > mockups > anything else. Since 2026-09-25 both documents describe what was built (requirements §15 and design §12 list the changes approved during the build). Report any new conflict; implement the higher-precedence source.
 - **Process per milestone:** plan in plan mode with open questions → parent approves → build one milestone → stop and report (template in §9) as `docs/milestones/M<n>-report.md` → update this file → commit → push (deploys) → run the live check.
 - **Public repo.** Never commit names, ages, gender, locations or local user paths of the parent or the learner. Say "the parent" and "the learner".
 - **Ask, don't guess** for irreversible choices; small reversible choices go under "assumptions" in the report.
@@ -49,7 +49,8 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | **M4 Sessions, adaptive levels, rewards** | Done. Assignments (from a link until M5), grouped and mixed order, resume; adaptive levels (R-ADP-1…6); stars, shells, streak, 12 badges; Pip the penguin and celebrations; Home with the assignment card and locked free practice; assignment summary; Dexie schema v2. 489 unit/property tests, 60 e2e (+8 on-demand skipped), engine 97.1 % lines, 229.7 KB gz JS. Report: `docs/milestones/M4-report.md`. |
 | 2026-09-23 | **M5 Parent area** | Done. First-run setup (PIN, then naming Shelly and Pip); PIN gate with reset and auto-lock; assignment builder and queue (replaces the link); progress dashboard; missed-question review; settings; export / import / reset; the error list; free practice defaults to `always`; Dexie schema v3. 556 unit/property tests, 86 e2e (+10 on-demand skipped), engine 97.2 % lines, 244.3 KB gz JS. Report: `docs/milestones/M5-report.md`. |
 | 2026-09-25 | **M6 Polish, shop, cosmetics** | Done. Lifetime shells unlock 8 cosmetics (worn at once); shells to spend buy real rewards in a shop the parent fulfils (Parent › Rewards); badge shelf; shells on the beach; synthesised sounds; motion audit; axe on every screen in both themes (R-TEST-6); offline question (R-TEST-7); cold load ~0.5 s at 4× CPU (R-NF-1); bundle check in the build (R-NF-2); Dexie schema v4. 594 unit/property tests, 116 e2e (+12 on-demand skipped), engine 97.3 % lines, 244.5 KB gz JS. Report: `docs/milestones/M6-report.md`. |
-| — | M7 | Not started: an editable shop catalogue (parent request). |
+| 2026-09-25 | **After M6** | Sounds off by default; the treat renamed; cartoon shop pictures; the parent sets shells and shells per star; `requirements.md`, `design.md` and `CLAUDE.md` brought up to date. **v1 finished.** |
+| — | M7 | Deferred by the parent: an editable shop list. |
 
 ## 4. Parent decisions, questions and answers
 
@@ -64,7 +65,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-22 | M2: where does the walkthrough start when the learner has made progress? | **From the learner's last accepted line**; accepted lines count as done, and it ends with the substitution check against the original equation. |
 | 2026-09-22 | M2: where is the R-EQ-PED-2 count of correct sign choices stored? | **Derived from stored attempts** (accepted `SIGN` tries). No schema change. |
 | 2026-09-23 | Project checkpoint | Don't edit `CLAUDE.md`. Status, Q&A and decisions live in `progress.md` (this file). |
-| 2026-09-23 | After trying M2: at level 6 the learner may be doing the steps in her head | **Approved rule:** at EQ level 6, a correct final answer `v = q` entered on any line ends the question (label "Solved ✓ (straight to the answer)"; the solve can still be clean). How q is written is still checked (R-EQ-CHK-5 lowest terms, R-EQ-CHK-6 exact). A wrong value, and every line that is not a final answer, is checked as before. Levels 1–5 still require every step. Implemented in `checkStep` via `config.eq.finalAnswerAnyTimeLevels = [6]`. This overrides R-EQ-CHK-3 at level 6; `requirements.md` is unchanged. |
+| 2026-09-23 | After trying M2: at level 6 the learner may be doing the steps mentally | **Approved rule:** at EQ level 6, a correct final answer `v = q` entered on any line ends the question (label "Solved ✓ (straight to the answer)"; the solve can still be clean). How q is written is still checked (R-EQ-CHK-5 lowest terms, R-EQ-CHK-6 exact). A wrong value, and every line that is not a final answer, is checked as before. Levels 1–5 still require every step. Implemented in `checkStep` via `config.eq.finalAnswerAnyTimeLevels = [6]`. This overrides R-EQ-CHK-3 at level 6; `requirements.md` is unchanged. |
 | 2026-09-23 | Reference list in design.md | Approved: design.md header now lists the original brief, the build brief, milestone reports and `progress.md`. |
 | 2026-09-23 | M2 build session | Closed by the parent. M3 starts in a new session. |
 | 2026-09-23 | M3 plan | Approved as proposed. |
@@ -86,12 +87,15 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | M5: first-run setup | **Required before Home.** Existing progress is kept. |
 | 2026-09-23 | M5: "Save & make active" while another is active | **That one goes back to the front of the queue**, progress kept. |
 | 2026-09-25 | After trying M5: the Real checkbox | **Removed**: every number shown is real. NC has five cards; the sets map keeps Real as its outer frame. This overrides requirements §6.1 ("six checkboxes"); `requirements.md` is unchanged. |
-| 2026-09-25 | M6: shells and the shop | **She can spend shells**, on **real rewards** in a shop: a Starbucks treat (150) and a Roblox gift card, 2,000 Robux (1,500); prices editable by the parent. Buying takes shells to spend at once and leaves a request; the parent **marks it given or cancels it (refund)**. More items: **M7**. |
-| 2026-09-25 | M6: cosmetics | **Unlock automatically from lifetime shells** (a hidden total that never goes down), **worn at once**; she can take them off or swap. What she sees is shells to spend. |
+| 2026-09-25 | M6: shells and the shop | **The learner can spend shells**, on **real rewards** in a shop: a Starbucks treat (150) and a Roblox gift card, 2,000 Robux (1,500); prices editable by the parent. Buying takes shells to spend at once and leaves a request; the parent **marks it given or cancels it (refund)**. More items: **M7**. |
+| 2026-09-25 | M6: cosmetics | **Unlock automatically from lifetime shells** (a hidden total that never goes down), **worn at once**; the learner can take them off or swap. What the learner sees is shells to spend. |
 | 2026-09-25 | M6: badge shelf | **Yes, on Home.** |
 | 2026-09-25 | After M6: shop pictures | **Shown in the shop.** The Starbucks photo and the Robux symbol can't be committed to the public repo (copyright, trademark), so the parent adds each picture in Parent › Rewards; it stays on the device (and in exports). Until then the shop shows original cartoon drawings (a pink iced drink with strawberries; a gift card with a gold coin and 2,000, not Roblox's logo), and each card says what the real reward is (\"A real drink from Starbucks. A grown-up gets it for you.\"). |
 | 2026-09-25 | After M6: the treat's name | **Strawberry Açaí Lemonade Refresher.** Devices that stored the old default name show the new one. |
-| 2026-09-25 | After M6: editing shells | Parent › Rewards sets **her shells to spend** (only `spent` moves; the lifetime total and its cosmetics stay as earned) and **shells per 3 / 2 / 1 star answer** (default 3 / 2 / 1, R-RWD-4), from the next answer on. |
+| 2026-09-25 | After M6: editing shells | Parent › Rewards sets **the learner's shells to spend** (only `spent` moves; the lifetime total and its cosmetics stay as earned) and **shells per 3 / 2 / 1 star answer** (default 3 / 2 / 1, R-RWD-4), from the next answer on. |
+| 2026-09-25 | After M6: browsers and the tablet | **Chrome and Edge are the required browsers**; they work. The learner's tablet is a **Surface Pro** (Windows). Firefox, Safari, iPad and Android are not required. |
+| 2026-09-25 | After M6: the docs | **Update `requirements.md` and `design.md` to show what was built; remove the stale references from `CLAUDE.md`.** Done the same day. |
+| 2026-09-25 | M7 | **Deferred** ("we'll add that at a later time"). |
 | 2026-09-25 | After M6: sounds | **Off by default**; the parent turns them on in Settings. A device that saved its settings before this keeps what it had. |
 | 2026-09-25 | M6: compact portrait keypad; real-tablet drag check | **Stay parked.** |
 | 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. |
@@ -181,12 +185,12 @@ From M6 (details in `docs/milestones/M6-report.md` §3):
 68. Cosmetic thresholds 20, 50, 100, 175, 275, 400, 550, 750 lifetime shells, alternating turtle and penguin (`config.cosmetics`).
 69. Shop names are plain text, no logos; prices whole numbers 1–100,000; a new price applies to new purchases only; cancel refunds exactly once.
 70. Existing shells count as lifetime and spendable; cosmetics already reached are worn after the update without an announcement.
-71. Items she can't afford show "n more shells to go" instead of Buy.
+71. Items the learner can't afford yet show "n more shells to go" instead of Buy.
 72. Sounds are synthesised Web Audio tones, not files.
 73. axe runs with reduced motion emulated (final colours); dark mode tested via `data-theme="dark"`.
 74. R-NF-1 measured on the local preview at 4× CPU throttling, in its own Playwright project after the others.
 75. Shop pictures are scaled to fit 320 px and stored as data URLs in `Settings.shopItems[].image`; optional field, no schema bump.
-76. Setting her shells by hand moves `Rewards.spent` (negative when shells are added), so cosmetics unlock only from shells earned. Balance 0–1,000,000; shells per answer 0–100 each.
+76. Setting the learner's shells by hand moves `Rewards.spent` (negative when shells are added), so cosmetics unlock only from shells earned. Balance 0–1,000,000; shells per answer 0–100 each.
 77. Each attempt stores `shellsEarned`; the assignment summary sums it (older attempts count their stars). `Settings.shellsPerStars` is optional (default 3 / 2 / 1); no schema bump.
 
 ## 6. Spec conflicts found and how they were resolved
@@ -212,7 +216,7 @@ From M6 (details in `docs/milestones/M6-report.md` §3):
 
 ## 7. Approved deviations and rules in force
 
-**Deviations: none** since 2026-09-23. **Approved rules** (they override the spec): EQ-D4 detection (M1), the level-6 final-answer rule (2026-09-23), no Real checkbox (2026-09-25), and the free-practice level picker with its Adaptive rule (2026-09-25), all in §4. `CLAUDE.md` is out of date, and the parent asked for it to be left unchanged: it still lists the two M1 deviations as "in force until M2", and it points to `cc-develop-handoff.md` for the current milestone. **This file is the authority for status.**
+**Deviations: none** since 2026-09-23. **Approved rules** (they override the spec): EQ-D4 detection (M1), the level-6 final-answer rule (2026-09-23), no Real checkbox (2026-09-25), and the free-practice level picker with its Adaptive rule (2026-09-25), all in §4. These rules are now also written into `requirements.md` (§15). `CLAUDE.md` points here for status. **This file is the authority for status.**
 
 ## 8. Code map
 
@@ -257,13 +261,11 @@ scripts/check-size.mjs                   R-NF-2 bundle check, run by npm run bui
 
 1. What was built, against requirement IDs. 2. Test results: counts, `src/engine` coverage, anything skipped and why. 3. Assumptions. 4. Conflicts between requirements, design and mockups. 5. Approved deviations still in force and which milestone removes each. 6. PowerShell commands to run it, and confirmation that the hosted URL was redeployed and still installs and works offline. 7. What to build next, and anything wrong with the plan.
 
-## 10. Next: M7 editable shop catalogue (only after the parent says go)
+## 10. Next (v1 is finished)
 
-Parent request (2026-09-25): more real rewards for the shop, beyond the two in M6. Notes for the plan:
-
-- `Settings.shopItems` already holds `{ id, name, price }[]`; Parent › Rewards edits prices only. M7 adds add / rename / remove (removing an item with a pending request needs a rule).
-- Redemptions copy name and price at purchase, so edits never rewrite history.
-- Still parked while the app is used only in a desktop browser (§4): the compact tablet-portrait keypad and the M2 touch-drag check on the real tablet.
+- **M7, deferred:** an editable shop list in the parent area (add, rename, remove rewards). `Settings.shopItems` holds `{ id, name, price, note?, image? }[]`; Parent › Rewards already edits prices and pictures; drawn pictures exist only for `treat` and `robux` (`components/ShopArt.tsx`), so new items would need art or the parent's picture. Removing an item with a pending request needs a rule. Redemptions copy name and price at purchase.
+- **Open, on the Surface Pro:** the compact portrait keypad for typed equations, and the M2 touch-drag check.
+- **Optional:** run the Playwright specs in CI; a dark-mode switch (the tokens and axe checks are ready).
 
 ## 11. Reference materials
 
@@ -275,5 +277,5 @@ Parent request (2026-09-25): more real rewards for the shop, beyond the two in M
 | `docs/design/mockups/_src/` | Python mockup generator; `gen.py` `turtle()` / `penguin()` hold the mascot geometry. |
 | `docs/milestones/` | Milestone reports. |
 | `math-app-description.md` | The parent's original brief. |
-| `cc-develop-handoff.md` | The original Claude Code brief (M0–M2 instructions). Historical; its status line is superseded by this file. |
-| `CLAUDE.md` | Standing rules loaded by Claude Code (summarised in §1–2 above). |
+| `cc-develop-handoff.md` | The original Claude Code brief (M0–M2 instructions). Historical only. |
+| `CLAUDE.md` | Standing rules loaded by Claude Code (summarised in §1–2 above); points to this file for status. |

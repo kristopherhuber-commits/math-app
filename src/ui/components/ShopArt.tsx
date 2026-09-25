@@ -1,6 +1,6 @@
 // Drawn shop pictures (parent request, 2026-09-25): original cartoons, not Starbucks' photo or
 // Roblox's logo, so the public repo holds no one else's artwork. Each one pictures the reward plainly
-// and carries a caption-like label, so it's clear what she is buying. Tokens only (art colours).
+// and carries a caption-like label, so it's clear what the learner is buying. Tokens only (art colours).
 import type { ReactNode } from 'react';
 import { color } from '../theme/tokens';
 import { GiftIcon } from './GiftIcon';

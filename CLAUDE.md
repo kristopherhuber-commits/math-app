@@ -1,6 +1,6 @@
 # Turtle & Penguin Math — standing rules
 
-Read `cc-develop-handoff.md` for the full brief and the current milestone (§3 status line). Milestone reports, including assumptions and spec conflicts already resolved, are in `docs/milestones/`. Precedence: `docs/requirements.md` > `docs/design.md` > mockups > handoff, except the approved deviations below.
+Read `docs/requirements.md`, `docs/design.md`, then `progress.md`. `progress.md` is the project checkpoint: status, the parent's decisions, assumptions and next steps. Milestone reports are in `docs/milestones/`. Precedence: `docs/requirements.md` > `docs/design.md` > mockups.
 
 ## Public repo
 This repo and its GitHub Pages site are public. Never commit names, ages, gender, locations or local user paths of the parent or the learner. Refer to "the parent" and "the learner".
@@ -22,7 +22,7 @@ This repo and its GitHub Pages site are public. Never commit names, ages, gender
 - `npm run dev` — dev server
 - `npm test` — Vitest (unit + property); `npm run coverage` for engine coverage (target ≥ 90%, R-ARCH-4)
 - `npm run lint` — ESLint + Prettier check; `npm run format` to fix
-- `npm run build` — typecheck + production build
+- `npm run build` — typecheck + production build + bundle-size check (R-NF-2)
 - `npm run e2e` — Playwright against the production build (first run: `npx playwright install chromium`)
 
 ## Coding standards
@@ -33,10 +33,3 @@ This repo and its GitHub Pages site are public. Never commit names, ages, gender
 - Accessibility from the first component: 48 px targets, visible focus rings, keyboard paths, `prefers-reduced-motion`.
 - Mouse, touch and keyboard all work for every interaction (R-PLAT-5).
 - No analytics, telemetry, external requests or accounts (R-DATA-3).
-
-## Approved deviations (in force until M2)
-1. EQ levels 1–2 use typed mode instead of the tile builder (R-ANS-5, R-EQ-TILE). M2 replaces this.
-2. The H3 walkthrough UI is not shown; the hint drawer offers H1/H2 only. H3 content is built and tested in the engine. M2 adds the UI with the balance scale.
-
-## Approved rule
-EQ-D4: fires at the SEPARATE stage when N is separated and some term t of Terms(P) (signed, moved to the left) gives D(N) = ±(D(P) − 2t).

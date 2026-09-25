@@ -97,7 +97,7 @@ export const listRedemptions = async (): Promise<Redemption[]> =>
   (await db.redemptions.toArray()).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
 
 /**
- * The parent sets the shells she has to spend. Only `spent` moves, so the lifetime total (and the
+ * The parent sets the learner's shells to spend. Only `spent` moves, so the lifetime total (and the
  * cosmetics it unlocks) stays as earned; adding shells makes `spent` negative.
  */
 export async function setBalance(n: number): Promise<void> {

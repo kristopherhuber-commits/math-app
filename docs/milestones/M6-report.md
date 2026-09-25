@@ -49,7 +49,7 @@ Status: **done** (2026-09-25). Deployed to https://kristopherhuber-commits.githu
 4. Existing shells count as both lifetime and spendable (`spent = 0`); cosmetics already reached are worn after the update without an announcement.
 5. Prices are whole numbers 1–100,000; a new price applies to new purchases only.
 6. Cancelling a request refunds exactly what it cost; a request can be given or cancelled once.
-7. The learner's shop doesn't disable items she can't afford: they show "n more shells to go" instead of a Buy button.
+7. The learner's shop doesn't disable items the learner can't afford yet: they show "n more shells to go" instead of a Buy button.
 8. Sounds are synthesised tones (≤ 300 ms, low volume), not the OGG/MP3 files design.md §8 names: no files to license, cache or download.
 9. Accessibility runs axe with reduced motion emulated, so contrast is measured on final colours rather than a frame of a fade-in. Dark mode is tested by setting `data-theme="dark"` (the switch itself is v1.1).
 10. R-NF-1 "mid-range tablet over a local network" is approximated by the local preview server at 4× CPU throttling.
@@ -63,7 +63,7 @@ Status: **done** (2026-09-25). Deployed to https://kristopherhuber-commits.githu
 
 ## 5. Approved deviations still in force
 
-None. Approved rules in force: EQ-D4 detection, the level-6 final-answer rule, no Real checkbox, and the free-practice level picker with its Adaptive rule (progress.md §4). `CLAUDE.md` is still out of date; `progress.md` is the authority.
+None. Approved rules in force: EQ-D4 detection, the level-6 final-answer rule, no Real checkbox, and the free-practice level picker with its Adaptive rule (progress.md §4). `progress.md` is the authority. (`CLAUDE.md` was brought up to date after this report; see §8.)
 
 ## 6. Commands
 
@@ -86,3 +86,18 @@ Live check (after the deploy): passed on desktop and tablet-touch.
 - **M7 (parent's request):** an editable shop catalogue in the parent area (add, rename, remove items, beyond the two in M6).
 - Still parked while the app is used only in a desktop browser: the compact tablet-portrait keypad for typed equations, and the M2 touch-drag check on the real tablet.
 - Worth a look when trying M6: the unlock thresholds, the two prices, and how the accessories look on the mascots.
+
+## 8. Addendum: changes after the M6 report (2026-09-25)
+
+Made at the parent's request after trying M6; each deployed with all tests passing (599 unit, 120 e2e).
+
+| Change | Where |
+|---|---|
+| **Sounds off by default**; the parent turns them on in Settings. Devices that saved settings earlier keep what they had. | `data/settings.ts` |
+| The treat is the **Strawberry Açaí Lemonade Refresher**; devices that stored "Starbucks treat" show the new name. | `config.shop`, `data/settings.ts` |
+| **Shop pictures:** original cartoons (an iced strawberry drink; a gift card with a gold coin and 2,000), not the official photo or logo, which can't go in a public repo. Each card has a line saying what the real reward is. The parent can use their own picture per item (Parent › Rewards › Pictures); it stays on the device and in exports. | `components/ShopArt.tsx`, `parent/image.ts` |
+| **Parent › Rewards › Shells:** set the learner's shells to spend (only `spent` moves, so lifetime shells and cosmetics stay as earned), and **shells per 3 / 2 / 1 star answer** (default 3 / 2 / 1). Celebrations and the assignment summary show the shells actually earned (`Attempt.shellsEarned`). | `data/rewards.ts`, `parent/RewardsPage.tsx` |
+| **Browsers:** Chrome and Edge are the required browsers, on desktop and the learner's **Surface Pro**. Firefox, Safari, iPad and Android are not required. | requirements R-PLAT-2 |
+| **Docs brought up to date:** `requirements.md` and `design.md` now describe what was built (requirements §15 and design §12 list the changes); `CLAUDE.md` points to `progress.md` and no longer lists the M1 deviations. | `docs/`, `CLAUDE.md` |
+
+**v1 is finished.** Deferred: M7 (an editable shop list). Still open: the compact tablet-portrait keypad and the touch-drag check on the real tablet (now the Surface Pro).

@@ -1,6 +1,6 @@
 // The shop (R-RWD-4 as the parent reshaped it, M6): real rewards bought with shells to spend. Buying
 // takes the shells at once and leaves a request a grown-up gives or cancels. No timers, no pressure:
-// an item she can't buy yet says how many more shells it needs.
+// an item the learner can't buy yet says how many more shells it needs.
 import { useCallback, useEffect, useState } from 'react';
 import { shellsShort } from '../../engine/rewards';
 import type { ShopItem } from '../../data/db';
