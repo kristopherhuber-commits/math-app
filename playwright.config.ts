@@ -14,16 +14,25 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-chromium',
+      testIgnore: /perf\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
     },
     {
       name: 'tablet-touch',
+      testIgnore: /perf\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1024, height: 768 },
         hasTouch: true,
         isMobile: false,
       },
+    },
+    {
+      // R-NF-1 timings run on their own, after everything else, so other workers don't share the CPU.
+      name: 'perf',
+      testMatch: /perf\.spec\.ts/,
+      dependencies: ['desktop-chromium', 'tablet-touch'],
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1024, height: 768 }, hasTouch: true },
     },
   ],
   webServer: {
