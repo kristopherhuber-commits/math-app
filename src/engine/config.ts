@@ -172,6 +172,11 @@ export const config = {
     kind: 'hat' | 'scarf' | 'sunglasses' | 'bowtie';
     at: number;
   }[],
+  /**
+   * Shells earned per answer by its stars (R-RWD-4 has 1 ★ = 1 shell); the parent can change them
+   * in Parent › Rewards (2026-09-25). `maxPerAnswer` and `maxBalance` bound what the parent can enter.
+   */
+  shells: { perStars: { 1: 1, 2: 2, 3: 3 }, maxPerAnswer: 100, maxBalance: 1_000_000 },
   /** Home beach: at most this many shells drawn on the sand (design.md §7.1). */
   beachShellsMax: 12,
   /** R-RWD-2/3/5 */

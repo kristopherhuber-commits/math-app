@@ -4,7 +4,7 @@ import Dexie from 'dexie';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { db, MathDb } from '../../src/data/db';
 import { newAttempt } from '../../src/data/attempts';
-import { finishAttempt, homeSnapshot, shellCount } from '../../src/data/progress';
+import { assignmentSummary, finishAttempt, homeSnapshot, shellCount } from '../../src/data/progress';
 import {
   buy,
   cancelRedemption,
@@ -12,8 +12,10 @@ import {
   loadShop,
   loadWardrobe,
   markGiven,
+  setBalance,
   setImage,
   setPrice,
+  setShellsPerStars,
   setWorn,
 } from '../../src/data/rewards';
 import { exportData, importData, parseImport } from '../../src/data/backup';
@@ -208,5 +210,75 @@ describe('shop names and pictures (parent requests, 2026-09-25)', () => {
     expect((await loadShop()).items.find((i) => i.id === 'robux')).not.toHaveProperty('image');
     await expect(setImage('robux', 'https://example.com/robux.png')).rejects.toThrow();
     await expect(setImage('robux', 'data:text/html;base64,PGI+')).rejects.toThrow();
+  });
+});
+
+describe('the parent sets shells (2026-09-25)', () => {
+  const answer = (stars: 1 | 2 | 3) =>
+    finishAttempt(
+      {
+        ...newAttempt({ topic: 'PC', level: 1, generatorId: 'test', seed: 1, params: {} }),
+        finishedAt: new Date().toISOString(),
+        stars,
+        clean: stars === 3,
+        wrongTries: 3 - stars,
+      },
+      { adaptive: false, rewarded: true },
+    );
+
+  it('shells to spend can go up or down; lifetime and cosmetics stay as earned', async () => {
+    await rewards(60, 10, ['turtle-hat', 'penguin-scarf']);
+    await setBalance(500);
+    expect(await loadShop()).toMatchObject({ balance: 500, lifetime: 60 });
+    expect((await loadWardrobe()).unlocked).toEqual(['turtle-hat', 'penguin-scarf']);
+    await setBalance(0);
+    expect((await loadShop()).balance).toBe(0);
+    for (const bad of [-1, 2.5, 1_000_001]) await expect(setBalance(bad)).rejects.toThrow();
+    // Earning after a change adds on top of what the parent set.
+    await setBalance(20);
+    await answer(3);
+    expect((await loadShop()).balance).toBe(23);
+  });
+
+  it("shells per 3, 2 and 1 star answer: default 3 / 2 / 1, then the parent's table", async () => {
+    await rewards(0);
+    expect((await loadShop()).shellsPerStars).toEqual({ 1: 1, 2: 2, 3: 3 });
+    expect((await answer(3)).shellsEarned).toBe(3);
+    await setShellsPerStars({ 1: 2, 2: 5, 3: 10 });
+    const e = await answer(3);
+    expect(e).toMatchObject({ shellsEarned: 10, shells: 13 });
+    expect((await answer(1)).shellsEarned).toBe(2);
+    expect((await loadShop()).lifetime).toBe(15);
+    await expect(setShellsPerStars({ 1: -1, 2: 2, 3: 3 })).rejects.toThrow();
+    await expect(setShellsPerStars({ 1: 1, 2: 2, 3: 101 })).rejects.toThrow();
+  });
+
+  it('the assignment summary counts the shells actually earned', async () => {
+    await setShellsPerStars({ 1: 1, 2: 2, 3: 5 });
+    await db.assignments.put({
+      id: 'a',
+      profileId: 'default',
+      items: [{ topic: 'PC', count: 2 }],
+      status: 'active',
+      createdAt: '2026-09-25T00:00:00.000Z',
+      activatedAt: '2026-09-25T00:00:00.000Z',
+      position: 0,
+      seed: 1,
+      order: 'grouped',
+    });
+    for (const stars of [3, 2] as const)
+      await finishAttempt(
+        {
+          ...newAttempt({ topic: 'PC', level: 1, generatorId: 'test', seed: 1, params: {} }),
+          assignmentId: 'a',
+          itemIndex: 0,
+          finishedAt: new Date().toISOString(),
+          stars,
+          clean: stars === 3,
+          wrongTries: 3 - stars,
+        },
+        { adaptive: false, rewarded: true },
+      );
+    expect(await assignmentSummary('a')).toMatchObject({ stars: 5, shells: 7 });
   });
 });

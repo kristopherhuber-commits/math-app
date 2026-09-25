@@ -44,7 +44,7 @@ export function AssignmentSummary({
           <StarIcon size={68} />
           <StarIcon size={56} />
         </div>
-        <p className="summary-totals">{s.totals(summary.stars)}</p>
+        <p className="summary-totals">{s.totals(summary.stars, summary.shells)}</p>
         <h2 className="visually-hidden">{s.byTopic}</h2>
         <dl className="summary-topics">
           {summary.byTopic.map(({ topic, stars }) => (

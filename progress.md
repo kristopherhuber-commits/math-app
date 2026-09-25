@@ -89,6 +89,9 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-25 | M6: shells and the shop | **She can spend shells**, on **real rewards** in a shop: a Starbucks treat (150) and a Roblox gift card, 2,000 Robux (1,500); prices editable by the parent. Buying takes shells to spend at once and leaves a request; the parent **marks it given or cancels it (refund)**. More items: **M7**. |
 | 2026-09-25 | M6: cosmetics | **Unlock automatically from lifetime shells** (a hidden total that never goes down), **worn at once**; she can take them off or swap. What she sees is shells to spend. |
 | 2026-09-25 | M6: badge shelf | **Yes, on Home.** |
+| 2026-09-25 | After M6: shop pictures | **Shown in the shop.** The Starbucks photo and the Robux symbol can't be committed to the public repo (copyright, trademark), so the parent adds each picture in Parent › Rewards; it stays on the device (and in exports). A drawn gift shows until then. |
+| 2026-09-25 | After M6: the treat's name | **Strawberry Açaí Lemonade Refresher.** Devices that stored the old default name show the new one. |
+| 2026-09-25 | After M6: editing shells | Parent › Rewards sets **her shells to spend** (only `spent` moves; the lifetime total and its cosmetics stay as earned) and **shells per 3 / 2 / 1 star answer** (default 3 / 2 / 1, R-RWD-4), from the next answer on. |
 | 2026-09-25 | After M6: sounds | **Off by default**; the parent turns them on in Settings. A device that saved its settings before this keeps what it had. |
 | 2026-09-25 | M6: compact portrait keypad; real-tablet drag check | **Stay parked.** |
 | 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. |
@@ -182,6 +185,9 @@ From M6 (details in `docs/milestones/M6-report.md` §3):
 72. Sounds are synthesised Web Audio tones, not files.
 73. axe runs with reduced motion emulated (final colours); dark mode tested via `data-theme="dark"`.
 74. R-NF-1 measured on the local preview at 4× CPU throttling, in its own Playwright project after the others.
+75. Shop pictures are scaled to fit 320 px and stored as data URLs in `Settings.shopItems[].image`; optional field, no schema bump.
+76. Setting her shells by hand moves `Rewards.spent` (negative when shells are added), so cosmetics unlock only from shells earned. Balance 0–1,000,000; shells per answer 0–100 each.
+77. Each attempt stores `shellsEarned`; the assignment summary sums it (older attempts count their stars). `Settings.shellsPerStars` is optional (default 3 / 2 / 1); no schema bump.
 
 ## 6. Spec conflicts found and how they were resolved
 

@@ -1,7 +1,7 @@
 // Parent › Rewards (M6): the learner's shop requests to give or cancel (cancel refunds the shells),
 // the history, shells to spend and lifetime shells, and the price of each item.
 import { useCallback, useEffect, useState } from 'react';
-import { isValidPrice } from '../../engine/rewards';
+import { isValidBalance, isValidPrice, isValidShellsTable, type ShellsPerStars } from '../../engine/rewards';
 import type { Redemption } from '../../data/db';
 import { logError } from '../../data/errors';
 import {
@@ -9,8 +9,10 @@ import {
   listRedemptions,
   loadShop,
   markGiven,
+  setBalance,
   setImage,
   setPrice,
+  setShellsPerStars,
   type ShopSnapshot,
 } from '../../data/rewards';
 import { GiftIcon } from '../components/GiftIcon';
@@ -20,6 +22,93 @@ import { fileToShopImage } from './image';
 const s = parentStrings.rewards;
 const when = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+/** The shells she has to spend, set by hand (the lifetime total and its cosmetics stay as earned). */
+function BalanceForm({ balance, onSaved }: { balance: number; onSaved: () => void }) {
+  const [text, setText] = useState(String(balance));
+  const [note, setNote] = useState('');
+  return (
+    <form
+      className="setting-row"
+      onSubmit={(e) => {
+        e.preventDefault();
+        const n = Number(text);
+        if (!isValidBalance(n)) return setNote(s.balanceInvalid);
+        void setBalance(n)
+          .then(() => {
+            setNote(s.saved);
+            onSaved();
+          })
+          .catch((err: unknown) => logError('setBalance', err));
+      }}
+    >
+      <label className="price-field">
+        <span className="setting-label">{s.balance}</span>
+        <input
+          className="text-input"
+          inputMode="numeric"
+          value={text}
+          aria-label={s.balance}
+          onChange={(e) => {
+            setText(e.target.value);
+            setNote('');
+          }}
+        />
+      </label>
+      <button type="submit" className="btn btn-small btn-outline">
+        {s.savePrice}
+      </button>
+      <span className="label muted" role="status">
+        {note}
+      </span>
+    </form>
+  );
+}
+
+/** Shells per 3, 2 and 1 star answer (R-RWD-4 default 3 / 2 / 1). */
+function PerStarsForm({ table, onSaved }: { table: ShellsPerStars; onSaved: () => void }) {
+  const [text, setText] = useState({ 3: String(table[3]), 2: String(table[2]), 1: String(table[1]) });
+  const [note, setNote] = useState('');
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const t = { 1: Number(text[1]), 2: Number(text[2]), 3: Number(text[3]) };
+        if (!isValidShellsTable(t)) return setNote(s.perStarsInvalid);
+        void setShellsPerStars(t)
+          .then(() => {
+            setNote(s.saved);
+            onSaved();
+          })
+          .catch((err: unknown) => logError('setShellsPerStars', err));
+      }}
+    >
+      {([3, 2, 1] as const).map((k) => (
+        <label key={k} className="setting-row price-field">
+          <span className="setting-label">{s.perStars(k)}</span>
+          <input
+            className="text-input"
+            inputMode="numeric"
+            value={text[k]}
+            aria-label={s.perStars(k)}
+            onChange={(e) => {
+              setText({ ...text, [k]: e.target.value });
+              setNote('');
+            }}
+          />
+        </label>
+      ))}
+      <div className="setting-row">
+        <button type="submit" className="btn btn-small btn-outline">
+          {s.savePrice}
+        </button>
+        <span className="label muted" role="status">
+          {note}
+        </span>
+      </div>
+    </form>
+  );
+}
 
 /** An item's picture: add or replace from a file, or remove. Kept on this device only. */
 function PictureRow({
@@ -213,6 +302,15 @@ export function RewardsPage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="parent-card" aria-label={s.shells}>
+          <h2>{s.shells}</h2>
+          <p className="muted">{s.shellsSub}</p>
+          <BalanceForm key={shop.balance} balance={shop.balance} onSaved={refresh} />
+          <h3 className="setting-label">{s.perAnswer}</h3>
+          <p className="muted">{s.perAnswerSub}</p>
+          <PerStarsForm table={shop.shellsPerStars} onSaved={refresh} />
         </section>
 
         <section className="parent-card" aria-label={s.prices}>

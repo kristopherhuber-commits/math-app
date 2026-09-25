@@ -39,6 +39,8 @@ export interface Settings {
   mascotNames: { turtle: string; penguin: string };
   /** v4: what the shop sells and for how many shells (parent decision, M6; an editable catalogue in M7). */
   shopItems: ShopItem[];
+  /** Shells per 3, 2 and 1 star answer (parent, 2026-09-25; optional, default 3 / 2 / 1). */
+  shellsPerStars?: Record<1 | 2 | 3, number>;
 }
 
 export interface ShopItem {
@@ -109,6 +111,8 @@ export interface Attempt {
   countedAt?: string;
   /** v3: a fixed-level question from a `?topic=&level=` link (parent and tests); left out of the dashboard. */
   fixed?: true;
+  /** Shells this answer earned (by the parent's table at the time); older attempts earned their stars. */
+  shellsEarned?: number;
 }
 
 export interface Rewards {
@@ -119,7 +123,10 @@ export interface Rewards {
   badges: { id: string; at: string }[];
   /** Cosmetics worn now (they unlock from lifetime shells, R-RWD-4 as the parent reshaped it). */
   accessories: string[];
-  /** v4: shells spent in the shop. `shells` stays the lifetime total; shells to spend = shells − spent. */
+  /**
+   * v4: shells spent in the shop. `shells` stays the lifetime total; shells to spend = shells − spent.
+   * Negative when the parent has added shells by hand (which doesn't unlock cosmetics).
+   */
   spent?: number;
 }
 

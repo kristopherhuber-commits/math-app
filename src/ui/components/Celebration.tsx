@@ -79,7 +79,7 @@ export function Celebration({
       </div>
       <div className="celebration-text">
         <p className="celebration-title">{s.headline[events.stars]}</p>
-        {showShells && <p className="celebration-shells">{s.shells(events.stars)}</p>}
+        {showShells && <p className="celebration-shells">{s.shells(events.shellsEarned ?? events.stars)}</p>}
         {events.levelUp !== undefined && <p className="celebration-level">{s.levelUp}</p>}
         {events.badges.map((b) => (
           <p key={b} className="celebration-badge">

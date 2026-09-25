@@ -22,6 +22,7 @@ export function defaultSettings(): Settings {
     currency: config.settings.currency,
     mascotNames: { ...config.settings.mascotNames },
     shopItems: defaultShopItems(),
+    shellsPerStars: { ...config.shells.perStars },
   };
 }
 
@@ -36,6 +37,7 @@ export async function loadSettings(): Promise<Settings> {
     levelBounds: { ...d.levelBounds, ...s.levelBounds },
     mascotNames: { ...d.mascotNames, ...s.mascotNames },
     shopItems: (s.shopItems ?? d.shopItems).map(renameDefault),
+    shellsPerStars: { ...d.shellsPerStars!, ...s.shellsPerStars },
   };
 }
 

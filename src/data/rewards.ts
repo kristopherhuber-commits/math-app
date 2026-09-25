@@ -1,6 +1,15 @@
 // The shop and the cosmetics over Dexie (R-RWD-4 as the parent reshaped it, M6). Buying takes shells
 // to spend at once and leaves a request for the parent, who marks it given or cancels it (refund).
-import { isValidPrice, shellsShort, spendable, unlockedAt, wear } from '../engine/rewards';
+import {
+  isValidBalance,
+  isValidPrice,
+  isValidShellsTable,
+  shellsShort,
+  spendable,
+  unlockedAt,
+  wear,
+  type ShellsPerStars,
+} from '../engine/rewards';
 import { db, PROFILE_ID, type Redemption, type Rewards, type ShopItem } from './db';
 import { loadSettings, saveSettings } from './settings';
 
@@ -21,6 +30,8 @@ export interface ShopSnapshot {
   balance: number;
   lifetime: number;
   pending: Redemption[];
+  /** Shells per 3, 2 and 1 star answer. */
+  shellsPerStars: ShellsPerStars;
 }
 
 export async function loadShop(): Promise<ShopSnapshot> {
@@ -34,6 +45,7 @@ export async function loadShop(): Promise<ShopSnapshot> {
     balance: spendable(r),
     lifetime: r.shells,
     pending: pending.sort((a, b) => a.requestedAt.localeCompare(b.requestedAt)),
+    shellsPerStars: s.shellsPerStars!,
   };
 }
 
@@ -83,6 +95,24 @@ export const cancelRedemption = (id: string, now: Date = new Date()) => resolve(
 /** Every request, newest first (the parent's history). */
 export const listRedemptions = async (): Promise<Redemption[]> =>
   (await db.redemptions.toArray()).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
+
+/**
+ * The parent sets the shells she has to spend. Only `spent` moves, so the lifetime total (and the
+ * cosmetics it unlocks) stays as earned; adding shells makes `spent` negative.
+ */
+export async function setBalance(n: number): Promise<void> {
+  if (!isValidBalance(n)) throw new Error('invalid balance');
+  await db.transaction('rw', db.rewards, async () => {
+    const r = await rewardsRow();
+    await db.rewards.put({ ...r, spent: r.shells - n });
+  });
+}
+
+/** The parent's shells per 3, 2 and 1 star answer (from the next answer on). */
+export async function setShellsPerStars(t: ShellsPerStars): Promise<void> {
+  if (!isValidShellsTable(t)) throw new Error('invalid table');
+  await saveSettings({ shellsPerStars: { 1: t[1], 2: t[2], 3: t[3] } });
+}
 
 /** The parent adds or removes an item's picture (a data: URL made on the device). */
 export async function setImage(itemId: string, image: string | null): Promise<void> {

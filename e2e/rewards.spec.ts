@@ -167,3 +167,37 @@ test('the parent adds a picture; the shop shows it; it can be removed', async ({
   await press(pictures.getByRole('button', { name: 'Remove' }), hasTouch);
   await expect(pictures.getByText('Removed.')).toBeVisible();
 });
+
+test('the parent sets her shells and the shells per answer; the next answer earns the new amount', async ({
+  page,
+  hasTouch,
+}) => {
+  await openHome(page, { rewards: [rewardsRow(30)] });
+  await unlock(page, hasTouch);
+  const card = page.getByRole('region', { name: 'Shells', exact: true });
+  const balance = card.getByLabel('Shells to spend now');
+  await expect(balance).toHaveValue('30');
+  await balance.fill('-5');
+  await press(card.locator('form').first().getByRole('button', { name: 'Save' }), hasTouch);
+  await expect(card.getByText('A whole number from 0 to 1,000,000.')).toBeVisible();
+  await balance.fill('140');
+  await press(card.locator('form').first().getByRole('button', { name: 'Save' }), hasTouch);
+  await expect(page.getByText('Shells to spend: 140 · earned in all: 30')).toBeVisible();
+
+  await expect(card.getByLabel('3 stars')).toHaveValue('3');
+  await card.getByLabel('3 stars').fill('10');
+  await card.getByLabel('2 stars').fill('4');
+  await press(card.getByRole('button', { name: 'Save' }).last(), hasTouch);
+  await expect(card.getByText('Saved.').last()).toBeVisible();
+
+  await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
+  await expect(page.locator('.home-counter').nth(1)).toContainText('140');
+  await press(page.getByRole('button', { name: 'Price changes', exact: true }), hasTouch);
+  await press(page.getByRole('button', { name: /^Level 1/ }), hasTouch);
+  const { level, seed } = await current(page);
+  const q = generatePc(level, seed, '$');
+  await press(page.locator('.mc-option').nth(q.options.findIndex((o) => o.code === 'correct')), hasTouch);
+  await press(page.getByRole('button', { name: 'Check' }), hasTouch);
+  await expect(page.getByText('+10 shells')).toBeVisible();
+  await expect(page.getByRole('status', { name: /150 shells/ })).toBeVisible();
+});

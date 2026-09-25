@@ -16,7 +16,7 @@ import { itemProgress, nextSlot } from '../engine/session';
 import { db, PROFILE_ID, type Assignment, type Attempt, type Settings } from './db';
 import { loadSettings } from './settings';
 import { emptyRewards } from './rewards';
-import { newlyUnlocked, spendable } from '../engine/rewards';
+import { newlyUnlocked, shellsFor, spendable } from '../engine/rewards';
 
 /** A local calendar day, 'YYYY-MM-DD' (streaks follow the learner's days, R-RWD-2). */
 export function localDay(d: Date | string = new Date()): string {
@@ -138,6 +138,8 @@ export interface FinishEvents {
   stars: Stars;
   /** Shells to spend after this attempt. */
   shells: number;
+  /** Shells this attempt earned (the parent's table by stars). */
+  shellsEarned?: number;
   /** Cosmetics this attempt unlocked (worn at once). */
   unlocked?: string[];
   /** The new level after a promotion (R-ADP-6). Demotions are silent, so they aren't reported. */
@@ -165,15 +167,16 @@ const intervals = (all: Assignment[]): ActiveInterval[] =>
 export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promise<FinishEvents> {
   const stars = attempt.stars ?? 1;
   const bounds = ctx.adaptive ? (await practiceSettings()).levelBounds : null;
+  const earned = ctx.rewarded ? shellsFor(stars, (await loadSettings()).shellsPerStars!) : 0;
   return db.transaction('rw', [db.attempts, db.topicStates, db.rewards, db.assignments], async () => {
     const stored = await db.attempts.get(attempt.id);
     const rewards = (await db.rewards.get(PROFILE_ID)) ?? emptyRewards();
     if (stored?.countedAt) return { stars, shells: spendable(rewards), badges: [] };
     const now = new Date().toISOString();
-    await db.attempts.put({ ...attempt, countedAt: now });
+    await db.attempts.put({ ...attempt, countedAt: now, ...(ctx.rewarded ? { shellsEarned: earned } : {}) });
     if (!ctx.rewarded) return { stars, shells: spendable(rewards), badges: [] };
 
-    const events: FinishEvents = { stars, shells: 0, badges: [] };
+    const events: FinishEvents = { stars, shells: 0, shellsEarned: earned, badges: [] };
     const key = { profileId: PROFILE_ID, topic: attempt.topic };
 
     // Adaptive level (R-ADP-2…5). Attempts at another level (after a walkthrough) don't count.
@@ -188,8 +191,8 @@ export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promi
     }
 
     // Lifetime shells (never go down) unlock cosmetics, which are worn at once (R-RWD-4, M6).
-    const unlocked = newlyUnlocked(rewards.shells, rewards.shells + stars).map((c) => c.id);
-    rewards.shells += stars;
+    const unlocked = newlyUnlocked(rewards.shells, rewards.shells + earned).map((c) => c.id);
+    rewards.shells += earned;
     if (unlocked.length) {
       rewards.accessories = [...rewards.accessories.filter((a) => !unlocked.includes(a)), ...unlocked];
       events.unlocked = unlocked;
@@ -290,6 +293,8 @@ export interface Summary {
   title?: string;
   questions: number;
   stars: number;
+  /** Shells earned in this assignment. */
+  shells: number;
   /** Per item topic, in the assignment's order: how many 3, 2 and 1 star answers. */
   byTopic: { topic: TopicId; stars: Record<Stars, number> }[];
   /** Badges earned while this assignment was active. */
@@ -309,6 +314,7 @@ export async function assignmentSummary(id: string): Promise<Summary | null> {
     ...(a.title ? { title: a.title } : {}),
     questions: finished.length,
     stars: finished.reduce((s, f) => s + (f.stars ?? 0), 0),
+    shells: finished.reduce((s, f) => s + (f.shellsEarned ?? f.stars ?? 0), 0),
     byTopic: topics.map((topic) => {
       const stars: Record<Stars, number> = { 3: 0, 2: 0, 1: 0 };
       for (const f of finished) if (f.topic === topic && f.stars) stars[f.stars]++;
