@@ -9,14 +9,79 @@ import {
   listRedemptions,
   loadShop,
   markGiven,
+  setImage,
   setPrice,
   type ShopSnapshot,
 } from '../../data/rewards';
+import { GiftIcon } from '../components/GiftIcon';
 import { parentStrings } from '../strings';
+import { fileToShopImage } from './image';
 
 const s = parentStrings.rewards;
 const when = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+/** An item's picture: add or replace from a file, or remove. Kept on this device only. */
+function PictureRow({
+  id,
+  name,
+  image,
+  onSaved,
+}: {
+  id: string;
+  name: string;
+  image?: string;
+  onSaved: () => void;
+}) {
+  const [note, setNote] = useState('');
+  const save = (img: string | null, done: string) =>
+    void setImage(id, img)
+      .then(() => {
+        setNote(done);
+        onSaved();
+      })
+      .catch((err: unknown) => {
+        setNote(s.pictureBad);
+        void logError('setImage', err);
+      });
+  return (
+    <div className="setting-row picture-row">
+      <span className="picture-preview">
+        {image ? <img src={image} alt={s.pictureOf(name)} /> : <GiftIcon />}
+      </span>
+      <span className="setting-label">{name}</span>
+      <label className="btn btn-small btn-outline file-btn">
+        {image ? s.pictureChange : s.pictureAdd}
+        <input
+          type="file"
+          accept="image/*"
+          className="visually-hidden"
+          aria-label={s.pictureFor(name)}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = '';
+            if (!f) return;
+            void fileToShopImage(f)
+              .then((img) => save(img, s.pictureSaved))
+              .catch(() => setNote(s.pictureBad));
+          }}
+        />
+      </label>
+      {image && (
+        <button
+          type="button"
+          className="btn btn-small btn-outline"
+          onClick={() => save(null, s.pictureRemoved)}
+        >
+          {s.pictureRemove}
+        </button>
+      )}
+      <span className="label muted" role="status">
+        {note}
+      </span>
+    </div>
+  );
+}
 
 function PriceRow({
   id,
@@ -155,6 +220,20 @@ export function RewardsPage() {
           <p className="muted">{s.pricesSub}</p>
           {shop.items.map((i) => (
             <PriceRow key={i.id} id={i.id} name={i.name} price={i.price} onSaved={refresh} />
+          ))}
+        </section>
+
+        <section className="parent-card" aria-label={s.pictures}>
+          <h2>{s.pictures}</h2>
+          <p className="muted">{s.picturesSub}</p>
+          {shop.items.map((i) => (
+            <PictureRow
+              key={i.id}
+              id={i.id}
+              name={i.name}
+              {...(i.image ? { image: i.image } : {})}
+              onSaved={refresh}
+            />
           ))}
         </section>
 

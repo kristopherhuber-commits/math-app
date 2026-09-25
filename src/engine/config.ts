@@ -141,10 +141,17 @@ export const config = {
    */
   shop: {
     items: [
-      { id: 'treat', name: 'Starbucks treat', price: 150 },
+      { id: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 150 },
       { id: 'robux', name: 'Roblox gift card, 2,000 Robux', price: 1500 },
     ] as readonly { id: string; name: string; price: number }[],
     maxPrice: 100_000,
+    /** Names that were defaults before and are replaced on load (the parent renamed the treat, 2026-09-25). */
+    renamed: { treat: { from: 'Starbucks treat', to: 'Strawberry Açaí Lemonade Refresher' } } as Record<
+      string,
+      { from: string; to: string }
+    >,
+    /** A picture the parent adds is scaled to fit this square and kept on the device only. */
+    imageMaxPx: 320,
   },
   /**
    * Cosmetics (R-RWD-4 as the parent reshaped it): each unlocks when the lifetime shell count reaches

@@ -12,6 +12,7 @@ import {
   loadShop,
   loadWardrobe,
   markGiven,
+  setImage,
   setPrice,
   setWorn,
 } from '../../src/data/rewards';
@@ -57,7 +58,7 @@ describe('schema v4 (R-DATA-1)', () => {
       accessories: ['turtle-hat', 'penguin-scarf'],
     });
     expect((await d.settings.get('default'))?.shopItems).toEqual([
-      { id: 'treat', name: 'Starbucks treat', price: 150 },
+      { id: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 150 },
       { id: 'robux', name: 'Roblox gift card, 2,000 Robux', price: 1500 },
     ]);
     expect(await d.redemptions.count()).toBe(0);
@@ -96,7 +97,7 @@ describe('the shop', () => {
     const shop = await loadShop();
     expect(shop).toMatchObject({ balance: 50, lifetime: 200 });
     expect(shop.pending).toMatchObject([
-      { itemId: 'treat', name: 'Starbucks treat', price: 150, status: 'requested' },
+      { itemId: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 150, status: 'requested' },
     ]);
     expect(await shellCount()).toBe(50);
     expect((await homeSnapshot()).shells).toBe(50);
@@ -180,5 +181,32 @@ describe('cosmetics', () => {
     expect(await setWorn('turtle-hat', false)).toEqual(['penguin-scarf']);
     expect(await setWorn('turtle-hat', true)).toEqual(['penguin-scarf', 'turtle-hat']);
     expect(await setWorn('penguin-bowtie', true)).toEqual(['penguin-scarf', 'turtle-hat']);
+  });
+});
+
+describe('shop names and pictures (parent requests, 2026-09-25)', () => {
+  it('a device that stored the old default name shows the new one; a name the parent chose stays', async () => {
+    await db.settings.put({
+      profileId: 'default',
+      pinHash: 'h',
+      shopItems: [
+        { id: 'treat', name: 'Starbucks treat', price: 150 },
+        { id: 'robux', name: 'Robux card', price: 1500 },
+      ],
+    } as never);
+    expect((await loadShop()).items.map((i) => i.name)).toEqual([
+      'Strawberry Açaí Lemonade Refresher',
+      'Robux card',
+    ]);
+  });
+
+  it('a picture is kept as an image data URL, can be removed, and anything else is refused', async () => {
+    const png = 'data:image/png;base64,iVBORw0KGgo=';
+    await setImage('robux', png);
+    expect((await loadShop()).items.find((i) => i.id === 'robux')?.image).toBe(png);
+    await setImage('robux', null);
+    expect((await loadShop()).items.find((i) => i.id === 'robux')).not.toHaveProperty('image');
+    await expect(setImage('robux', 'https://example.com/robux.png')).rejects.toThrow();
+    await expect(setImage('robux', 'data:text/html;base64,PGI+')).rejects.toThrow();
   });
 });

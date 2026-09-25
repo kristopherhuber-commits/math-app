@@ -71,16 +71,22 @@ test('the shop: buy the treat, it waits for a grown-up, the parent marks it give
   const robux = page.locator('.shop-card', { hasText: 'Roblox gift card, 2,000 Robux' });
   await expect(robux).toContainText('1500 shells');
   await expect(robux).toContainText('1300 more shells to go');
-  const treat = page.locator('.shop-card', { hasText: 'Starbucks treat' });
+  const treat = page.locator('.shop-card', { hasText: 'Strawberry Açaí Lemonade Refresher' });
   await press(treat.getByRole('button', { name: 'Buy' }), hasTouch);
   await press(page.getByRole('button', { name: 'Not now' }), hasTouch);
   await press(treat.getByRole('button', { name: 'Buy' }), hasTouch);
-  await expect(page.getByRole('alertdialog')).toContainText('Buy Starbucks treat for 150 shells?');
+  await expect(page.getByRole('alertdialog')).toContainText(
+    'Buy Strawberry Açaí Lemonade Refresher for 150 shells?',
+  );
   await press(page.getByRole('button', { name: 'Yes, buy it' }), hasTouch);
-  await expect(page.getByText('Done! A grown-up will get you Starbucks treat.')).toBeVisible();
+  await expect(
+    page.getByText('Done! A grown-up will get you Strawberry Açaí Lemonade Refresher.'),
+  ).toBeVisible();
   await expect(page.locator('.home-counter')).toContainText('50');
   await expect(treat).toContainText('100 more shells to go');
-  await expect(page.getByRole('region', { name: 'Waiting for a grown-up' })).toContainText('Starbucks treat');
+  await expect(page.getByRole('region', { name: 'Waiting for a grown-up' })).toContainText(
+    'Strawberry Açaí Lemonade Refresher',
+  );
 
   await press(page.getByRole('button', { name: '‹ Home' }), hasTouch);
   await expect(page.getByText('1 reward waiting for a grown-up')).toBeVisible();
@@ -89,7 +95,7 @@ test('the shop: buy the treat, it waits for a grown-up, the parent marks it give
   await unlock(page, hasTouch);
   await expect(page.getByText('Shells to spend: 50 · earned in all: 200')).toBeVisible();
   const waiting = page.getByRole('region', { name: 'Waiting to be given' });
-  await expect(waiting).toContainText('Starbucks treat');
+  await expect(waiting).toContainText('Strawberry Açaí Lemonade Refresher');
   await press(waiting.getByRole('button', { name: 'Mark given' }), hasTouch);
   await expect(waiting).toContainText('No requests right now.');
   await expect(page.getByRole('region', { name: 'Given and cancelled' })).toContainText('given');
@@ -101,7 +107,7 @@ test('the parent cancels a request (shells come back) and changes a price', asyn
   await openHome(page, { rewards: [rewardsRow(160)] });
   await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
   await press(
-    page.locator('.shop-card', { hasText: 'Starbucks' }).getByRole('button', { name: 'Buy' }),
+    page.locator('.shop-card', { hasText: 'Strawberry' }).getByRole('button', { name: 'Buy' }),
     hasTouch,
   );
   await press(page.getByRole('button', { name: 'Yes, buy it' }), hasTouch);
@@ -115,7 +121,7 @@ test('the parent cancels a request (shells come back) and changes a price', asyn
   await press(page.getByRole('alertdialog').getByRole('button', { name: 'Yes' }), hasTouch);
   await expect(page.getByText('Shells to spend: 160 · earned in all: 160')).toBeVisible();
 
-  const price = page.getByLabel('Price of Starbucks treat, in shells');
+  const price = page.getByLabel('Price of Strawberry Açaí Lemonade Refresher, in shells');
   await price.fill('0');
   await press(page.locator('form', { has: price }).getByRole('button', { name: 'Save' }), hasTouch);
   await expect(page.getByText('A whole number from 1 to 100,000.')).toBeVisible();
@@ -124,6 +130,40 @@ test('the parent cancels a request (shells come back) and changes a price', asyn
   await expect(page.locator('form', { has: price })).toContainText('Saved.');
   await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
   await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
-  await expect(page.locator('.shop-card', { hasText: 'Starbucks' })).toContainText('170 shells');
-  await expect(page.locator('.shop-card', { hasText: 'Starbucks' })).toContainText('10 more shells to go');
+  await expect(page.locator('.shop-card', { hasText: 'Strawberry' })).toContainText('170 shells');
+  await expect(page.locator('.shop-card', { hasText: 'Strawberry' })).toContainText('10 more shells to go');
+});
+
+// A 2 × 2 gold PNG, made here so no real picture is ever committed.
+const GOLD_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVR42mP8/5/hPwMRgHFUIX0VAgBXHAf9eMWwWQAAAABJRU5ErkJggg==',
+  'base64',
+);
+
+test('the parent adds a picture; the shop shows it; it can be removed', async ({ page, hasTouch }) => {
+  await openHome(page, { rewards: [rewardsRow(10)] });
+  await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
+  const robux = page.locator('.shop-card', { hasText: 'Robux' });
+  await expect(robux.locator('.gift-icon')).toBeVisible();
+  await press(page.getByRole('button', { name: '‹ Home' }), hasTouch);
+
+  await unlock(page, hasTouch);
+  await page.getByLabel('Choose a picture for Roblox gift card, 2,000 Robux').setInputFiles({
+    name: 'robux.png',
+    mimeType: 'image/png',
+    buffer: GOLD_PNG,
+  });
+  const pictures = page.getByRole('region', { name: 'Pictures' });
+  await expect(pictures.getByRole('img', { name: 'Picture of Roblox gift card, 2,000 Robux' })).toBeVisible();
+  await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
+  await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
+  const img = robux.locator('.shop-picture img');
+  await expect(img).toBeVisible();
+  expect(await img.getAttribute('src')).toMatch(/^data:image\/(webp|png);base64,/);
+  await expect(page.locator('.shop-card', { hasText: 'Strawberry' }).locator('.gift-icon')).toBeVisible();
+
+  await press(page.getByRole('button', { name: '‹ Home' }), hasTouch);
+  await unlock(page, hasTouch);
+  await press(pictures.getByRole('button', { name: 'Remove' }), hasTouch);
+  await expect(pictures.getByText('Removed.')).toBeVisible();
 });

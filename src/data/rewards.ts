@@ -84,6 +84,22 @@ export const cancelRedemption = (id: string, now: Date = new Date()) => resolve(
 export const listRedemptions = async (): Promise<Redemption[]> =>
   (await db.redemptions.toArray()).sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
 
+/** The parent adds or removes an item's picture (a data: URL made on the device). */
+export async function setImage(itemId: string, image: string | null): Promise<void> {
+  if (image !== null && !/^data:image\/(png|jpeg|webp|gif);base64,/.test(image))
+    throw new Error('not an image');
+  const s = await loadSettings();
+  await saveSettings({
+    shopItems: s.shopItems.map((i) => {
+      if (i.id !== itemId) return i;
+      const next: ShopItem = { ...i };
+      if (image === null) delete next.image;
+      else next.image = image;
+      return next;
+    }),
+  });
+}
+
 /** R-PAR: the parent changes an item's price; items bought already keep the price they were bought at. */
 export async function setPrice(itemId: string, price: number): Promise<void> {
   if (!isValidPrice(price)) throw new Error('invalid price');

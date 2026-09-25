@@ -2,7 +2,7 @@
 // child gate, not security: it is stored as a salted SHA-256 hash only so it isn't in plain text.
 import { config, TOPICS, type TopicId } from '../engine/config';
 import { defaultBounds, type LevelBounds } from '../engine/adaptive';
-import { db, defaultShopItems, PROFILE_ID, type Settings } from './db';
+import { db, defaultShopItems, PROFILE_ID, type Settings, type ShopItem } from './db';
 
 export type EditableSettings = Omit<Settings, 'profileId' | 'pinHash'>;
 
@@ -35,7 +35,14 @@ export async function loadSettings(): Promise<Settings> {
     ...s,
     levelBounds: { ...d.levelBounds, ...s.levelBounds },
     mascotNames: { ...d.mascotNames, ...s.mascotNames },
+    shopItems: (s.shopItems ?? d.shopItems).map(renameDefault),
   };
+}
+
+/** A shop item still carrying an old default name gets the new one; names the parent chose stay. */
+function renameDefault(i: ShopItem): ShopItem {
+  const r = config.shop.renamed[i.id];
+  return r && i.name === r.from ? { ...i, name: r.to } : i;
 }
 
 export async function saveSettings(patch: Partial<EditableSettings>): Promise<Settings> {

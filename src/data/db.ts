@@ -45,6 +45,11 @@ export interface ShopItem {
   id: string;
   name: string;
   price: number;
+  /**
+   * A picture the parent added (a data: URL). It lives only in this device's database and in exports,
+   * never in the public repo or site. Optional, so no schema upgrade is needed.
+   */
+  image?: string;
 }
 
 export interface TopicState {
