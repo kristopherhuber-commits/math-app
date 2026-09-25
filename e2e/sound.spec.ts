@@ -31,13 +31,13 @@ test.beforeEach(async ({ page }) => {
 test('sounds on: a tick on choosing, a soft note on Not quite, the chime and a sparkle per star', async ({
   page,
 }) => {
-  await openHome(page);
+  await openHome(page, { settings: { sound: true } });
   await answerWrongThenRight(page);
   await expect.poll(() => log(page)).toEqual(['select', 'notQuite', 'select', 'correct', 'stars']);
 });
 
-test('sounds off in the parent settings: nothing plays', async ({ page }) => {
-  await openHome(page, { settings: { sound: false } });
+test('sounds are off by default: nothing plays', async ({ page }) => {
+  await openHome(page);
   await answerWrongThenRight(page);
   expect(await log(page)).toEqual([]);
 });

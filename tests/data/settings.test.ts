@@ -22,7 +22,7 @@ beforeEach(async () => {
 });
 
 describe('settings (R-PAR-5)', () => {
-  it('defaults: free practice always (parent decision), grouped, full level ranges, Shelly and Pip', async () => {
+  it('defaults: free practice always, sounds off (parent decisions), grouped, full level ranges, Shelly and Pip', async () => {
     const s = await loadSettings();
     expect(s).toEqual(defaultSettings());
     expect(s.freePractice).toBe('always');
@@ -30,6 +30,7 @@ describe('settings (R-PAR-5)', () => {
     expect(s.levelBounds.EQ).toEqual({ min: 1, max: 6 });
     expect(s.levelBounds.NC).toEqual({ min: 1, max: 5 });
     expect(s.allowSkipping).toBe(false);
+    expect(s.sound).toBe(false);
     expect(s.mascotNames).toEqual({ turtle: 'Shelly', penguin: 'Pip' });
     expect(await isSetUp()).toBe(false);
   });

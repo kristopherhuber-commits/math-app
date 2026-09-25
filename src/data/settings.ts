@@ -16,7 +16,8 @@ export function defaultSettings(): Settings {
     allowSkipping: config.eq.allowSkippingDefault,
     fullBalanceAnim: config.eq.fullBalanceAnimDefault,
     naturalIncludesZero: config.settings.naturalIncludesZero,
-    sound: true,
+    // Off until the parent turns it on (parent decision, 2026-09-25).
+    sound: false,
     reduceMotion: false,
     currency: config.settings.currency,
     mascotNames: { ...config.settings.mascotNames },

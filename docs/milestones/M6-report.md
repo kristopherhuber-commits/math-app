@@ -45,7 +45,7 @@ Status: **done** (2026-09-25). Deployed to https://kristopherhuber-commits.githu
 
 1. Unlock thresholds and order: see §1; in `config.cosmetics`.
 2. Shop names are plain text ("Starbucks treat", "Roblox gift card, 2,000 Robux"); no logos. They live in `Settings.shopItems`, so M7 can edit them.
-3. Sound stays on by default (the existing default).
+3. Sound is off by default (parent decision after M6); the parent turns it on in Settings.
 4. Existing shells count as both lifetime and spendable (`spent = 0`); cosmetics already reached are worn after the update without an announcement.
 5. Prices are whole numbers 1–100,000; a new price applies to new purchases only.
 6. Cancelling a request refunds exactly what it cost; a request can be given or cancelled once.

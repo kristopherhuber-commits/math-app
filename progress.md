@@ -89,6 +89,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-25 | M6: shells and the shop | **She can spend shells**, on **real rewards** in a shop: a Starbucks treat (150) and a Roblox gift card, 2,000 Robux (1,500); prices editable by the parent. Buying takes shells to spend at once and leaves a request; the parent **marks it given or cancels it (refund)**. More items: **M7**. |
 | 2026-09-25 | M6: cosmetics | **Unlock automatically from lifetime shells** (a hidden total that never goes down), **worn at once**; she can take them off or swap. What she sees is shells to spend. |
 | 2026-09-25 | M6: badge shelf | **Yes, on Home.** |
+| 2026-09-25 | After M6: sounds | **Off by default**; the parent turns them on in Settings. A device that saved its settings before this keeps what it had. |
 | 2026-09-25 | M6: compact portrait keypad; real-tablet drag check | **Stay parked.** |
 | 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. |
 
@@ -178,7 +179,7 @@ From M6 (details in `docs/milestones/M6-report.md` §3):
 69. Shop names are plain text, no logos; prices whole numbers 1–100,000; a new price applies to new purchases only; cancel refunds exactly once.
 70. Existing shells count as lifetime and spendable; cosmetics already reached are worn after the update without an announcement.
 71. Items she can't afford show "n more shells to go" instead of Buy.
-72. Sounds are synthesised Web Audio tones, not files; on by default.
+72. Sounds are synthesised Web Audio tones, not files.
 73. axe runs with reduced motion emulated (final colours); dark mode tested via `data-theme="dark"`.
 74. R-NF-1 measured on the local preview at 4× CPU throttling, in its own Playwright project after the others.
 
