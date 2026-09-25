@@ -144,7 +144,13 @@ test('the parent adds a picture; the shop shows it; it can be removed', async ({
   await openHome(page, { rewards: [rewardsRow(10)] });
   await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
   const robux = page.locator('.shop-card', { hasText: 'Robux' });
-  await expect(robux.locator('.gift-icon')).toBeVisible();
+  // A drawn card by default (not Roblox's logo), with a line saying what the real reward is.
+  await expect(robux.getByRole('img', { name: 'Picture of Roblox gift card, 2,000 Robux' })).toBeVisible();
+  await expect(robux.locator('.shop-picture img')).toHaveCount(0);
+  await expect(robux).toContainText('A real Roblox gift card with 2,000 Robux. A grown-up gets it for you.');
+  await expect(page.locator('.shop-card', { hasText: 'Strawberry' })).toContainText(
+    'A real drink from Starbucks.',
+  );
   await press(page.getByRole('button', { name: '‹ Home' }), hasTouch);
 
   await unlock(page, hasTouch);
@@ -154,13 +160,15 @@ test('the parent adds a picture; the shop shows it; it can be removed', async ({
     buffer: GOLD_PNG,
   });
   const pictures = page.getByRole('region', { name: 'Pictures' });
-  await expect(pictures.getByRole('img', { name: 'Picture of Roblox gift card, 2,000 Robux' })).toBeVisible();
+  await expect(pictures.locator('.picture-preview img')).toHaveCount(1);
   await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
   await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
   const img = robux.locator('.shop-picture img');
   await expect(img).toBeVisible();
   expect(await img.getAttribute('src')).toMatch(/^data:image\/(webp|png);base64,/);
-  await expect(page.locator('.shop-card', { hasText: 'Strawberry' }).locator('.gift-icon')).toBeVisible();
+  await expect(
+    page.locator('.shop-card', { hasText: 'Strawberry' }).locator('.shop-picture svg'),
+  ).toBeVisible();
 
   await press(page.getByRole('button', { name: '‹ Home' }), hasTouch);
   await unlock(page, hasTouch);

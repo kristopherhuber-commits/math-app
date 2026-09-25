@@ -985,7 +985,8 @@ export const parentStrings = {
     perStars: (n: number) => `${n} ${n === 1 ? 'star' : 'stars'}`,
     perStarsInvalid: 'Whole numbers from 0 to 100.',
     pictures: 'Pictures',
-    picturesSub: 'Shown in the shop. They stay on this device (and in exports); they are never uploaded.',
+    picturesSub:
+      'The shop shows a drawing of each reward. You can use your own picture instead; it stays on this device (and in exports) and is never uploaded.',
     pictureOf: (name: string) => `Picture of ${name}`,
     pictureFor: (name: string) => `Choose a picture for ${name}`,
     pictureAdd: 'Add picture',
@@ -1082,4 +1083,5 @@ export const shopStrings = {
   more: (n: number) => `${n} more ${n === 1 ? 'shell' : 'shells'} to go`,
   waitingTitle: 'Waiting for a grown-up',
   waiting: (name: string) => name,
+  pictureOf: (name: string) => `Picture of ${name}`,
 };

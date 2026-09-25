@@ -141,9 +141,19 @@ export const config = {
    */
   shop: {
     items: [
-      { id: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 150 },
-      { id: 'robux', name: 'Roblox gift card, 2,000 Robux', price: 1500 },
-    ] as readonly { id: string; name: string; price: number }[],
+      {
+        id: 'treat',
+        name: 'Strawberry Açaí Lemonade Refresher',
+        price: 150,
+        note: 'A real drink from Starbucks. A grown-up gets it for you.',
+      },
+      {
+        id: 'robux',
+        name: 'Roblox gift card, 2,000 Robux',
+        price: 1500,
+        note: 'A real Roblox gift card with 2,000 Robux. A grown-up gets it for you.',
+      },
+    ] as readonly { id: string; name: string; price: number; note: string }[],
     maxPrice: 100_000,
     /** Names that were defaults before and are replaced on load (the parent renamed the treat, 2026-09-25). */
     renamed: { treat: { from: 'Starbucks treat', to: 'Strawberry Açaí Lemonade Refresher' } } as Record<

@@ -6,7 +6,7 @@ import { shellsShort } from '../../engine/rewards';
 import type { ShopItem } from '../../data/db';
 import { logError } from '../../data/errors';
 import { buy, loadShop, type ShopSnapshot } from '../../data/rewards';
-import { GiftIcon } from '../components/GiftIcon';
+import { ShopArt } from '../components/ShopArt';
 import { ShellIcon } from '../components/TopBar';
 import { Penguin } from '../mascots/Penguin';
 import { shopStrings as s } from '../strings';
@@ -50,10 +50,9 @@ export function Shop({ onHome }: { onHome: () => void }) {
           const short = shellsShort(shop.balance, item.price);
           return (
             <li key={item.id} className="card shop-card">
-              <span className="shop-picture">
-                {item.image ? <img src={item.image} alt="" /> : <GiftIcon />}
-              </span>
+              <ShopArt id={item.id} image={item.image} label={s.pictureOf(item.name)} />
               <h2 className="title">{item.name}</h2>
+              {item.note && <p className="shop-note">{item.note}</p>}
               <p className="shop-price">
                 <ShellIcon size={28} /> {s.price(item.price)}
               </p>

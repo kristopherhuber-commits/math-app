@@ -906,7 +906,11 @@
   max-height: 100%;
   object-fit: contain;
 }
-.picture-preview .gift-icon {
-  width: 40px;
-  height: 40px;
+.picture-preview .shop-picture {
+  height: 64px;
+  background: none;
+}
+.picture-preview svg {
+  width: 56px;
+  height: 56px;
 }

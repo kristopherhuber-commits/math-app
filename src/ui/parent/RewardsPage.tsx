@@ -15,7 +15,7 @@ import {
   setShellsPerStars,
   type ShopSnapshot,
 } from '../../data/rewards';
-import { GiftIcon } from '../components/GiftIcon';
+import { ShopArt } from '../components/ShopArt';
 import { parentStrings } from '../strings';
 import { fileToShopImage } from './image';
 
@@ -136,7 +136,7 @@ function PictureRow({
   return (
     <div className="setting-row picture-row">
       <span className="picture-preview">
-        {image ? <img src={image} alt={s.pictureOf(name)} /> : <GiftIcon />}
+        <ShopArt id={id} image={image} label={s.pictureOf(name)} />
       </span>
       <span className="setting-label">{name}</span>
       <label className="btn btn-small btn-outline file-btn">

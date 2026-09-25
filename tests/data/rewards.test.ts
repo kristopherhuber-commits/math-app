@@ -59,7 +59,7 @@ describe('schema v4 (R-DATA-1)', () => {
       spent: 0,
       accessories: ['turtle-hat', 'penguin-scarf'],
     });
-    expect((await d.settings.get('default'))?.shopItems).toEqual([
+    expect((await d.settings.get('default'))?.shopItems).toMatchObject([
       { id: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 150 },
       { id: 'robux', name: 'Roblox gift card, 2,000 Robux', price: 1500 },
     ]);

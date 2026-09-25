@@ -44,7 +44,10 @@ export async function loadSettings(): Promise<Settings> {
 /** A shop item still carrying an old default name gets the new one; names the parent chose stay. */
 function renameDefault(i: ShopItem): ShopItem {
   const r = config.shop.renamed[i.id];
-  return r && i.name === r.from ? { ...i, name: r.to } : i;
+  const named = r && i.name === r.from ? { ...i, name: r.to } : i;
+  // Items stored before notes existed get their default note.
+  const note = config.shop.items.find((d) => d.id === i.id)?.note;
+  return named.note === undefined && note ? { ...named, note } : named;
 }
 
 export async function saveSettings(patch: Partial<EditableSettings>): Promise<Settings> {

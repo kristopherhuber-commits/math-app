@@ -47,6 +47,8 @@ export interface ShopItem {
   id: string;
   name: string;
   price: number;
+  /** What the real reward is, in words she understands (shown under the name). */
+  note?: string;
   /**
    * A picture the parent added (a data: URL). It lives only in this device's database and in exports,
    * never in the public repo or site. Optional, so no schema upgrade is needed.

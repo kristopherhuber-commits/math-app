@@ -759,3 +759,8 @@
 .gift-icon .gift-ribbon {
   fill: var(--star);
 }
+.shop-note {
+  margin: 0;
+  color: var(--ink-muted);
+  font-weight: 700;
+}
