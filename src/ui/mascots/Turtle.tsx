@@ -1,6 +1,8 @@
 // Shelly the turtle: help (design.md §4.1, R-HELP-7). Geometry from docs/design/mockups/_src/gen.py
 // `turtle()`. Named parts; poses are transforms of those parts. Decorative only (aria-hidden).
+import type { AccessoryKind } from '../../engine/rewards';
 import { color } from '../theme/tokens';
+import { useWearing } from '../wardrobe';
 
 export type TurtlePose = 'idle' | 'wave' | 'think' | 'point' | 'nod';
 
@@ -30,7 +32,7 @@ function Shell() {
   );
 }
 
-function Head({ transform }: { transform?: string }) {
+function Head({ transform, wearing }: { transform?: string; wearing: readonly AccessoryKind[] }) {
   return (
     <g transform={transform}>
       <circle cx="-62" cy="-2" r="22" fill={color.turtle} />
@@ -47,6 +49,40 @@ function Head({ transform }: { transform?: string }) {
       />
       <circle cx="-76" cy="2" r="3.5" fill={color.shell} opacity="0.8" />
       <circle cx="-48" cy="2" r="3.5" fill={color.shell} opacity="0.8" />
+      {wearing.includes('scarf') && (
+        <g className="accessory accessory-scarf">
+          <path d="M-80,14 Q-62,26 -42,14 L-40,21 Q-62,33 -82,21 Z" fill={color.coral} />
+          <rect
+            x="-50"
+            y="18"
+            width="7"
+            height="16"
+            rx="3"
+            fill={color.coral}
+            transform="rotate(-18 -46 18)"
+          />
+        </g>
+      )}
+      {wearing.includes('bowtie') && (
+        <g className="accessory accessory-bowtie">
+          <path d="M-62,24 L-73,18 L-73,30 Z M-62,24 L-51,18 L-51,30 Z" fill={color.star} />
+          <circle cx="-62" cy="24" r="3" fill={color.coral} />
+        </g>
+      )}
+      {wearing.includes('sunglasses') && (
+        <g className="accessory accessory-sunglasses">
+          <rect x="-78" y="-14" width="15" height="11" rx="4" fill={color.artPupil} />
+          <rect x="-62" y="-14" width="15" height="11" rx="4" fill={color.artPupil} />
+          <path d="M-63,-10 L-62,-10" stroke={color.artPupil} strokeWidth="3" />
+        </g>
+      )}
+      {wearing.includes('hat') && (
+        <g className="accessory accessory-hat">
+          <ellipse cx="-62" cy="-21" rx="17" ry="4" fill={color.penguin} />
+          <rect x="-72" y="-39" width="20" height="18" rx="3" fill={color.penguin} />
+          <rect x="-72" y="-27" width="20" height="4" fill={color.coral} />
+        </g>
+      )}
     </g>
   );
 }
@@ -83,6 +119,7 @@ export function Turtle({
   size?: number;
   className?: string;
 }) {
+  const wearing = useWearing('turtle');
   return (
     <svg
       className={`turtle ${className ?? ''}`}
@@ -97,7 +134,7 @@ export function Turtle({
       <Flipper side="back" />
       {(pose === 'wave' || pose === 'point') && <RaisedFlipper pose={pose} />}
       <Shell />
-      <Head {...(HEAD[pose] ? { transform: HEAD[pose] } : {})} />
+      <Head {...(HEAD[pose] ? { transform: HEAD[pose] } : {})} wearing={wearing} />
     </svg>
   );
 }

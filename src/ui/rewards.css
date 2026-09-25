@@ -519,3 +519,150 @@
   border-color: var(--primary);
   background: var(--primary-soft);
 }
+
+/* ---------- M6: shop, shells on the sand, dress up, badge shelf ---------- */
+.shop-btn {
+  align-self: center;
+}
+.beach-shells {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.beach-shell {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+.beach-shell path {
+  fill: var(--shell);
+}
+.beach-shell .beach-shell-ridge {
+  fill: none;
+  stroke: var(--coral);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+.home-waiting {
+  margin: var(--space-5) 0 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--var-ink);
+  font-weight: 800;
+}
+.home-extras {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+  align-items: start;
+}
+.home-extras .title {
+  font-size: 22px;
+  margin-bottom: var(--space-3);
+}
+.dress-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.dress-item {
+  min-height: var(--target-min);
+  padding: 0 var(--space-4);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.dress-item.on {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.badge-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: var(--space-2);
+}
+.badge-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  font-size: 15px;
+  font-weight: 700;
+}
+.badge-item.locked {
+  color: var(--ink-muted);
+}
+.badge-item.earned {
+  background: var(--primary-soft);
+  color: var(--var-ink);
+}
+.badge-medal {
+  font-size: 20px;
+}
+.badge-item.earned .badge-medal {
+  color: var(--star);
+}
+.shop-message {
+  min-height: 28px;
+  font-weight: 800;
+  color: var(--primary);
+}
+.shop-grid {
+  list-style: none;
+  margin: 0 0 var(--space-6);
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-5);
+}
+.shop-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+.shop-price {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: 22px;
+  font-weight: 900;
+}
+.shop-short {
+  margin: 0;
+  color: var(--ink-muted);
+  font-weight: 800;
+}
+.shop-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.shop-confirm p {
+  width: 100%;
+  margin: 0;
+  font-weight: 800;
+}
+.shop-pending {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+@media (max-width: 959px) {
+  .home-extras {
+    grid-template-columns: 1fr;
+  }
+}

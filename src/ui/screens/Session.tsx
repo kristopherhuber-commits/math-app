@@ -6,6 +6,7 @@ import type { TopicId } from '../../engine/config';
 import { newSeed } from '../../engine/rng';
 import { freeAdapt, freeStart, rightFirstTime, type FreeState } from '../../engine/adaptive';
 import { useSettings } from '../settings';
+import { useWardrobe } from '../wardrobe';
 import { saveAttempt } from '../../data/attempts';
 import { logError } from '../../data/errors';
 import type { Attempt } from '../../data/db';
@@ -68,6 +69,7 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
   /** Free practice, R-HELP-6: the level to stay at after a walkthrough. */
   const stayAt = useRef<number | null>(null);
   const bounds = useSettings().levelBounds;
+  const wardrobe = useWardrobe();
   /** Adaptive free practice: this session's own level and window (the stored level is left alone). */
   const free = useRef<FreeState | null>(
     kind.kind === 'free' && kind.level === 'adaptive' ? freeStart(bounds[kind.topic]) : null,
@@ -187,13 +189,14 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
         },
       );
       void pending.current.then((e) => {
+        if (e.unlocked?.length) wardrobe.refresh();
         setEvents(levelUp !== undefined ? { ...e, levelUp } : e);
         if (e.streak?.milestone) setStreak(e.streak.days);
         setStars((s) => s + e.stars);
         if (cur.rewarded) setShells(e.shells);
       });
     },
-    [cur, kind, shells, tag, bounds],
+    [cur, kind, shells, tag, bounds, wardrobe],
   );
 
   const onNext = useCallback(() => {

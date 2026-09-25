@@ -75,7 +75,13 @@ export function assignment(
  */
 export async function openHome(
   page: Page,
-  rows: { assignments?: object[]; topicStates?: object[]; attempts?: object[]; settings?: object } = {},
+  rows: {
+    assignments?: object[];
+    topicStates?: object[];
+    attempts?: object[];
+    rewards?: object[];
+    settings?: object;
+  } = {},
 ): Promise<void> {
   await page.goto('./');
   await expect(page.getByRole('heading', { name: 'Hello, grown-up!' })).toBeVisible();
@@ -84,6 +90,7 @@ export async function openHome(
     ...(rows.assignments ? { assignments: rows.assignments } : {}),
     ...(rows.topicStates ? { topicStates: rows.topicStates } : {}),
     ...(rows.attempts ? { attempts: rows.attempts } : {}),
+    ...(rows.rewards ? { rewards: rows.rewards } : {}),
   });
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Hi there!' })).toBeVisible();
@@ -110,4 +117,29 @@ export function attemptRow(o: Record<string, unknown> & { topic: TopicId; finish
     countedAt: o.finishedAt,
     ...o,
   };
+}
+
+/** The question on screen: its level and seed, from the attempt saved when it appeared (R-SES-5). */
+export async function current(page: Page): Promise<{ level: number; seed: number }> {
+  await expect(page.locator('.mc-option')).toHaveCount(5);
+  return page.evaluate(
+    () =>
+      new Promise<{ level: number; seed: number }>((resolve, reject) => {
+        const open = indexedDB.open('turtle-penguin-math');
+        open.onsuccess = () => {
+          const req = open.result.transaction('attempts').objectStore('attempts').getAll();
+          req.onsuccess = () => {
+            const open2 = (
+              req.result as { startedAt: string; finishedAt?: string; level: number; seed: number }[]
+            )
+              .filter((a) => !a.finishedAt)
+              .sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
+            open.result.close();
+            if (open2) resolve({ level: open2.level, seed: open2.seed });
+            else reject(new Error('no open attempt'));
+          };
+        };
+        open.onerror = () => reject(open.error);
+      }),
+  );
 }

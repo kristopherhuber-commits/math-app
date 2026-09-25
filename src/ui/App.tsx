@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { config, TOPICS, type TopicId } from '../engine/config';
 import type { Settings } from '../data/db';
 import { logError } from '../data/errors';
 import { defaultSettings, isSetUp, loadSettings } from '../data/settings';
+import { loadWardrobe } from '../data/rewards';
+import { WardrobeProvider } from './wardrobe';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { AssignmentSummary } from './screens/AssignmentSummary';
 import { Home } from './screens/Home';
 import { Session, type SessionKind } from './screens/Session';
 import { Setup } from './screens/Setup';
+import { Shop } from './screens/Shop';
 import { ParentArea } from './parent/ParentArea';
 import { SettingsProvider } from './settings';
 import './ui.css';
@@ -22,7 +25,8 @@ type Route =
   | { name: 'home'; key: number; focusFree?: boolean }
   | { name: 'session'; kind: SessionKind; key: number }
   | { name: 'summary'; id: string }
-  | { name: 'parent' };
+  | { name: 'parent' }
+  | { name: 'shop' };
 
 /**
  * `?topic=RD&level=3&seed=42` opens a fixed level; `?level=3` alone opens EQ, as before (the parent,
@@ -47,6 +51,16 @@ function initialRoute(): Route {
 export function App() {
   const [route, setRoute] = useState<Route>(initialRoute);
   const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [worn, setWorn] = useState<readonly string[]>([]);
+  const refreshWardrobe = useCallback(
+    () =>
+      void loadWardrobe()
+        .then((w) => setWorn(w.worn))
+        .catch((e: unknown) => logError('loadWardrobe', e)),
+    [],
+  );
+  useEffect(refreshWardrobe, [refreshWardrobe]);
+  const wardrobe = useMemo(() => ({ worn, refresh: refreshWardrobe }), [worn, refreshWardrobe]);
   const reloadSettings = useCallback(
     () =>
       loadSettings()
@@ -98,11 +112,20 @@ export function App() {
             onStartAssignment={(id) => start({ kind: 'assignment', id })}
             onFreePractice={(topic, level) => start({ kind: 'free', topic, level })}
             onParent={() => setRoute({ name: 'parent' })}
+            onShop={() => setRoute({ name: 'shop' })}
           />
         );
+      case 'shop':
+        return <Shop onHome={home} />;
       case 'parent':
         return (
-          <ParentArea onExit={() => void reloadSettings().then(home)} onSettingsChanged={reloadSettings} />
+          <ParentArea
+            onExit={() => {
+              refreshWardrobe();
+              void reloadSettings().then(home);
+            }}
+            onSettingsChanged={reloadSettings}
+          />
         );
       case 'session':
         return (
@@ -120,9 +143,11 @@ export function App() {
 
   return (
     <SettingsProvider value={settings}>
-      <ErrorBoundary onReset={() => setRoute((r) => (r.name === 'session' ? { ...r, key: r.key + 1 } : r))}>
-        {screen()}
-      </ErrorBoundary>
+      <WardrobeProvider value={wardrobe}>
+        <ErrorBoundary onReset={() => setRoute((r) => (r.name === 'session' ? { ...r, key: r.key + 1 } : r))}>
+          {screen()}
+        </ErrorBoundary>
+      </WardrobeProvider>
     </SettingsProvider>
   );
 }

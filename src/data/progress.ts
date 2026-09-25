@@ -259,6 +259,10 @@ export interface HomeSnapshot {
   streak: number;
   /** R-SES-6: free practice is open. */
   freeOpen: boolean;
+  /** M6: lifetime shells (unlocks), badges earned, shop requests waiting for the parent. */
+  lifetime: number;
+  badges: string[];
+  pending: number;
 }
 
 export async function homeSnapshot(): Promise<HomeSnapshot> {
@@ -276,6 +280,9 @@ export async function homeSnapshot(): Promise<HomeSnapshot> {
     shells: spendable(r),
     streak: currentStreak(r, localDay(), intervals(all)),
     freeOpen,
+    lifetime: r.shells,
+    badges: r.badges.map((b) => b.id),
+    pending: await db.redemptions.where('status').equals('requested').count(),
   };
 }
 

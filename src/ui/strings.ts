@@ -718,10 +718,18 @@ export const rewardStrings = {
     shells: (n: number) => `+${n} ${n === 1 ? 'shell' : 'shells'}`,
     levelUp: 'Level up!',
     badge: (name: string) => `New badge: ${name}`,
+    newAccessory: (who: string, what: string) => `New for ${who}: ${what}!`,
     streak: (n: number) => `${n}-day streak!`,
     streakSub: 'You practised every assignment day.',
     streakClose: 'Yay!',
   },
+  /** Cosmetics (R-RWD-4, M6). */
+  accessory: {
+    hat: 'a hat',
+    scarf: 'a scarf',
+    sunglasses: 'sunglasses',
+    bowtie: 'a bow tie',
+  } as Record<string, string>,
   badges: {
     'first-solve': 'First question solved',
     'perfect-assignment': 'A perfect assignment',
@@ -763,6 +771,16 @@ export const rewardStrings = {
     adaptiveSub: 'Starts at level 3 and changes as you go',
     level: (n: number) => `Level ${n}`,
     pickClose: 'Close',
+    shop: 'Shop',
+    waiting: (n: number) =>
+      n === 1 ? '1 reward waiting for a grown-up' : `${n} rewards waiting for a grown-up`,
+    dressUp: 'Dress up',
+    dressUpNone: 'Keep earning shells: something fun unlocks soon!',
+    accessoryFor: (who: string, what: string) => `${what} for ${who}`,
+    nextAccessory: (what: string) => `Next to unlock: ${what}`,
+    badges: (n: number, of: number) => `Badges: ${n} of ${of}`,
+    badgeEarned: 'earned',
+    badgeToGet: 'still to get',
   },
   summary: {
     title: 'Assignment done!',
@@ -824,6 +842,7 @@ export const parentStrings = {
     assignments: 'Assignments',
     progress: 'Progress',
     missed: 'Missed questions',
+    rewards: 'Rewards',
     settings: 'Settings',
     data: 'Data',
     back: '‹ Back to learner',
@@ -938,6 +957,28 @@ export const parentStrings = {
     } as Record<string, string>,
     back: '‹ All missed questions',
   },
+  rewards: {
+    title: 'Rewards',
+    counts: (balance: number, lifetime: number) =>
+      `Shells to spend: ${balance} · earned in all: ${lifetime} (cosmetics unlock from this)`,
+    requests: 'Waiting to be given',
+    none: 'No requests right now.',
+    requested: (price: number, when: string) => `${price} shells · asked ${when}`,
+    given: 'Mark given',
+    cancel: 'Cancel and refund',
+    confirmCancel: (name: string, price: number) => `Cancel "${name}" and give back ${price} shells?`,
+    yes: 'Yes',
+    no: 'No',
+    prices: 'Prices',
+    pricesSub: 'In shells. New prices apply to new purchases.',
+    priceOf: (name: string) => `Price of ${name}, in shells`,
+    savePrice: 'Save',
+    priceSaved: 'Saved.',
+    priceInvalid: 'A whole number from 1 to 100,000.',
+    history: 'Given and cancelled',
+    noHistory: 'Nothing yet.',
+    status: { given: 'given', cancelled: 'cancelled', requested: 'waiting' } as Record<string, string>,
+  },
   settings: {
     title: 'Settings',
     learning: 'Learning',
@@ -1004,4 +1045,22 @@ export const parentStrings = {
     errorsClear: 'Clear the list',
     errorsStack: 'Details',
   },
+};
+
+// ---------------------------------------------------------------------------------------------
+// The shop (M6, R-RWD-4 as the parent reshaped it): real rewards for shells to spend.
+
+export const shopStrings = {
+  title: 'Shop',
+  home: '‹ Home',
+  toSpend: 'shells to spend',
+  price: (n: number) => `${n} shells`,
+  buy: 'Buy',
+  sure: (name: string, price: number) => `Buy ${name} for ${price} shells?`,
+  yes: 'Yes, buy it',
+  no: 'Not now',
+  bought: (name: string) => `Done! A grown-up will get you ${name}.`,
+  more: (n: number) => `${n} more ${n === 1 ? 'shell' : 'shells'} to go`,
+  waitingTitle: 'Waiting for a grown-up',
+  waiting: (name: string) => name,
 };

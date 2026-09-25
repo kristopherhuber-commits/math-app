@@ -5,6 +5,8 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { FinishEvents } from '../../data/progress';
 import { Penguin } from '../mascots/Penguin';
+import { cosmetic } from '../../engine/rewards';
+import { useSettings } from '../settings';
 import { rewardStrings } from '../strings';
 import { color } from '../theme/tokens';
 import { StarIcon } from './TopBar';
@@ -43,6 +45,7 @@ export function Celebration({
   showShells: boolean;
 }) {
   const [skipped, setSkipped] = useState(false);
+  const names = useSettings().mascotNames;
   const s = rewardStrings.celebrate;
   const big = events.stars === 3;
   const pose = events.levelUp ? 'hop' : big ? 'cheer' : 'clap';
@@ -74,6 +77,14 @@ export function Celebration({
             {s.badge(rewardStrings.badges[b] ?? b)}
           </p>
         ))}
+        {events.unlocked?.map((id) => {
+          const c = cosmetic(id);
+          return c ? (
+            <p key={id} className="celebration-badge celebration-new">
+              {s.newAccessory(names[c.mascot], rewardStrings.accessory[c.kind] ?? c.kind)}
+            </p>
+          ) : null;
+        })}
       </div>
     </div>
   );

@@ -1,7 +1,9 @@
 // Pip the penguin: celebration (design.md §4.2, R-HELP-7: never in help, never on a wrong answer).
 // Geometry from docs/design/mockups/_src/gen.py `penguin()`. Named parts; poses are transforms of
 // those parts, and the movement itself is CSS (rewards.css), so reduced motion can switch it off.
+import type { AccessoryKind } from '../../engine/rewards';
 import { color } from '../theme/tokens';
+import { useWearing } from '../wardrobe';
 
 export type PenguinPose = 'idle' | 'cheer' | 'hop' | 'slide' | 'clap';
 
@@ -49,7 +51,7 @@ function Body() {
   );
 }
 
-function Head() {
+function Head({ wearing }: { wearing: readonly AccessoryKind[] }) {
   return (
     <g className="penguin-head">
       <circle cx="0" cy="-34" r="30" fill={color.penguin} />
@@ -62,6 +64,32 @@ function Head() {
       <path d="M-7,-20 L7,-20 L0,-11 Z" fill={color.beak} />
       <circle cx="-20" cy="-20" r="4" fill={color.shell} opacity="0.8" />
       <circle cx="20" cy="-20" r="4" fill={color.shell} opacity="0.8" />
+      {wearing.includes('scarf') && (
+        <g className="accessory accessory-scarf">
+          <path d="M-30,-10 Q0,4 30,-10 L30,-1 Q0,13 -30,-1 Z" fill={color.coral} />
+          <rect x="12" y="-2" width="9" height="22" rx="4" fill={color.coral} transform="rotate(-12 16 -2)" />
+        </g>
+      )}
+      {wearing.includes('bowtie') && (
+        <g className="accessory accessory-bowtie">
+          <path d="M0,6 L-13,-1 L-13,13 Z M0,6 L13,-1 L13,13 Z" fill={color.star} />
+          <circle cx="0" cy="6" r="3.5" fill={color.coral} />
+        </g>
+      )}
+      {wearing.includes('sunglasses') && (
+        <g className="accessory accessory-sunglasses">
+          <rect x="-22" y="-39" width="20" height="14" rx="5" fill={color.artPupil} />
+          <rect x="2" y="-39" width="20" height="14" rx="5" fill={color.artPupil} />
+          <path d="M-2,-33 L2,-33" stroke={color.artPupil} strokeWidth="3" />
+        </g>
+      )}
+      {wearing.includes('hat') && (
+        <g className="accessory accessory-hat">
+          <ellipse cx="0" cy="-60" rx="24" ry="5" fill={color.coral} />
+          <rect x="-15" y="-82" width="30" height="23" rx="4" fill={color.coral} />
+          <rect x="-15" y="-66" width="30" height="5" fill={color.star} />
+        </g>
+      )}
     </g>
   );
 }
@@ -75,6 +103,10 @@ export function Penguin({
   size?: number;
   className?: string;
 }) {
+  const wearing = useWearing('penguin');
+  // A hat needs room above the head.
+  const top = wearing.includes('hat') ? -86 : -70;
+  const height = 66 - top;
   // Clapping flippers sit in front of the body; the others behind it.
   const flippers = (
     <>
@@ -86,9 +118,9 @@ export function Penguin({
     <svg
       className={`penguin ${className ?? ''}`}
       data-pose={pose}
-      viewBox="-64 -70 128 136"
+      viewBox={`-64 ${top} 128 ${height}`}
       width={size}
-      height={(size * 136) / 128}
+      height={(size * height) / 128}
       aria-hidden="true"
       focusable="false"
     >
@@ -97,7 +129,7 @@ export function Penguin({
         {pose !== 'clap' && flippers}
         <Body />
         {pose === 'clap' && flippers}
-        <Head />
+        <Head wearing={wearing} />
       </g>
     </svg>
   );

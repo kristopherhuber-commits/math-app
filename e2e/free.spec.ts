@@ -3,32 +3,7 @@
 // Free-practice seeds are random, so each question's seed is read from its stored attempt.
 import { expect, test, type Page } from '@playwright/test';
 import { generatePc } from '../src/engine/topics/pc/generator';
-import { openHome } from './helpers';
-
-/** The question on screen: its level and seed, from the attempt saved when it appeared (R-SES-5). */
-async function current(page: Page): Promise<{ level: number; seed: number }> {
-  await expect(page.locator('.mc-option')).toHaveCount(5);
-  return page.evaluate(
-    () =>
-      new Promise<{ level: number; seed: number }>((resolve, reject) => {
-        const open = indexedDB.open('turtle-penguin-math');
-        open.onsuccess = () => {
-          const req = open.result.transaction('attempts').objectStore('attempts').getAll();
-          req.onsuccess = () => {
-            const open2 = (
-              req.result as { startedAt: string; finishedAt?: string; level: number; seed: number }[]
-            )
-              .filter((a) => !a.finishedAt)
-              .sort((a, b) => b.startedAt.localeCompare(a.startedAt))[0];
-            open.result.close();
-            if (open2) resolve({ level: open2.level, seed: open2.seed });
-            else reject(new Error('no open attempt'));
-          };
-        };
-        open.onerror = () => reject(open.error);
-      }),
-  );
-}
+import { current, openHome } from './helpers';
 
 async function answer(page: Page, right: boolean) {
   const { level, seed } = await current(page);

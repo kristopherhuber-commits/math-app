@@ -6,6 +6,8 @@ import { config, TOPICS, type TopicId } from '../../engine/config';
 import { logError } from '../../data/errors';
 import { homeSnapshot, type HomeSnapshot } from '../../data/progress';
 import { LevelExample } from '../components/LevelExample';
+import { BadgeShelf, BeachShells, DressUp } from '../components/HomeExtras';
+import { unlockedAt } from '../../engine/rewards';
 import { MathText } from '../components/Math';
 import { ShellIcon } from '../components/TopBar';
 import { Penguin } from '../mascots/Penguin';
@@ -153,6 +155,7 @@ function Beach({ snap }: { snap: HomeSnapshot }) {
         <p className="speech-sub">{h.shelly(names.turtle)}</p>
       </div>
       <span className="sand" aria-hidden="true" />
+      <BeachShells count={snap.shells} />
       <Turtle size={150} className="beach-turtle" />
       <Penguin size={110} className="beach-penguin" />
     </section>
@@ -163,9 +166,11 @@ export function Home({
   onStartAssignment,
   onFreePractice,
   onParent,
+  onShop,
   focusFree = false,
 }: {
   onParent: () => void;
+  onShop: () => void;
   onStartAssignment: (id: string) => void;
   /** Free practice at a level the learner picked, or Adaptive (parent decision, 2026-09-25). */
   onFreePractice: (topic: TopicId, level: number | 'adaptive') => void;
@@ -185,7 +190,7 @@ export function Home({
       .then(setSnap)
       .catch((e: unknown) => {
         void logError('homeSnapshot', e);
-        setSnap({ shells: 0, streak: 0, freeOpen: true });
+        setSnap({ shells: 0, streak: 0, freeOpen: true, lifetime: 0, badges: [], pending: 0 });
       });
   }, []);
   if (!snap) return <main className="home" />;
@@ -212,6 +217,9 @@ export function Home({
               <span className="label muted">{h.shellsLabel}</span>
             </span>
           </span>
+          <button type="button" className="btn btn-primary shop-btn" onClick={onShop}>
+            {h.shop}
+          </button>
         </div>
       </header>
 
@@ -260,6 +268,15 @@ export function Home({
           />
         )}
       </section>
+      {snap.pending > 0 && (
+        <p className="home-waiting" role="status">
+          {h.waiting(snap.pending)}
+        </p>
+      )}
+      <div className="home-extras">
+        <DressUp unlocked={unlockedAt(snap.lifetime).map((c) => c.id)} lifetime={snap.lifetime} />
+        <BadgeShelf earned={snap.badges} />
+      </div>
       <p className="parent-link">
         <button type="button" className="link-btn" onClick={onParent}>
           {h.parent}

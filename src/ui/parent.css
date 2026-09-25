@@ -591,6 +591,15 @@
 .settings-group .text-input {
   max-width: 260px;
 }
+.price-field {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.price-field .text-input {
+  max-width: 120px;
+  text-align: right;
+}
 .pin-field {
   display: flex;
   flex-direction: column;

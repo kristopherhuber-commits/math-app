@@ -197,3 +197,28 @@ function sampleAttempts() {
   }
   return rows;
 }
+
+test('rewards screens', async ({ page }, info) => {
+  const tag = info.project.name;
+  const shot = (name: string) => page.screenshot({ path: `${OUT}/${tag}-m6-${name}.png`, fullPage: true });
+  await openHome(page, {
+    rewards: [
+      {
+        profileId: 'default',
+        shells: 420,
+        spent: 150,
+        streak: 3,
+        badges: [
+          { id: 'first-solve', at: 'x' },
+          { id: 'first-delayed-rd', at: 'x' },
+        ],
+        accessories: ['turtle-hat', 'penguin-scarf', 'turtle-sunglasses', 'penguin-hat'],
+      },
+    ],
+  });
+  await page.waitForTimeout(300);
+  await shot('home');
+  await page.getByRole('button', { name: 'Shop', exact: true }).click();
+  await page.waitForTimeout(200);
+  await shot('shop');
+});

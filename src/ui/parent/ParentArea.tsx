@@ -13,12 +13,13 @@ import { Assignments } from './Assignments';
 import { Progress } from './Progress';
 import { Missed, type MissedFilter } from './Missed';
 import { SettingsPage } from './SettingsPage';
+import { RewardsPage } from './RewardsPage';
 import { DataPage } from './DataPage';
 
 const s = parentStrings;
 
-export type ParentPage = 'assignments' | 'progress' | 'missed' | 'settings' | 'data';
-const PAGES: ParentPage[] = ['assignments', 'progress', 'missed', 'settings', 'data'];
+export type ParentPage = 'assignments' | 'progress' | 'missed' | 'rewards' | 'settings' | 'data';
+const PAGES: ParentPage[] = ['assignments', 'progress', 'missed', 'rewards', 'settings', 'data'];
 
 function PinReset({ onDone }: { onDone: () => void }) {
   const [challenge, setChallenge] = useState(() => pinChallenge(newSeed()));
@@ -191,6 +192,9 @@ export function ParentArea({
       break;
     case 'missed':
       content = <Missed filter={missedFilter} onFilter={setMissedFilter} />;
+      break;
+    case 'rewards':
+      content = <RewardsPage />;
       break;
     case 'settings':
       content = <SettingsPage onChanged={onSettingsChanged} />;
