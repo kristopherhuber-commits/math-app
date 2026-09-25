@@ -1,6 +1,6 @@
 # M6 report: polish, the rewards shop, cosmetics
 
-Status: **done** (2026-09-25). Deployed to https://kristopherhuber-commits.github.io/math-app/; live check result in §6.
+Status: **done** (2026-09-25). Deployed to https://kristopherhuber-commits.github.io/math-app/; the live check passed after the deploy (setup, installable, an equation and a repeating-decimal question offline).
 
 ## 1. What was built
 
@@ -79,7 +79,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 $env:SHOTS="$env:TEMP\shots"; npx playwright test e2e/zz-screens.spec.ts
 ```
 
-Live check: see progress.md §3.
+Live check (after the deploy): passed on desktop and tablet-touch.
 
 ## 7. Next, and concerns
 
