@@ -2,13 +2,13 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-25 · Current state: **M0–M5 done and deployed. Next: M6 (polish), when the parent says go.**
+Last updated: 2026-09-25 · Current state: **M0–M6 done and deployed (v1 complete). Next: M7 (editable shop catalogue), when the parent says go.**
 
 ---
 
 ## 1. How to work on this project
 
-- **Read first:** `docs/requirements.md`, `docs/design.md`, then this file. Milestone reports with full detail: `docs/milestones/M1-report.md` (M0 + M1), `docs/milestones/M2-report.md`, `docs/milestones/M3-report.md`, `docs/milestones/M4-report.md`, `docs/milestones/M5-report.md`.
+- **Read first:** `docs/requirements.md`, `docs/design.md`, then this file. Milestone reports with full detail: `docs/milestones/M1-report.md` (M0 + M1), `docs/milestones/M2-report.md`, `docs/milestones/M3-report.md`, `docs/milestones/M4-report.md`, `docs/milestones/M5-report.md`, `docs/milestones/M6-report.md`.
 - **Precedence:** `requirements.md` > `design.md` > mockups > anything else, except the approved rules and deviations in §4. Report any other conflict; implement the higher-precedence source.
 - **Process per milestone:** plan in plan mode with open questions → parent approves → build one milestone → stop and report (template in §9) as `docs/milestones/M<n>-report.md` → update this file → commit → push (deploys) → run the live check.
 - **Public repo.** Never commit names, ages, gender, locations or local user paths of the parent or the learner. Say "the parent" and "the learner".
@@ -48,7 +48,8 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | **M3 Number topics** | Done. NC, RD, FDP and PC generators L1–5 with misconception distractors (R-ANS-3 checked on 1000 seeds per level); hints H1/H2; H3 walkthroughs with mini-questions, column subtraction, long division and the sets map; multiple-choice and select-all screens; Home topic picker. 377 unit/property tests, 50 e2e (+6 on-demand skipped), engine 96.9 % lines, 216.7 KB gz JS. Report: `docs/milestones/M3-report.md`. |
 | 2026-09-23 | **M4 Sessions, adaptive levels, rewards** | Done. Assignments (from a link until M5), grouped and mixed order, resume; adaptive levels (R-ADP-1…6); stars, shells, streak, 12 badges; Pip the penguin and celebrations; Home with the assignment card and locked free practice; assignment summary; Dexie schema v2. 489 unit/property tests, 60 e2e (+8 on-demand skipped), engine 97.1 % lines, 229.7 KB gz JS. Report: `docs/milestones/M4-report.md`. |
 | 2026-09-23 | **M5 Parent area** | Done. First-run setup (PIN, then naming Shelly and Pip); PIN gate with reset and auto-lock; assignment builder and queue (replaces the link); progress dashboard; missed-question review; settings; export / import / reset; the error list; free practice defaults to `always`; Dexie schema v3. 556 unit/property tests, 86 e2e (+10 on-demand skipped), engine 97.2 % lines, 244.3 KB gz JS. Report: `docs/milestones/M5-report.md`. |
-| — | M6 | Not started. |
+| 2026-09-25 | **M6 Polish, shop, cosmetics** | Done. Lifetime shells unlock 8 cosmetics (worn at once); shells to spend buy real rewards in a shop the parent fulfils (Parent › Rewards); badge shelf; shells on the beach; synthesised sounds; motion audit; axe on every screen in both themes (R-TEST-6); offline question (R-TEST-7); cold load ~0.5 s at 4× CPU (R-NF-1); bundle check in the build (R-NF-2); Dexie schema v4. 594 unit/property tests, 116 e2e (+12 on-demand skipped), engine 97.3 % lines, 244.5 KB gz JS. Report: `docs/milestones/M6-report.md`. |
+| — | M7 | Not started: an editable shop catalogue (parent request). |
 
 ## 4. Parent decisions, questions and answers
 
@@ -85,6 +86,10 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | M5: first-run setup | **Required before Home.** Existing progress is kept. |
 | 2026-09-23 | M5: "Save & make active" while another is active | **That one goes back to the front of the queue**, progress kept. |
 | 2026-09-25 | After trying M5: the Real checkbox | **Removed**: every number shown is real. NC has five cards; the sets map keeps Real as its outer frame. This overrides requirements §6.1 ("six checkboxes"); `requirements.md` is unchanged. |
+| 2026-09-25 | M6: shells and the shop | **She can spend shells**, on **real rewards** in a shop: a Starbucks treat (150) and a Roblox gift card, 2,000 Robux (1,500); prices editable by the parent. Buying takes shells to spend at once and leaves a request; the parent **marks it given or cancels it (refund)**. More items: **M7**. |
+| 2026-09-25 | M6: cosmetics | **Unlock automatically from lifetime shells** (a hidden total that never goes down), **worn at once**; she can take them off or swap. What she sees is shells to spend. |
+| 2026-09-25 | M6: badge shelf | **Yes, on Home.** |
+| 2026-09-25 | M6: compact portrait keypad; real-tablet drag check | **Stay parked.** |
 | 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. |
 
 ## 5. Assumptions in force (spec silent; reversible)
@@ -168,6 +173,15 @@ From the 2026-09-25 changes:
 66. "Right" in adaptive free practice = correct on the first try with no hint (H1 counts as help). The level picker shows only levels inside the parent's range; Adaptive starts at 3 clamped to that range.
 67. Older NC attempts that ticked Real show "real" in the missed-question replay.
 
+From M6 (details in `docs/milestones/M6-report.md` §3):
+68. Cosmetic thresholds 20, 50, 100, 175, 275, 400, 550, 750 lifetime shells, alternating turtle and penguin (`config.cosmetics`).
+69. Shop names are plain text, no logos; prices whole numbers 1–100,000; a new price applies to new purchases only; cancel refunds exactly once.
+70. Existing shells count as lifetime and spendable; cosmetics already reached are worn after the update without an announcement.
+71. Items she can't afford show "n more shells to go" instead of Buy.
+72. Sounds are synthesised Web Audio tones, not files; on by default.
+73. axe runs with reduced motion emulated (final colours); dark mode tested via `data-theme="dark"`.
+74. R-NF-1 measured on the local preview at 4× CPU throttling, in its own Playwright project after the others.
+
 ## 6. Spec conflicts found and how they were resolved
 
 1. (M1) §7.4 rule order would make `x = 8` from `x/4 = 2` a CLEAR_FRACTIONS; §7.5 says SOLVE. Implemented §7.5: a `v = q` line is never CLEAR_FRACTIONS.
@@ -186,6 +200,8 @@ From the 2026-09-25 changes:
 14. (M5) Mockup 11 has no editing state; the builder becomes "Edit assignment" from a queue card.
 15. (2026-09-25) Requirements §6.1 lists six NC checkboxes including Real; mockup 04 shows six. The parent removed Real (§4).
 16. (2026-09-25) Requirements §4.1 R-ADP-2/3 and M4 decision "no level picker on Home" vs the parent's free-practice picker and faster Adaptive rule (§4). Assignments are unchanged.
+17. (M6) R-RWD-4 (accessories bought with shells) and R-RWD-6 (no loss of shells) vs the parent's model: real rewards cost shells to spend; cosmetics unlock from lifetime shells.
+18. (M6) design.md §7 "accessory shop" vs a shop of real rewards; design.md §8 sound files vs synthesised tones.
 
 ## 7. Approved deviations and rules in force
 
@@ -198,6 +214,7 @@ src/engine/            pure TS (R-ARCH-1)
   rational.ts rng.ts config.ts (TopicId, TOPICS, adaptive start levels, rewards)
   adaptive.ts scoring.ts session.ts      R-ADP window; stars, streak, badges; builder draft + edit rules, order, seeds
   parent.ts review.ts                    PIN challenge, dashboard stats, Worth a look, missed rule; regenerate a question
+  rewards.ts                             cosmetic unlocks, shells to spend, prices, wearing
   eq/parse.ts linear.ts stepChecker.ts format.ts evaluate.ts tiles.ts
   topics/eq/generator.ts hints.ts        (eqHint H1/H2, eqWalkthrough H3 + WalkOp)
   numbers/decimal.ts display.ts          long division, DecimalRep (R-RD-2/3); Shown: LaTeX + text + speech
@@ -206,10 +223,13 @@ src/engine/            pure TS (R-ARCH-1)
 src/data/db.ts attempts.ts progress.ts   Dexie schema v3 + upgrades; attempt save; finishAttempt, Home, summary
   settings.ts assignments.ts stats.ts    settings + PIN hash; the queue; dashboard and missed loaders
   backup.ts errors.ts                    export / import / reset; the error list (R-NF-5)
+  rewards.ts                             shop: buy, give, cancel, prices; wardrobe
 src/ui/
   App.tsx settings.tsx                   routes: setup, Home, Session (assignment | free | fixed level), summary, parent; settings context
-  screens/Setup.tsx                      first run: PIN, then naming
-  parent/ ParentArea PinPad Reorder Assignments Progress Missed SettingsPage DataPage   (parent.css)
+  screens/Setup.tsx Shop.tsx             first run: PIN, then naming; the shop
+  wardrobe.tsx sound.ts                  what the mascots wear; synthesised sounds
+  components/HomeExtras.tsx LevelExample.tsx   beach shells, dress up, badge shelf; level examples
+  parent/ ParentArea PinPad Reorder Assignments Progress Missed RewardsPage SettingsPage DataPage   (parent.css)
   screens/Session.tsx                    chooses each question, mounts the practice screen, applies what it earns
   screens/Home.tsx AssignmentSummary.tsx EquationPractice.tsx TileEquation.tsx McPractice.tsx NcPractice.tsx
   practice/question.tsx                  QuestionProps, useReportAttempt, CelebrationSlot
@@ -220,7 +240,9 @@ src/ui/
   strings.ts (numText, misconceptionLine, rewardStrings)  theme/tokens.css tokens.ts global.css
   ui.css tiles.css numbers.css rewards.css
 tests/engine/*  tests/ui/*  tests/data/* Vitest + fast-check (+ fake-indexeddb)
-e2e/assignment equation offline parent tiles walkthrough topics + helpers.ts   Playwright (desktop + tablet-touch); zz-live, zz-screens on demand
+e2e/a11y assignment equation free offline parent perf rewards sound tiles walkthrough topics + helpers.ts
+                                         Playwright (desktop + tablet-touch; perf as its own project); zz-live, zz-screens on demand
+scripts/check-size.mjs                   R-NF-2 bundle check, run by npm run build
 ```
 
 
@@ -228,16 +250,13 @@ e2e/assignment equation offline parent tiles walkthrough topics + helpers.ts   P
 
 1. What was built, against requirement IDs. 2. Test results: counts, `src/engine` coverage, anything skipped and why. 3. Assumptions. 4. Conflicts between requirements, design and mockups. 5. Approved deviations still in force and which milestone removes each. 6. PowerShell commands to run it, and confirmation that the hosted URL was redeployed and still installs and works offline. 7. What to build next, and anything wrong with the plan.
 
-## 10. Next: M6 polish (only after the parent says go)
+## 10. Next: M7 editable shop catalogue (only after the parent says go)
 
-Scope and done-when: requirements §12 (shells + accessories R-RWD-4, animations, a11y pass, offline test, performance budget; R-TEST-6, R-TEST-7, R-NF-1/2 met). Notes for the plan:
+Parent request (2026-09-25): more real rewards for the shop, beyond the two in M6. Notes for the plan:
 
-- Sounds: `Settings.sound` is stored and toggled in the parent area, but nothing plays yet (design.md §8).
-- Shells: `Rewards.shells` counts; the beach shows none yet; `Rewards.accessories` is unused.
-- R-TEST-7: `e2e/offline.spec.ts` reloads offline but doesn't complete a question; `zz-live` does on the hosted site.
-- R-TEST-6: run axe on the parent pages too.
-- The tablet-portrait keypad (M1 open item) and the M2 touch-drag check on the real tablet stay open while the app is used only in a desktop browser (§4).
-- After the M5 deploy, the installed app shows the first-run setup once (no PIN yet); progress is kept.
+- `Settings.shopItems` already holds `{ id, name, price }[]`; Parent › Rewards edits prices only. M7 adds add / rename / remove (removing an item with a pending request needs a rule).
+- Redemptions copy name and price at purchase, so edits never rewrite history.
+- Still parked while the app is used only in a desktop browser (§4): the compact tablet-portrait keypad and the M2 touch-drag check on the real tablet.
 
 ## 11. Reference materials
 
