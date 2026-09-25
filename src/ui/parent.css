@@ -425,7 +425,7 @@
   background: var(--parent-bg);
 }
 .segmented button {
-  min-height: 44px;
+  min-height: var(--target-min);
   min-width: 120px;
   border: none;
   border-radius: var(--radius-pill);
