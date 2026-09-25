@@ -2,7 +2,7 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-23 · Current state: **M0–M5 done and deployed. Next: M6 (polish), when the parent says go.**
+Last updated: 2026-09-25 · Current state: **M0–M5 done and deployed. Next: M6 (polish), when the parent says go.**
 
 ---
 
@@ -84,6 +84,8 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | M5: what does "Reset all progress" clear? | **Answers, levels, shells, streak, badges and all assignments.** The PIN, names, settings and the error list stay. |
 | 2026-09-23 | M5: first-run setup | **Required before Home.** Existing progress is kept. |
 | 2026-09-23 | M5: "Save & make active" while another is active | **That one goes back to the front of the queue**, progress kept. |
+| 2026-09-25 | After trying M5: the Real checkbox | **Removed**: every number shown is real. NC has five cards; the sets map keeps Real as its outer frame. This overrides requirements §6.1 ("six checkboxes"); `requirements.md` is unchanged. |
+| 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. |
 
 ## 5. Assumptions in force (spec silent; reversible)
 
@@ -136,13 +138,13 @@ From M4 (details in `docs/milestones/M4-report.md` §3):
 40. "First delayed repeating decimal" = a solved RD question with a delayed repeat (D→F `delayed`, or F→D over 6, 12, 15, 22).
 41. Demotion can fire before 5 attempts (3 bad out of 3–5); promotion needs 5.
 42. Level-locked items and `?topic=&level=` links don't move levels; links also earn no shells, streak or badges, but show the celebration.
-43. Free practice earns stars, shells, badges and moves levels; it doesn't count toward the streak.
+43. Free practice earns stars, shells and badges; it doesn't count toward the streak. Since 2026-09-25 it no longer moves the stored levels (see §4).
 44. Resuming mid-question restarts the same question (same seed and level); the unfinished attempt doesn't count.
 45. Mixed order is a seeded pick weighted by each item's remaining count; question seeds come from the assignment seed.
 46. Shells = stars earned, counted from M4; beach shells and accessories in M6.
 47. Streak milestones 3, 5, 7, 10, 14, 21, 30, then every 10; Home shows the current streak (0 after a missed assignment day).
 48. TopBar: ★ = stars in this assignment or session, shells = total; "Question n of N" within the item (grouped) or the assignment (mixed).
-49. Free-practice policy from Dexie, default `afterAssignment`; open when there's no active assignment. "Free practice ›" on the summary goes to Home with the first tile focused.
+49. Free-practice policy from Dexie (default `always` since M5); open when there's no active assignment. "Free practice ›" on the summary goes to Home with the first tile focused.
 50. No sounds in M4.
 51. Home's Pip line names the next unfinished topic, else the streak; the due date isn't shown to the learner.
 52. The learner's level picker is gone; its level examples stay in `strings.ts` for M5's level lock.
@@ -162,6 +164,10 @@ From M5 (details in `docs/milestones/M5-report.md` §3):
 64. New tokens `--on-parent-nav`, `--on-parent-nav-muted`, `--parent-nav-active`.
 65. Dashboard charts are hand-drawn SVG with hover titles; the numbers are also in text.
 
+From the 2026-09-25 changes:
+66. "Right" in adaptive free practice = correct on the first try with no hint (H1 counts as help). The level picker shows only levels inside the parent's range; Adaptive starts at 3 clamped to that range.
+67. Older NC attempts that ticked Real show "real" in the missed-question replay.
+
 ## 6. Spec conflicts found and how they were resolved
 
 1. (M1) §7.4 rule order would make `x = 8` from `x/4 = 2` a CLEAR_FRACTIONS; §7.5 says SOLVE. Implemented §7.5: a `v = q` line is never CLEAR_FRACTIONS.
@@ -178,10 +184,12 @@ From M5 (details in `docs/milestones/M5-report.md` §3):
 12. (M5) R-SES-6 default `afterAssignment`, design.md §7.1 and mockup 01 (locked tiles) vs the parent's `always` default. The parent decided (§4).
 13. (M5) Requirements §9.1 lacks `Assignment.order` and `Attempt.fixed`; both are optional fields (v2, v3).
 14. (M5) Mockup 11 has no editing state; the builder becomes "Edit assignment" from a queue card.
+15. (2026-09-25) Requirements §6.1 lists six NC checkboxes including Real; mockup 04 shows six. The parent removed Real (§4).
+16. (2026-09-25) Requirements §4.1 R-ADP-2/3 and M4 decision "no level picker on Home" vs the parent's free-practice picker and faster Adaptive rule (§4). Assignments are unchanged.
 
 ## 7. Approved deviations and rules in force
 
-**Deviations: none** since 2026-09-23. **Approved rules** (they override the spec): EQ-D4 detection (M1) and the level-6 final-answer rule (2026-09-23), both in §4. `CLAUDE.md` is out of date, and the parent asked for it to be left unchanged: it still lists the two M1 deviations as "in force until M2", and it points to `cc-develop-handoff.md` for the current milestone. **This file is the authority for status.**
+**Deviations: none** since 2026-09-23. **Approved rules** (they override the spec): EQ-D4 detection (M1), the level-6 final-answer rule (2026-09-23), no Real checkbox (2026-09-25), and the free-practice level picker with its Adaptive rule (2026-09-25), all in §4. `CLAUDE.md` is out of date, and the parent asked for it to be left unchanged: it still lists the two M1 deviations as "in force until M2", and it points to `cc-develop-handoff.md` for the current milestone. **This file is the authority for status.**
 
 ## 8. Code map
 
