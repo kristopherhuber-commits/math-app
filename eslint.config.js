@@ -18,6 +18,11 @@ export default tseslint.config(
     },
   },
   {
+    // Build scripts run in Node.
+    files: ['scripts/**/*.mjs'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     // R-ARCH-1: the engine is pure TypeScript, no React and no DOM.
     files: ['src/engine/**/*.ts'],
     languageOptions: { globals: {} },
