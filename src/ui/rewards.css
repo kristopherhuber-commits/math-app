@@ -666,3 +666,74 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- M6 motion audit (design.md §2.4 / §5): each a short --ease-pop, off with reduced motion ---------- */
+.counter-icon {
+  display: inline-flex;
+}
+.counter-icon.bumped {
+  animation: icon-pulse var(--dur-slow) var(--ease-pop);
+}
+@keyframes icon-pulse {
+  50% {
+    transform: scale(1.25);
+  }
+}
+/* A badge, or a new accessory, appears with a slight overshoot. */
+.celebration-badge,
+.badge-item.earned .badge-medal {
+  animation: pop-in var(--dur-slow) var(--ease-pop) both;
+}
+.celebration .accessory {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pop-in 420ms var(--ease-pop) 300ms both;
+}
+@keyframes pop-in {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+/* Panels that open in place fade and rise a little. */
+.level-picker,
+.shop-confirm,
+.home-waiting,
+.lock-popover {
+  animation: rise-in var(--dur-base) var(--ease-standard);
+}
+@keyframes rise-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+.dress-item,
+.level-option,
+.shop-card {
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
+}
+.dress-item:active,
+.level-option:active {
+  transform: translateY(2px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .counter-icon.bumped,
+  .celebration-badge,
+  .badge-item.earned .badge-medal,
+  .celebration .accessory,
+  .level-picker,
+  .shop-confirm,
+  .home-waiting,
+  .lock-popover {
+    animation: none;
+  }
+  .dress-item,
+  .level-option,
+  .shop-card {
+    transition: none;
+  }
+}

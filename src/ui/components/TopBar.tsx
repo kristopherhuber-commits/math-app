@@ -23,12 +23,14 @@ export function ShellIcon({ size = 24 }: { size?: number }) {
   );
 }
 
-/** A counter pill that pulses when its value goes up (reduced motion: no pulse, via CSS). */
+/** A counter pill: the number rolls up and the icon pulses when it goes up (design.md §5; reduced motion: neither). */
 export function Counter({ value, label, icon }: { value: number; label: string; icon: ReactNode }) {
   const [initial] = useState(value);
   return (
     <span className="counter-pill" aria-label={label} role="status">
-      {icon}
+      <span key={value} className={value !== initial ? 'counter-icon bumped' : 'counter-icon'}>
+        {icon}
+      </span>
       <span
         key={value}
         className={value !== initial ? 'counter-value bumped' : 'counter-value'}
