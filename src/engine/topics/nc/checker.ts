@@ -3,7 +3,8 @@
 import { isInteger, sign, type Rational } from '../../rational';
 import type { NcSet } from '../walk';
 
-export const NC_SETS: readonly NcSet[] = ['natural', 'whole', 'integer', 'rational', 'irrational', 'real'];
+/** The set cards, in order. Real is not one: every number shown is real (parent decision, 2026-09-25). */
+export const NC_SETS: readonly NcSet[] = ['natural', 'whole', 'integer', 'rational', 'irrational'];
 
 /** A patterned irrational decimal (R-DISP-4): its digits follow a rule that never repeats. */
 export interface IrrationalPattern {
@@ -21,7 +22,7 @@ export type NcValue =
 
 export function ncMembership(v: NcValue, naturalIncludesZero: boolean): Record<NcSet, boolean> {
   if (v.kind === 'irrational')
-    return { natural: false, whole: false, integer: false, rational: false, irrational: true, real: true };
+    return { natural: false, whole: false, integer: false, rational: false, irrational: true };
   const x = v.value;
   const integer = isInteger(x);
   const s = sign(x);
@@ -31,7 +32,6 @@ export function ncMembership(v: NcValue, naturalIncludesZero: boolean): Record<N
     integer,
     rational: true,
     irrational: false,
-    real: true,
   };
 }
 

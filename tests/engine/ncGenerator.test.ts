@@ -44,8 +44,8 @@ function readValue(q: NcQuestion): Rational | 'irrational' {
 
 /** Test-local membership (§6.1 definitions). */
 function oracle(v: Rational | 'irrational', zeroNatural: boolean): Set<NcSet> {
-  if (v === 'irrational') return new Set(['irrational', 'real']);
-  const out = new Set<NcSet>(['rational', 'real']);
+  if (v === 'irrational') return new Set(['irrational']);
+  const out = new Set<NcSet>(['rational']);
   if (v.d === 1n) {
     out.add('integer');
     if (v.n >= 0n) out.add('whole');
@@ -118,13 +118,13 @@ describe('NC examples (§6.1)', () => {
   const sets = (v: NcValue, z = false) => NC_SETS.filter((s) => ncMembership(v, z)[s]);
 
   it.each([
-    [r(7), ['natural', 'whole', 'integer', 'rational', 'real']],
-    [r(0), ['whole', 'integer', 'rational', 'real']],
-    [r(3, 4), ['rational', 'real']],
-    [r(-12), ['integer', 'rational', 'real']],
-    [r(12, 4), ['natural', 'whole', 'integer', 'rational', 'real']],
-    [r(-8, -2), ['natural', 'whole', 'integer', 'rational', 'real']],
-    [r(1), ['natural', 'whole', 'integer', 'rational', 'real']], // 0.999… = 1
+    [r(7), ['natural', 'whole', 'integer', 'rational']],
+    [r(0), ['whole', 'integer', 'rational']],
+    [r(3, 4), ['rational']],
+    [r(-12), ['integer', 'rational']],
+    [r(12, 4), ['natural', 'whole', 'integer', 'rational']],
+    [r(-8, -2), ['natural', 'whole', 'integer', 'rational']],
+    [r(1), ['natural', 'whole', 'integer', 'rational']], // 0.999… = 1
   ])('%o', (v, expected) => {
     expect(sets(v)).toEqual(expected);
   });
@@ -138,18 +138,17 @@ describe('NC examples (§6.1)', () => {
     expect(patternDigits(g)).toBe('0.1010010001');
     expect(patternDigits({ ...g, whole: 2, digit: 2, lead: false })).toBe('2.020020002');
     expect(patternDigits({ ...g, family: 'counting' })).toBe('0.123456789101112');
-    expect(sets({ kind: 'irrational', pattern: g })).toEqual(['irrational', 'real']);
+    expect(sets({ kind: 'irrational', pattern: g })).toEqual(['irrational']);
   });
 
   it('R-NC-2: exactly the right boxes; mismatches listed without direction', () => {
     const v = r(12, 4);
-    expect(checkSets(v, new Set(['natural', 'whole', 'integer', 'real']), false)).toEqual({
+    expect(checkSets(v, new Set(['natural', 'whole', 'integer']), false)).toEqual({
       correct: false,
       mismatched: ['rational'],
     });
     expect(
-      checkSets(v, new Set(['natural', 'whole', 'integer', 'rational', 'irrational', 'real']), false)
-        .mismatched,
+      checkSets(v, new Set(['natural', 'whole', 'integer', 'rational', 'irrational']), false).mismatched,
     ).toEqual(['irrational']);
   });
 });

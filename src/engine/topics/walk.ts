@@ -8,7 +8,7 @@ import type { LongDivision } from '../numbers/decimal';
 import type { Shown } from '../numbers/display';
 import type { HintContent } from './content';
 
-export type NcSet = 'natural' | 'whole' | 'integer' | 'rational' | 'irrational' | 'real';
+export type NcSet = 'natural' | 'whole' | 'integer' | 'rational' | 'irrational';
 
 /** One line of a column subtraction, aligned on the decimal point. */
 export interface ColumnRow {

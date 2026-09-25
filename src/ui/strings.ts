@@ -334,8 +334,9 @@ export const numStrings = {
       integer: 'Integer',
       rational: 'Rational',
       irrational: 'Irrational',
-      real: 'Real',
     } as Record<string, string>,
+    /** The sets map's outer frame (not a checkbox). */
+    realFrame: 'Real numbers',
     example: (set: string, naturalIncludesZero: boolean): string =>
       ({
         natural: naturalIncludesZero ? '0, 1, 2, …' : '1, 2, 3, …',
@@ -343,7 +344,6 @@ export const numStrings = {
         integer: '…, −1, 0, 1, …',
         rational: 'fractions p/q',
         irrational: 'never repeats',
-        real: 'all of these',
       })[set] ?? '',
   },
   walk: {
@@ -684,15 +684,15 @@ export function numText(h: HintContent): string {
     case 'nc.walk.place.irrational':
       return 'It can’t be written as p/q, so it goes in Irrational.';
     case 'nc.walk.contains.natural':
-      return 'Every natural number is also whole, an integer, rational and real.';
+      return 'Every natural number is also whole, an integer and rational.';
     case 'nc.walk.contains.whole':
-      return 'Every whole number is also an integer, rational and real.';
+      return 'Every whole number is also an integer and rational.';
     case 'nc.walk.contains.integer':
-      return 'Every integer is also rational and real.';
+      return 'Every integer is also rational.';
     case 'nc.walk.contains.rational':
-      return 'Every rational number is also real.';
+      return 'A rational number that is not an integer is only rational.';
     case 'nc.walk.contains.irrational':
-      return 'Every irrational number is also real (but never rational).';
+      return 'An irrational number is never rational, so Irrational is its only box.';
     case 'nc.walk.tick':
       return `So tick: ${setList(p.sets ?? '')}.`;
     default:

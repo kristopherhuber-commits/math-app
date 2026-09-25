@@ -111,15 +111,16 @@ describe('select-all (NC)', () => {
 
   it('second wrong outlines the mismatched boxes, without direction (R-NC-3)', () => {
     const { s, right } = answer(3, 5);
-    let t = ncReducer(tick(s, ['real']), { type: 'check' });
+    // Level 3 numbers are rational, so Irrational alone misses every right box and adds one.
+    let t = ncReducer(tick(s, ['irrational']), { type: 'check' });
     expect(t.flagged).toEqual([]); // first wrong: "Not quite" only
     expect(t.feedback).not.toBeNull();
     t = ncReducer(t, { type: 'check' });
-    expect(t.flagged.sort()).toEqual(right.filter((x) => x !== 'real').sort());
+    expect(t.flagged.sort()).toEqual([...right, 'irrational'].sort());
     expect(t.hintOpen).toBe(true);
     // Toggling a flagged box clears its outline.
     t = ncReducer(t, { type: 'toggle', set: t.flagged[0]! });
-    expect(t.flagged).toHaveLength(right.length - 2);
+    expect(t.flagged).toHaveLength(right.length);
   });
 
   it('the natural-numbers setting changes the answer for 0 (§6.1)', () => {
@@ -128,9 +129,9 @@ describe('select-all (NC)', () => {
     for (let seed = 0; seed < 500 && !(s.question.form === 'zero'); seed++) s = startNc(1, seed);
     expect(s.question.form).toBe('zero');
     const withZero = ncReducer(s, { type: 'naturalIncludesZero', value: true });
-    const ticked = tick(withZero, ['natural', 'whole', 'integer', 'rational', 'real']);
+    const ticked = tick(withZero, ['natural', 'whole', 'integer', 'rational']);
     expect(ncReducer(ticked, { type: 'check' }).solved).toBe(true);
-    const ticked2 = tick(s, ['natural', 'whole', 'integer', 'rational', 'real']);
+    const ticked2 = tick(s, ['natural', 'whole', 'integer', 'rational']);
     expect(ncReducer(ticked2, { type: 'check' }).solved).toBe(false);
   });
 });

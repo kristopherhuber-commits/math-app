@@ -1,6 +1,7 @@
 // NC components (design.md §5): SetCheckbox cards and the SetsMap, nested boxes
 // Real ⊃ (Rational ⊃ Integer ⊃ Whole ⊃ Natural) with Irrational beside Rational. In H3 the number
-// sits in its innermost box and each enclosing box lights up in turn.
+// sits in its innermost box and each enclosing box lights up in turn. Real is only the outer frame:
+// it has no checkbox, since every number shown is real (parent decision, 2026-09-25).
 import type { CSSProperties, ReactNode } from 'react';
 import type { NcSet } from '../../engine/topics/walk';
 import { numStrings } from '../strings';
@@ -76,14 +77,13 @@ export function SetsMap({ lit = [], place, number, compact = false, label }: Map
   );
   return (
     <figure className={`sets-map ${compact ? 'compact' : ''}`} aria-label={label}>
-      {box(
-        'real',
-        0,
+      <div className="sets-box sets-real" style={{ '--depth': 0 } as CSSProperties}>
+        <span className="sets-label">{numStrings.nc.realFrame}</span>
         <div className="sets-row">
           {box('rational', 1, box('integer', 2, box('whole', 3, box('natural', 4))))}
           {box('irrational', 1)}
-        </div>,
-      )}
+        </div>
+      </div>
     </figure>
   );
 }

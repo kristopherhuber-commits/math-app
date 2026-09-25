@@ -24,7 +24,6 @@ const setNames: Record<string, string> = {
   integer: 'Integer',
   rational: 'Rational',
   irrational: 'Irrational',
-  real: 'Real',
 };
 
 async function answerMc(page: Page, q: McQuestion, touch: boolean) {

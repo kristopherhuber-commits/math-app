@@ -109,7 +109,7 @@ export function ncWalkthrough(q: NcQuestion, naturalIncludesZero: boolean): NumW
   }
 
   // 2. Its innermost set, as a mini-question (R-HELP-4).
-  const others = NC_SETS.filter((s) => s !== place && s !== 'real');
+  const others = NC_SETS.filter((s) => s !== place);
   steps.push({
     explain: content('nc.walk.place', { x }),
     mini: miniQuestion(
