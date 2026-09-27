@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| Status | **v1 built** (milestones M0–M6, 2026-09-25). This file now describes what was built: changes the parent approved during the build are written into the requirements below and listed in §15. |
+| Status | **v1 built** (milestones M0–M6, 2026-09-25; M7, 2026-09-27). This file now describes what was built: changes the parent approved during the build are written into the requirements below and listed in §15. |
 | Owner | The parent (product owner) |
 | Learner | One child |
 | Companion doc | `docs/design.md` (visual design, screens, mockups in `docs/design/`) |
-| Last updated | 2026-09-25 |
+| Last updated | 2026-09-27 |
 
 Requirement IDs (`R-…`) are stable. Reference them in commits, tests and PRs. **MUST** / **SHOULD** / **MAY** follow RFC 2119. Any value marked *(default)* is a tunable constant; keep it in `src/engine/config.ts`, not scattered through the code.
 
@@ -20,7 +20,7 @@ A practice app that asks the learner questions on five topics, checks their answ
 
 | ID | Topic | Summary |
 |---|---|---|
-| NC | Number classification | Decide which sets a number belongs to: natural, whole, integer, rational, irrational, real |
+| NC | Number classification | Name the smallest set a number belongs to: natural, whole, integer, rational or irrational |
 | RD | Repeating decimals | Repeating decimal ↔ fraction (x-method), and fraction → repeating decimal |
 | FDP | Fraction ↔ decimal ↔ percent | Convert among the three forms |
 | PC | Percent change (prices) | New price after an increase or decrease, successive changes, recovering the original price |
@@ -108,7 +108,7 @@ Each topic has levels 1…N (defined per topic in §6–7). A learner has one cu
 
 ### 5.1 Answer formats
 
-- **R-ANS-1** NC, RD, FDP and PC questions use **multiple choice with 5 options** (NC uses select-all checkboxes instead, §6.1).
+- **R-ANS-1** NC, RD, FDP and PC questions use **multiple choice with 5 options** (NC's five options are the five number sets, §6.1).
 - **R-ANS-2** Distractors MUST be generated from explicit **misconception models** (listed per topic). Random-number fillers are allowed only when the misconception models produce fewer than 4 distinct candidates.
 - **R-ANS-3** **No distractor may be numerically equal to the correct answer.** For example, 420/99 must never be offered as wrong when 140/33 is right. All 5 options MUST be distinct in value and in displayed text.
 - **R-ANS-4** Option order is shuffled with the question's seeded PRNG.
@@ -125,7 +125,7 @@ Each topic has levels 1…N (defined per topic in §6–7). A learner has one cu
   - **H2 Next move**: states the specific next step for *this* problem without its result. ("Move the *a* from the right side to the left side. What happens to its sign?")
   - **H3 Walkthrough**: a step-by-step worked solution of *this* problem, which the learner advances by tapping **Next**. Some steps ask a small inline question (e.g. "What is 100 × 4.2424…?", with 3 options) before revealing the result.
 - **R-HELP-5** Hints MUST be generated from the actual problem data (the real numbers, variable letter and terms), not from generic text.
-- **R-HELP-6** After a walkthrough, the question counts as done (1 star, §8), and the next question is from the same topic and level.
+- **R-HELP-6** After a walkthrough, the question counts as done (0 stars, §8), and the next question is from the same topic and level.
 - **R-HELP-7** The turtle presents all help. The penguin presents all celebration. Neither ever mocks or shows disappointment.
 
 ### 5.3 Display conventions
@@ -148,11 +148,13 @@ For each topic, the tables below define the levels. Every generator MUST satisfy
 
 ### 6.1 NC — Number classification
 
-**Question:** "Which sets does this number belong to? Tick all that apply." There are **five** checkboxes, always in this order: **Natural · Whole · Integer · Rational · Irrational**. *(Parent decision 2026-09-25: Real is not a checkbox, since every number shown is real. The sets map still draws Real as the outer frame.)*
+**Question:** "What is the smallest set this number belongs to?" There are **five** set cards, always in this order: **Natural · Whole · Integer · Rational · Irrational**, and exactly one is correct. *(Parent decisions: 2026-09-25, Real is not a card, since every number shown is real, and the sets map still draws Real as the outer frame; 2026-09-27, one answer, the smallest set, instead of ticking every set.)*
+
+Examples: 7 → Natural; 0 → Whole; −3 → Integer; 3/4 → Rational; 0.1010010001… → Irrational; 12/4 → Natural; 0.999… → Natural.
 
 **Definitions (shown in help, used by the checker):**
 
-- Natural ℕ = {1, 2, 3, …} (excludes 0, following a common school convention) *(default; parent setting can switch to include 0; if changed, Natural and Whole become identical and the help text updates)*
+- Natural ℕ = {1, 2, 3, …}. 0 is **not** natural (parent decision 2026-09-27; there is no setting), so 0's smallest set is Whole.
 - Whole = {0, 1, 2, 3, …}
 - Integer ℤ = {…, −2, −1, 0, 1, 2, …}
 - Rational ℚ = numbers that can be written p/q with integers p, q and q ≠ 0. Equivalently: the decimal terminates or repeats.
@@ -168,9 +170,9 @@ For each topic, the tables below define the levels. Every generator MUST satisfy
 | 5 (challenge) | Mixed, including 0.999… (= 1, so natural, whole, integer, rational) | 0.999…, 4.24242…, −3.000 |
 
 - **R-NC-1** The checker computes the correct set membership from the number's exact value (a `Rational`, or a tagged `IrrationalPattern`). Disguised forms are reduced first.
-- **R-NC-2** A correct answer means **exactly** the correct set of boxes is ticked.
-- **R-NC-3** On the first wrong answer, the feedback says "Not quite". On the second wrong answer, the boxes that are wrong get outlined (without saying which way they're wrong), and the hint ladder is offered.
-- **R-NC-4** The app MUST NOT auto-tick supersets. The learner has to learn the nesting themselves.
+- **R-NC-2** *(changed 2026-09-27)* The correct answer is the **smallest** set the number belongs to (its innermost box on the sets map). Every other card is not quite, including larger sets that also contain the number.
+- **R-NC-3** *(changed 2026-09-27)* A card that was checked and was not quite is greyed out and can't be chosen again (as in R-HELP-1). The feedback adds one line that doesn't reveal the answer: for a larger set that contains the number, "It is in that set, but there's a smaller one."; for a set that doesn't contain it, "It isn't in that set." Hints follow R-HELP-2.
+- **R-NC-4** The sets map and the H3 walkthrough still show the nesting: the number's innermost box, then every set that contains it.
 - **R-NC-5** No roots, powers, π or e in v1.
 
 **Misconceptions to address in hints:** "a fraction can't be an integer" (12/4), "negative numbers aren't whole" (correct, but the learner may over-apply it and untick Integer), "a decimal isn't rational" (0.25 = 1/4), "a repeating decimal is irrational", "0 isn't a whole number", "long decimals are irrational".
@@ -178,7 +180,7 @@ For each topic, the tables below define the levels. Every generator MUST satisfy
 **Hints:**
 - H1: "Start at the smallest set. Is this number a counting number (1, 2, 3, …)?"
 - H2: number-specific, e.g. "12/4 simplifies. What is 12 ÷ 4?"
-- H3: a walkthrough over the **nested-sets diagram** (see design.md). It places the number in its innermost set, then shows which enclosing sets are also ticked.
+- H3: a walkthrough over the **nested-sets diagram** (see design.md). It places the number in its innermost set, shows which enclosing sets also contain it, and ends with the smallest set as the answer. For 0.999… it first finds the value with the x-method (§6.2), as in RD.
 
 ### 6.2 RD — Repeating decimals
 
@@ -435,13 +437,17 @@ EQ uses no multiple choice. Every step is produced by the learner, either throug
 
 ## 8. Rewards (learner-visible, light)
 
-- **R-RWD-1** **Stars per question:** 3 ★ = correct on the first try with no hints; 2 ★ = correct on the second try, or with H1 only; 1 ★ = needed H2 or H3, or more than 2 tries. There are no zero-star outcomes; completing always earns at least 1.
+- **R-RWD-1** *(changed 2026-09-27, parent decisions)* **Stars per question** depend on the question's level and how it was answered, so harder work pays more and guessing pays less:
+  - **Full stars** by level *(default)*: level 1 = 1, 2 = 2, 3 = 4, 4 = 6, 5 = 8, EQ 6 = 10.
+  - **How it was answered:** correct on the first try with no hint or H1 only → full stars; correct on the second try, or after H2 → 1 ★; three or more tries, or the walkthrough (H3) → 0 ★. The question still counts as done.
+  - **Levels below the learner's current level** in that topic: one level below pays at most 1 ★; two or more below pay 0. The **current level** is the higher of the stored level (R-ADP, moved by assignments) and the highest level adaptive free practice has promoted the learner to (R-ADP-7). An assignment item the parent level-locked (R-SES-3) pays normally.
+  - Fixed-level links (`?topic=&level=`) show stars without the below-level rule and earn no shells.
 - **R-RWD-2** **Streak:** the number of consecutive days on which the learner completed at least one assigned question set, or finished the active assignment *(default: ≥ 1 assignment question answered on a day that had an active assignment)*. Days with **no active assignment do not break** the streak.
-- **R-RWD-3** **Badges** (small, one-time): first question solved; first perfect assignment (all 3 ★); 10 EQ questions without H3; first delayed repeating decimal; first successive-change problem; 7-day streak; 30-day streak; each topic's max level reached.
-- **R-RWD-4** **Shells** *(as built, parent decisions M6 and 2026-09-25)*. Each answer earns shells by its stars *(default 3 ★ = 3, 2 ★ = 2, 1 ★ = 1; the parent can change the table)*. There are two counts:
+- **R-RWD-3** **Badges** (small, one-time): first question solved; first perfect assignment (every answer on the first try, with no hint above H1); 10 EQ questions without H3; first delayed repeating decimal; first successive-change problem; 7-day streak; 30-day streak; each topic's max level reached.
+- **R-RWD-4** **Shells** *(parent decisions M6, 2026-09-25 and 2026-09-27)*. Each answer earns **as many shells as stars** (R-RWD-1). There are two counts:
   - **Lifetime shells** (never go down; not shown to the learner) **unlock cosmetics automatically**: a hat, scarf, sunglasses and bow tie for each mascot, at 20, 50, 100, 175, 275, 400, 550 and 750 shells, alternating turtle and penguin. A new one is announced and worn at once; the learner can take them off or put them back on (Home › Dress up).
-  - **Shells to spend** (shown on Home, in the top bar and in the shop; up to 12 drawn on the beach) buy **real rewards** in the **shop**: a Strawberry Açaí Lemonade Refresher (150) and a Roblox gift card, 2,000 Robux (1,500). Each shop card has an original cartoon picture (no brand photos or logos) and a line saying what the real reward is. Buying asks first, takes the shells at once, and leaves a request "waiting for a grown-up"; the parent marks it given or cancels it, which refunds the shells (R-PAR-7).
-- **R-RWD-5** The penguin celebrates correct answers with short animations (< 1.2 s, skippable, and never blocking input for more than 600 ms). A 3 ★ answer gets a slightly bigger celebration. Streak milestones get a full-screen celebration (skippable).
+  - **Shells to spend** (shown on Home, in the top bar and in the shop; up to 12 drawn on the beach) buy **real rewards** in the **shop**: a Strawberry Açaí Lemonade Refresher (200) and a Roblox gift card, 2,000 Robux (2,000) *(default prices, rebalanced for R-RWD-1 on 2026-09-27; the parent can change them)*. Each shop card has an original cartoon picture (no brand photos or logos) and a line saying what the real reward is. Buying asks first, takes the shells at once, and leaves a request "waiting for a grown-up"; the parent marks it given or cancels it, which refunds the shells (R-PAR-7).
+- **R-RWD-5** The penguin celebrates correct answers with short animations (< 1.2 s, skippable, and never blocking input for more than 600 ms). An answer with full stars gets a slightly bigger celebration; a 0 ★ answer still gets a short "Done" from the penguin. Streak milestones get a full-screen celebration (skippable).
 - **R-RWD-6** No leaderboards, no timers, no speed scoring, and shells are never taken away as a penalty. *(Shells go down only when the learner chooses to buy a reward, or when the parent sets the count.)*
 - **R-RWD-7** **Character naming:** on first run, after the parent sets the PIN, the learner can name the turtle and the penguin (defaults "Shelly" and "Pip"). The names are stored in `Settings.mascotNames` and can be changed later from the parent area.
 - **R-RWD-8** *(added M6)* **Badge shelf** on Home: the badges earned so far, and the rest greyed out with their names.
@@ -454,13 +460,13 @@ EQ uses no multiple choice. Every step is produced by the learner, either throug
 - **R-PAR-2** **Assignments:** create ("Save & make active" puts it first and sends the active one back to the front of the queue; "Add to queue" puts it last), edit (once started: stored items stay, counts can't go below what's done, new items append), reorder (drag or ↑/↓), delete; see the active one's progress; mark it complete early.
 - **R-PAR-3** **Progress dashboard.** For each topic: current level, attempts, clean-solve rate, hint usage by tier, average tries, time spent, and a trend over the last 30 days (small line chart). Plus a **daily activity** strip (minutes per day).
 - **R-PAR-4** **Missed-question review:** a list of attempts that needed H2/H3 or two or more wrong tries. Each can be opened to show the question (regenerated from its seed), the learner's answers in order, and for EQ **every line they tried, including rejected lines with their diagnostic codes**. Filter by topic and date.
-- **R-PAR-5** **Settings:** PIN; free-practice policy (R-SES-6); question order (R-SES-4); per-topic min/max level (R-ADP-5); `allowSkipping` for EQ (R-EQ-CHK-3); full balance animation on/off (R-EQ-PED-2); natural numbers include 0 (§6.1); sounds on/off *(default **off**, parent decision 2026-09-25)*; reduce motion (also honours the OS `prefers-reduced-motion`); currency symbol; the mascots' names (R-RWD-7).
+- **R-PAR-5** **Settings:** PIN; free-practice policy (R-SES-6); question order (R-SES-4); per-topic min/max level (R-ADP-5); `allowSkipping` for EQ (R-EQ-CHK-3); full balance animation on/off (R-EQ-PED-2); sounds on/off *(default **off**, parent decision 2026-09-25)*; reduce motion (also honours the OS `prefers-reduced-motion`); currency symbol; the mascots' names (R-RWD-7).
 - **R-PAR-6** **Data:** export all data to a JSON file; import a JSON file (with a confirmation step and a schema-version check; older files are migrated, newer ones refused); reset all progress (with a confirmation step; it clears answers, levels, shells, streak, badges, cosmetics, shop requests and all assignments, and keeps the PIN, names, settings and the error list). The in-app error list (R-NF-5) is on this page.
-- **R-PAR-7** *(added M6)* **Rewards:** shop requests to **mark given** or **cancel and refund**; the history; shells to spend and lifetime shells; set the learner's **shells to spend** (the lifetime total and its cosmetics stay as earned); **shells per 3 / 2 / 1 star answer**; each item's **price**; and an optional **picture** per item, kept on the device only (never uploaded).
+- **R-PAR-7** *(added M6)* **Rewards:** shop requests to **mark given** or **cancel and refund**; the history; shells to spend and lifetime shells; set the learner's **shells to spend** (the lifetime total and its cosmetics stay as earned); each item's **price**; and an optional **picture** per item, kept on the device only (never uploaded).
 
 ### 9.1 Data model (Dexie; built as schema v4)
 
-The model below is the original v1. As built (see `src/data/db.ts`): v2 adds `Attempt.wrongTries / itemIndex / countedAt` and `Assignment.activatedAt / seed / order`; v3 adds the `errors` store and `Attempt.fixed`; v4 adds `Rewards.spent`, `Settings.shopItems` and the `redemptions` store. Optional fields added later without a schema bump: `Settings.shellsPerStars`, `ShopItem.note / image`, `Attempt.shellsEarned`.
+The model below is the original v1. As built (see `src/data/db.ts`): v2 adds `Attempt.wrongTries / itemIndex / countedAt` and `Assignment.activatedAt / seed / order`; v3 adds the `errors` store and `Attempt.fixed`; v4 adds `Rewards.spent`, `Settings.shopItems` and the `redemptions` store. Optional fields added later without a schema bump: `ShopItem.note / image`, `Attempt.shellsEarned`, `TopicState.freeBest` (M7: the highest level adaptive free practice promoted to). Since M7 `Attempt.stars` is 0–10 (R-RWD-1), and `Settings.shellsPerStars` and `Settings.naturalIncludesZero` are no longer read.
 
 ```ts
 type TopicId = 'NC' | 'RD' | 'FDP' | 'PC' | 'EQ';
@@ -526,16 +532,16 @@ interface Meta         { key: 'schemaVersion'; value: number; }
 | **M4 Sessions + adaptive + rewards** | assignments, adaptive levels, stars, streaks, badges, penguin celebrations | R-TEST-4 green; assignment completes with summary |
 | **M5 Parent area** | PIN, assignment builder, dashboard, missed-question review, settings, export/import | R-TEST-5 parent flow green |
 | **M6 Polish** | shells + accessories (R-RWD-4), animations, a11y pass, offline test, performance budget | R-TEST-6, R-TEST-7, R-NF-1/2 met |
-| *M7 (deferred)* | *An editable shop list in the parent area: add, rename and remove rewards* | *Not scheduled* |
+| **M7 Stars by level; smallest set** | R-RWD-1 (stars by level, stars = shells, new prices), R-NC-2…4 (one answer: the smallest set) | tests for every R-RWD-1 case and NC's single answer green |
 
-**Status:** M0–M6 done and deployed (2026-09-25); v1 is complete. Reports: `docs/milestones/`.
+**Status:** M0–M6 done and deployed (2026-09-25); v1 is complete. M7 built 2026-09-27. Future work: `docs/roadmap.md`. Reports: `docs/milestones/`.
 
 ---
 
 ## 13. Assumptions and defaults (change any of these freely)
 
 1. App name "Turtle & Penguin Math" is a placeholder.
-2. Natural numbers start at 1 (a common school convention). This is a parent setting.
+2. Natural numbers start at 1 (a common school convention). Since M7 there is no setting.
 3. Assignments: promote at 4 of the last 5 clean; demote at 3 of the last 5 needing a walkthrough. Free practice (Adaptive): R-ADP-7.
 4. Step skipping in EQ is off by default.
 5. Currency is `$`; no rounding problems in v1.
@@ -567,3 +573,6 @@ Everything below is written into the requirements above; `progress.md` §4 has t
 | M6 | R-RWD-4, R-RWD-6, R-RWD-8, R-PAR-7 | Lifetime shells unlock cosmetics; shells to spend buy real rewards the parent gives; badge shelf; Parent › Rewards. |
 | 2026-09-25 | R-RWD-4, R-PAR-5, R-PAR-7 | Cartoon shop pictures; sounds off by default; the parent sets shells and shells per star. |
 | 2026-09-25 | R-PLAT-2 | Chrome and Edge, on desktop and the Surface Pro, are the required browsers. |
+| 2026-09-26 | §6.1 H3 | The 0.999… walkthrough uses the x-method. |
+| 2026-09-27 (M7) | R-RWD-1, R-RWD-3/4/5, R-HELP-6, R-PAR-7 | Stars by level (1, 2, 4, 6, 8, 10), cut by tries and hints, less below the current level; shells = stars; prices 200 / 2,000; walkthrough 0 ★. |
+| 2026-09-27 (M7) | §6.1, R-NC-2…4, R-ANS-1, R-PAR-5 | One answer: the smallest set; natural numbers start at 1 with no setting. |

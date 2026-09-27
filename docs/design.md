@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Status | **v1 built** (M0–M6, 2026-09-25). Updated to show what was built; the mockups are unchanged, so §12 lists where the app differs from them. |
+| Status | **v1 built** (M0–M6, 2026-09-25; M7, 2026-09-27). Updated to show what was built; the mockups are unchanged, so §12 lists where the app differs from them. |
 | Requirements | `docs/requirements.md` (requirement IDs `R-…` are referenced below) |
 | Mockups | `docs/design/mockups/*.svg` (the source) + `*.png` (renders of the same) |
 | Mockup generator | `docs/design/mockups/_src/` (Python; regenerate after token changes) |
@@ -10,7 +10,7 @@
 | Build brief | `cc-develop-handoff.md` (the original Claude Code instructions for M0–M2; historical) |
 | Milestone reports | `docs/milestones/M<n>-report.md` |
 | Project checkpoint | `progress.md` (status, decisions, Q&A, assumptions, next steps) |
-| Last updated | 2026-09-25 |
+| Last updated | 2026-09-27 |
 
 **For Claude Code:** the mockups show layout, hierarchy and state. They are not pixel specs; the tokens and component specs below are the source of truth. Purple numbered circles in the mockups are **annotations**. They are not UI. Each one is explained in §7 under that screen.
 
@@ -21,7 +21,7 @@
 1. **Calm by default, playful on success.** Screens are quiet: a warm sand background, white cards, one teal action colour. Colour and motion burst only when the learner gets something right (the penguin) or needs help (the turtle).
 2. **The math is the hero.** The number or equation is the largest thing on the screen, set in a math face and centred. Chrome stays small.
 3. **Show the process.** Every solved equation leaves a visible trail of steps. Hints refer to *the learner's* numbers.
-4. **Never punish.** No red, no buzzers, no timers, no taking anything away. "Not quite" is amber and gentle. Every answered question earns at least one star.
+4. **Never punish.** No red, no buzzers, no timers, no taking anything away. "Not quite" is amber and gentle. Every answered question gets a celebration, even when it earns no stars (since M7 stars reward first-try work at the learner's level, R-RWD-1).
 5. **Two characters, two jobs.** The turtle (**Shelly**) means *help*: she is patient and green, and always appears in the help colour. The penguin (**Pip**) means *celebration*: bouncy, with gold stars. They never swap roles. (The names are placeholders. See §4.3: the learner names them on first run.)
 6. **Touch first, keyboard complete.** Targets ≥ 48 px. Everything works with a finger, a mouse, or a keyboard.
 
@@ -173,7 +173,7 @@ Names match the intended React components. "States" lists every visual state tha
 | **TopicChip** | Pill, 30 px high, `label` text. EQ/NC/RD/FDP use `--primary-soft`/`--var-ink`; PC uses `--const-bg`/`--const-ink` | — |
 | **MathHero** | KaTeX, `math-hero`, centred, with an optional caption below (`label`, muted), e.g. "the block 24 repeats forever" | — |
 | **McOption** | 196×136 (desktop row of 5) or 2-column on portrait. Radius 18. Content centred: `math-lg` or `money` | `idle` (surface, 2 px `--line`) · `hover` (border `--primary` 2 px) · `selected` (`--primary-soft`, 4 px `--primary`, ✓ badge top-right) · `wrong` (sunken fill, 45% veil, ✕ in amber, **disabled**) · `correct` (`--success-soft`, 4 px `--success`) · `focus-visible` (3 px outline `--primary`, 3 px offset) |
-| **SetCheckbox** (NC) | **Five** cards, no Real (parent decision 2026-09-25). 166×132 card: a 30 px checkbox, the set name (`title`/21), and an example line (e.g. "0, 1, 2, …"). The whole card toggles | `off` · `on` (`--primary-soft`, 4 px `--primary`, white ✓ in a filled box) · `flagged` (after the 2nd wrong try: dashed 3 px `--amber` outline, with no hint of which way it's wrong, R-NC-3) |
+| **SetCard** (NC) | **Five** cards, no Real (parent decision 2026-09-25). **One answer: the smallest set** (M7, R-NC-2), so the cards behave like McOption (a radio group). 166×132 card: a 30 px round marker, the set name (`title`/21), and an example line (e.g. "0, 1, 2, …") | `idle` · `selected` (`--primary-soft`, 4 px `--primary`, ● in the marker) · `tried` (like McOption `wrong`: sunken fill, veil, ✕ in amber, disabled, R-NC-3) · `correct` |
 | **SetsMap** | Nested rounded rectangles: Real ⊃ (Rational ⊃ Integer ⊃ Whole ⊃ Natural) and Irrational beside Rational. The rational chain uses progressively deeper teal tints; Irrational uses the constant tint. Full-size version in a modal; in H3 the current number animates into its innermost box and each enclosing box lights up in turn | `static` · `highlight(set)` |
 | **HelpButton** | 200×56, `--help-bg`, 2 px `--turtle`, turtle icon + "Help" | `idle` · `pressed` · `pulsing` (a gentle 2 s glow after the 2nd wrong try, R-HELP-2) |
 | **CheckButton** | 176×56 primary | `disabled` (nothing selected yet; `--surface-sunken` fill, `--ink-muted` label, 5.5:1) · `enabled` · `busy` (≤ 100 ms, no spinner needed) |
@@ -189,7 +189,7 @@ Names match the intended React components. "States" lists every visual state tha
 | **ErrorMark** | Amber wavy underline under the offending term(s), from the diagnostic's term span | — |
 | **StepFeedback** | Under the current line: `--help-bg` box with a small turtle and the diagnostic message (R-EQ, §7.4 table). Title line 19/900, detail 17/700, balance reminder 15 | `hidden` · `shown` |
 | **MathKeypad** | 4 columns × 5 rows of 80×64 keys, radius 14, 8 px gap. Digits on `--bg`; operators on `--surface-sunken`; the variable key on `--var-bg`, showing **only this problem's letter**. Row 5: `( ) = ⌫`. Below: `Clear line` + `Check step` | key `idle` · `pressed` (translateY 2 px, lip shrinks) · `disabled` |
-| **Celebration** | Pip `cheer` + 3 stars popping in sequence (`--ease-pop`, 80 ms stagger) + confetti rectangles. Text "3 stars! Brilliant!" + "+3 shells". 1-star and 2-star versions are smaller: 1 or 2 stars, Pip `clap` | `3★` · `2★` · `1★` · `levelUp` · `streak` (full screen) |
+| **Celebration** | *As built (M7, R-RWD-1):* full stars → Pip `cheer`, the stars popping in sequence (`--ease-pop`, 80 ms stagger; up to 10, smaller when more than 5) + confetti; text "Full stars! Brilliant!" + "+n shells". 1 ★ → Pip `clap`, one star, "1 star. Nice work!". 0 ★ → Pip `clap`, no stars, "Done! Try it on the first go next time." | `full` · `one` · `none` · `levelUp` · `streak` (full screen) |
 | **StarCounter / ShellCounter** | Pills. When they increment, the number rolls up and the icon pulses | — |
 | **AssignmentCard** (Home) | Overline, title, one row per item (name, n / N, progress bar, ✓ when done), a primary **Keep going ›** button and "x of N done" | `notStarted` ("Start ›") · `inProgress` · `done` |
 | **TopicTile** (Home free practice) | 216×136, glyph (math face) + name. Tapping it opens the LevelPicker | `locked` (55% veil + padlock) · `open` · `hover` |
@@ -276,7 +276,7 @@ Each mockup is at `docs/design/mockups/NN-name.svg` with a PNG render beside it.
 
 ### 7.4 Number classification: `04-number-classification.svg`
 ![NC](design/mockups/04-number-classification.png)
-1. **Six set cards** *(as built: five; Real is only the outer frame of the sets map)*, always in the same order. The state shown is the learner's in-progress answer, with the common "a fraction can't be rational/integer" confusion: Rational is still unticked.
+1. **Six set cards** *(as built: five; Real is only the outer frame of the sets map; since M7 the learner picks one, the smallest set)*, always in the same order. The state shown is the learner's in-progress answer, with the common "a fraction can't be rational/integer" confusion: Rational is still unticked.
 2. **Sets map** button opens the full SetsMap modal (a reference; using it is not a hint).
 3. **SetsMap preview** (optional at desktop width; hidden on portrait).
 
@@ -362,7 +362,7 @@ All strings live in `src/ui/strings.ts` (R-NF-4).
 - Contrast: all token pairs in §2.1 are ≥ 4.5:1. Star, beak and shell colours are decorative only and never carry text.
 - Colour is never the only signal: tiles differ by shape, wrong options get ✕ and a veil, accepted steps get ✓ and a text label, and flagged set cards get a dashed outline.
 - Focus: visible 3 px `--primary` outline with a 3 px offset on every interactive element. Logical tab order: prompt → answers → Help → Check.
-- Keyboard: `1–5` choose an MC option; `Space` toggles the focused set card; `Enter` = Check / Check step / Next; `H` opens Help; `Esc` closes the hint drawer.
+- Keyboard: `1–5` choose an MC option or a set card; `Space` chooses the focused set card; `Enter` = Check / Check step / Next; `H` opens Help; `Esc` closes the hint drawer.
 - Screen readers: KaTeX output includes MathML; add `aria-label`s in words for the hero ("4.242424 repeating, block 24"). Live region for feedback toasts and step feedback.
 - Targets ≥ 48×48 px (keypad keys are 80×64).
 - Reduced motion per §2.4.
@@ -386,7 +386,8 @@ The app follows this document, with the changes below. The mockups were not redr
 | Area | Mockup / section | As built |
 |---|---|---|
 | Hints | mockup 03, §5 HintDrawer | A panel inside the question card, not a docked drawer (parent approved, M3). |
-| Number sets | mockup 04, §7.4 | Five set cards; Real is the outer frame of the sets map only. |
+| Number sets | mockup 04, §7.4 | Five set cards; Real is the outer frame of the sets map only. Since M7 one card is the answer (the smallest set), chosen like a multiple-choice option; tried cards are greyed out. |
+| Stars | mockups 08, 09, §5 Celebration | Since M7 stars depend on the level (up to 10) and shells equal stars; the summary shows stars per topic as a total. |
 | Home | mockup 01, §7.1 | Free practice open by default; a level picker (Adaptive or a level) on each tile; Shop button; waiting-for-a-grown-up note; Dress up; badge shelf; shells on the sand = shells to spend. |
 | Rewards | §4.3, §7 "accessory shop" | Cosmetics unlock from lifetime shells (no shop for them). The shop sells real rewards for shells to spend, with original cartoon pictures and a line saying what each reward is; the parent gives or cancels them in Parent › Rewards. |
 | Parent area | mockups 10, 11 | Adds a Rewards page and "Edit assignment" from a queue card; Missed questions, Settings and Data as described in §7. |
