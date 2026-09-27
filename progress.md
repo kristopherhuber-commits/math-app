@@ -2,13 +2,13 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-27 · Current state: **v1 finished (M0–M6 done and deployed, 2026-09-25). Future work is in `docs/roadmap.md`; RM-1 (stars by level) and RM-2 (smallest number set) are being decided.**
+Last updated: 2026-09-27 · Current state: **v1 finished (M0–M6, 2026-09-25); M7 (stars by level; the smallest number set) built and deployed 2026-09-27. Future work: `docs/roadmap.md`.**
 
 ---
 
 ## 1. How to work on this project
 
-- **Read first:** `docs/requirements.md`, `docs/design.md`, this file, then `docs/roadmap.md` (future work). Milestone reports with full detail: `docs/milestones/M1-report.md` (M0 + M1), `docs/milestones/M2-report.md`, `docs/milestones/M3-report.md`, `docs/milestones/M4-report.md`, `docs/milestones/M5-report.md`, `docs/milestones/M6-report.md`.
+- **Read first:** `docs/requirements.md`, `docs/design.md`, this file, then `docs/roadmap.md` (future work). Milestone reports with full detail: `docs/milestones/M1-report.md` (M0 + M1), `docs/milestones/M2-report.md`, `docs/milestones/M3-report.md`, `docs/milestones/M4-report.md`, `docs/milestones/M5-report.md`, `docs/milestones/M6-report.md`, `docs/milestones/M7-report.md`.
 - **Precedence:** `requirements.md` > `design.md` > mockups > anything else. Since 2026-09-25 both documents describe what was built (requirements §15 and design §12 list the changes approved during the build). Report any new conflict; implement the higher-precedence source.
 - **Process per milestone:** plan in plan mode with open questions → parent approves → build one milestone → stop and report (template in §9) as `docs/milestones/M<n>-report.md` → update this file → commit → push (deploys) → run the live check.
 - **Public repo.** Never commit names, ages, gender, locations or local user paths of the parent or the learner. Say "the parent" and "the learner".
@@ -50,7 +50,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-23 | **M5 Parent area** | Done. First-run setup (PIN, then naming Shelly and Pip); PIN gate with reset and auto-lock; assignment builder and queue (replaces the link); progress dashboard; missed-question review; settings; export / import / reset; the error list; free practice defaults to `always`; Dexie schema v3. 556 unit/property tests, 86 e2e (+10 on-demand skipped), engine 97.2 % lines, 244.3 KB gz JS. Report: `docs/milestones/M5-report.md`. |
 | 2026-09-25 | **M6 Polish, shop, cosmetics** | Done. Lifetime shells unlock 8 cosmetics (worn at once); shells to spend buy real rewards in a shop the parent fulfils (Parent › Rewards); badge shelf; shells on the beach; synthesised sounds; motion audit; axe on every screen in both themes (R-TEST-6); offline question (R-TEST-7); cold load ~0.5 s at 4× CPU (R-NF-1); bundle check in the build (R-NF-2); Dexie schema v4. 594 unit/property tests, 116 e2e (+12 on-demand skipped), engine 97.3 % lines, 244.5 KB gz JS. Report: `docs/milestones/M6-report.md`. |
 | 2026-09-25 | **After M6** | Sounds off by default; the treat renamed; cartoon shop pictures; the parent sets shells and shells per star; `requirements.md`, `design.md` and `CLAUDE.md` brought up to date. **v1 finished.** |
-| — | M7 | Deferred by the parent: an editable shop list. |
+| 2026-09-27 | **M7 Stars by level; the smallest set** | Done. Stars by level (1, 2, 4, 6, 8, 10), 1 for a second try or H2, 0 after that or for the walkthrough; less below the current level (stored level or free-practice best, `TopicState.freeBest`); shells = stars; prices 200 / 2,000. Number sets: one answer, the smallest set; natural numbers from 1, no setting. 618 unit/property tests, 120 e2e (+12 on-demand skipped), engine 97.4 % lines, 247.1 KB gz JS. Report: `docs/milestones/M7-report.md`. |
 
 ## 4. Parent decisions, questions and answers
 
@@ -99,9 +99,14 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-25 | After M6: sounds | **Off by default**; the parent turns them on in Settings. A device that saved its settings before this keeps what it had. |
 | 2026-09-25 | M6: compact portrait keypad; real-tablet drag check | **Stay parked.** |
 | 2026-09-26 | The 0.999… walkthrough and H2 hint in Number sets | **Use the x-method** (x = 0.999…, 10x = 9.999…, 9x = 9), as in Repeating decimals, instead of "3 × 1/3". Built and deployed (`fa82d80`). |
-| 2026-09-26/27 | Stars, shells and levels | Stars = shells; harder levels pay more (steep); current level and above pay full, one below 1, two or more below 0; no bonus for 0.999…; shop prices 200 / 2,000. Details and open questions: `docs/roadmap.md` RM-1. **Not built; `requirements.md` not yet changed.** |
-| 2026-09-26/27 | Number sets | **The smallest set only** (one answer); natural numbers start at 1, so 0 → Whole; the "natural numbers include 0" setting goes. `docs/roadmap.md` RM-2. **Not built.** |
-| 2026-09-27 | Future work | Kept in a new `docs/roadmap.md`. |
+| 2026-09-26/27 | Stars, shells and levels | Stars = shells; harder levels pay more (steep); current level and above pay full, one below 1, two or more below 0; no bonus for 0.999…; shop prices 200 / 2,000. **Built in M7** (requirements R-RWD-1, §15). |
+| 2026-09-26/27 | Number sets | **The smallest set only** (one answer); natural numbers start at 1, so 0 → Whole; the "natural numbers include 0" setting goes. **Built in M7** (requirements §6.1). |
+| 2026-09-27 | Future work | Kept in a new `docs/roadmap.md`: **future work only**, items deleted once built (history stays here and in requirements §15). Items are numbered RM-1, RM-2, … |
+| 2026-09-27 | M7: what is the "current level" for stars? | **The higher of the stored level and the highest level adaptive free practice has promoted to.** |
+| 2026-09-27 | M7: hints and tries | **First try (H1 at most) = full; second try or H2 = 1; three or more tries or the walkthrough = 0.** |
+| 2026-09-27 | M7: a parent's level lock below the current level | **Pays normally.** |
+| 2026-09-27 | M7: process | **Build now**: update requirements and design, build RM-1 and RM-2 as M7, commit and push. |
+| 2026-09-27 | Handoff | The project documents (requirements, design, progress, roadmap) are the handoff for any tool; project information is not kept in agent files. |
 | 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. |
 
 ## 5. Assumptions in force (spec silent; reversible)
@@ -195,7 +200,14 @@ From M6 (details in `docs/milestones/M6-report.md` §3):
 74. R-NF-1 measured on the local preview at 4× CPU throttling, in its own Playwright project after the others.
 75. Shop pictures are scaled to fit 320 px and stored as data URLs in `Settings.shopItems[].image`; optional field, no schema bump.
 76. Setting the learner's shells by hand moves `Rewards.spent` (negative when shells are added), so cosmetics unlock only from shells earned. Balance 0–1,000,000; shells per answer 0–100 each.
-77. Each attempt stores `shellsEarned`; the assignment summary sums it (older attempts count their stars). `Settings.shellsPerStars` is optional (default 3 / 2 / 1); no schema bump.
+77. Each attempt stores `shellsEarned`; the assignment summary sums it (older attempts count their stars). `Settings.shellsPerStars` is optional (default 3 / 2 / 1); no schema bump. *(Since M7 no longer read: shells = stars.)*
+
+From M7 (details in `docs/milestones/M7-report.md` §3):
+78. Only adaptive free-practice promotions raise the current level (starting at 3 doesn't); `TopicState.freeBest` is capped by the parent's max and never goes down.
+79. Older attempts keep their 1–3 stars; summaries add stored stars.
+80. A device whose stored shop price equals the old default (150, 1,500) gets the new one (200, 2,000); any other price is the parent's and stays.
+81. New celebration copy for 0 stars and for below-level answers ("A harder level earns stars/more").
+82. NC feedback codes `NC-CONTAINS` / `NC-NOT-IN`; H2 hints for integers and 0 reworded so they don't give the answer.
 
 ## 6. Spec conflicts found and how they were resolved
 
@@ -235,7 +247,7 @@ src/engine/            pure TS (R-ARCH-1)
   numbers/decimal.ts display.ts          long division, DecimalRep (R-RD-2/3); Shown: LaTeX + text + speech
   topics/content.ts mc.ts walk.ts        HintContent; option builder (R-ANS-3); NumWalkStep, miniQuestion
   topics/rd|fdp|pc/ generator distractors hints     multiple choice; nc/ generator checker hints
-src/data/db.ts attempts.ts progress.ts   Dexie schema v3 + upgrades; attempt save; finishAttempt, Home, summary
+src/data/db.ts attempts.ts progress.ts   Dexie schema v4 + upgrades; attempt save; finishAttempt, Home, summary
   settings.ts assignments.ts stats.ts    settings + PIN hash; the queue; dashboard and missed loaders
   backup.ts errors.ts                    export / import / reset; the error list (R-NF-5)
   rewards.ts                             shop: buy, give, cancel, prices; wardrobe
@@ -269,7 +281,7 @@ scripts/check-size.mjs                   R-NF-2 bundle check, run by npm run bui
 
 The ranked list is `docs/roadmap.md`. Details for the older items:
 
-- **M7, deferred:** an editable shop list in the parent area (add, rename, remove rewards). `Settings.shopItems` holds `{ id, name, price, note?, image? }[]`; Parent › Rewards already edits prices and pictures; drawn pictures exist only for `treat` and `robux` (`components/ShopArt.tsx`), so new items would need art or the parent's picture. Removing an item with a pending request needs a rule. Redemptions copy name and price at purchase.
+- **RM-4 (was M7), deferred:** an editable shop list in the parent area (add, rename, remove rewards). `Settings.shopItems` holds `{ id, name, price, note?, image? }[]`; Parent › Rewards already edits prices and pictures; drawn pictures exist only for `treat` and `robux` (`components/ShopArt.tsx`), so new items would need art or the parent's picture. Removing an item with a pending request needs a rule. Redemptions copy name and price at purchase.
 - **Open, on the Surface Pro:** the compact portrait keypad for typed equations, and the M2 touch-drag check.
 - **Optional:** run the Playwright specs in CI; a dark-mode switch (the tokens and axe checks are ready).
 

@@ -12,48 +12,13 @@ To build an item, a session reads `docs/requirements.md`, `docs/design.md`, `pro
 
 | # | Item | Status | Priority |
 |---|---|---|---|
-| RM-1 | Stars by level, and shells = stars | proposed (decisions in progress) | high |
-| RM-2 | Number sets: the smallest set only | proposed | high |
 | RM-3 | Tutorials for each topic | idea | — |
-| RM-4 | Editable shop list (was M7) | deferred by the parent | low |
+| RM-4 | Editable shop list | deferred by the parent | low |
 | RM-5 | Compact portrait keypad for typed equations; touch-drag check on the Surface Pro | parked | low |
 | RM-6 | Dark-mode switch | idea | low |
 | RM-7 | Run the Playwright specs in CI | idea | low |
 
 ---
-
-### RM-1 Stars by level, and shells = stars
-
-**Problem.** Every question pays 1–3 stars whatever its level, so staying at easy levels pays as well as moving up, and guessing on multiple choice pays.
-
-**Decided by the parent (2026-09-26/27):**
-- Stars always equal shells. The per-star shell table in Parent › Rewards goes away.
-- Harder levels pay more, on a steep scale. Proposed maximums: level 1 = 1, 2 = 2, 3 = 4, 4 = 6, 5 = 8, EQ 6 = 10.
-- The learner's **current level** in a topic, and anything above it, pays full stars. **One level below pays 1 star. Two or more below pay 0.**
-- No bonus for 0.999… questions; they are ordinary level 5 questions.
-- Shop prices rebalanced to the proposed scale: the drink **200** (was 150), the gift card **2,000** (was 1,500). The parent can change them later. Cosmetic thresholds unchanged.
-
-**Proposed, not yet approved:**
-- First try with no hint (or H1 only) = the level's full stars. Second try, or H2 = 1 star. Three or more tries = 0. (Makes blind guessing pay less than honest work at a lower level.)
-- Celebrations and the summary show up to 10 stars.
-
-**Open questions:**
-1. What is the "current level"? Proposal: the higher of the stored level (moved by assignments) and the highest level adaptive free practice has reached.
-2. Does a walkthrough (H3) earn 0 or 1 star?
-
-**Touches:** R-RWD-1, R-RWD-4, R-HELP-6, R-PAR-7, R-SES-7; design.md §5 Celebration; `src/engine/scoring.ts`, `config.ts`.
-
-### RM-2 Number sets: the smallest set only
-
-**Problem.** The parent wants the learner to name the one smallest set a number belongs to, not tick every set.
-
-**Decided by the parent (2026-09-26/27):**
-- One answer: the smallest of Natural, Whole, Integer, Rational, Irrational. Examples: 7 → Natural, 0 → Whole, −3 → Integer, 3/4 → Rational, 0.1010010001… → Irrational, 0.999… → Natural.
-- Natural numbers start at 1; 0's smallest set is Whole. The "natural numbers include 0" setting is removed.
-
-**Proposed:** a single choice among the five cards; a wrong card is greyed out like other multiple choice, with a short set-specific line; R-NC-3 (outlined boxes) goes away. The sets map and walkthrough still show the nesting.
-
-**Touches:** §6.1 R-NC-2/3/4, R-PAR-5, design.md §5 SetCheckbox; `src/engine/topics/nc/`, `NcPractice.tsx`, `ncReducer.ts`. Old attempts must still replay in Missed questions.
 
 ### RM-3 Tutorials for each topic
 
