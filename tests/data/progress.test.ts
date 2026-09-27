@@ -20,14 +20,13 @@ import type { TopicId } from '../../src/engine/config';
 const ADAPTIVE: FinishContext = { adaptive: true, rewarded: true };
 let clock = 0;
 
-/** A finished attempt: clean 3 ★ by default. */
+/** A finished attempt: clean (first try, no hint) by default; finishAttempt sets its stars. */
 function finished(topic: TopicId, level: number, o: Partial<Attempt> = {}): Attempt {
   const a = newAttempt({ topic, level, generatorId: 'test', seed: 1, params: {} });
   clock++;
   return {
     ...a,
     finishedAt: new Date(Date.now() + clock).toISOString(),
-    stars: 3,
     wrongTries: 0,
     clean: true,
     ...o,
@@ -101,18 +100,71 @@ describe('assignments (R-SES-1…3)', () => {
 
   it('after a walkthrough, the next question is the same item and level (R-HELP-6)', async () => {
     const a = await add('EQ:2,PC:2', { order: 'mixed', seed: 1 });
-    const { q } = await answerNext(a.id, { maxHint: 3, stars: 1, clean: false });
+    const { q } = await answerNext(a.id, { maxHint: 3, clean: false });
     expect(await nextAssignmentQuestion(a)).toMatchObject({ itemIndex: q.itemIndex, level: q.level });
   });
 });
 
 describe('finishAttempt', () => {
-  it('adds the stars as shells, once (a second call is a no-op)', async () => {
-    const at = finished('NC', 1, { stars: 2, clean: false, wrongTries: 1 });
-    expect(await finishAttempt(at, ADAPTIVE)).toMatchObject({ stars: 2, shells: 2, badges: ['first-solve'] });
-    expect(await finishAttempt(at, ADAPTIVE)).toMatchObject({ shells: 2, badges: [] });
-    expect((await db.rewards.get('default'))?.shells).toBe(2);
-    expect((await db.attempts.get(at.id))?.countedAt).toBeDefined();
+  it('adds the stars as shells, once (a second call is a no-op) (R-RWD-1/4)', async () => {
+    const at = finished('EQ', 3); // EQ starts at 3: full stars = 4
+    expect(await finishAttempt(at, ADAPTIVE)).toMatchObject({
+      stars: 4,
+      quality: 'full',
+      shells: 4,
+      shellsEarned: 4,
+      badges: ['first-solve'],
+    });
+    expect(await finishAttempt(at, ADAPTIVE)).toMatchObject({ stars: 4, shells: 4, badges: [] });
+    expect((await db.rewards.get('default'))?.shells).toBe(4);
+    expect(await db.attempts.get(at.id)).toMatchObject({ stars: 4, shellsEarned: 4 });
+  });
+
+  it('second try = 1 star, walkthrough = 0 (R-RWD-1, R-HELP-6)', async () => {
+    expect(await finishAttempt(finished('EQ', 3, { clean: false, wrongTries: 1 }), ADAPTIVE)).toMatchObject({
+      stars: 1,
+      quality: 'one',
+    });
+    expect(await finishAttempt(finished('EQ', 3, { clean: false, maxHint: 3 }), ADAPTIVE)).toMatchObject({
+      stars: 0,
+      quality: 'none',
+      shellsEarned: 0,
+    });
+    expect((await db.rewards.get('default'))?.shells).toBe(1);
+  });
+
+  it('below the current level: one below at most 1, two below 0; a level lock pays normally (R-RWD-1)', async () => {
+    await db.topicStates.put({ profileId: 'default', topic: 'PC', level: 4, window: [] });
+    expect(await finishAttempt(finished('PC', 5), { adaptive: false, rewarded: true })).toMatchObject({
+      stars: 8,
+    });
+    expect(await finishAttempt(finished('PC', 4), { adaptive: false, rewarded: true })).toMatchObject({
+      stars: 6,
+    });
+    expect(await finishAttempt(finished('PC', 3), { adaptive: false, rewarded: true })).toMatchObject({
+      stars: 1,
+      capped: true,
+    });
+    expect(await finishAttempt(finished('PC', 2), { adaptive: false, rewarded: true })).toMatchObject({
+      stars: 0,
+      capped: true,
+    });
+    expect(
+      await finishAttempt(finished('PC', 2), { adaptive: false, rewarded: true, locked: true }),
+    ).toMatchObject({ stars: 2 });
+  });
+
+  it('adaptive free practice promotions raise the level that pays full stars (R-RWD-1)', async () => {
+    // RD's stored level is 1; free practice promotes to 4.
+    await finishAttempt(finished('RD', 3), { adaptive: false, rewarded: true, freePromotedTo: 4 });
+    expect((await db.topicStates.toArray())[0]).toMatchObject({ topic: 'RD', level: 1, freeBest: 4 });
+    expect(await topicLevel('RD')).toBe(1); // assignments keep their own level (R-ADP-7)
+    expect(await finishAttempt(finished('RD', 2), { adaptive: false, rewarded: true })).toMatchObject({
+      stars: 0,
+    });
+    // A lower promotion later doesn't lower it.
+    await finishAttempt(finished('RD', 3), { adaptive: false, rewarded: true, freePromotedTo: 3 });
+    expect((await db.topicStates.toArray())[0]?.freeBest).toBe(4);
   });
 
   it('promotes after 4 of 5 clean and says so (R-ADP-2, R-ADP-6); the window resets', async () => {
@@ -127,7 +179,7 @@ describe('finishAttempt', () => {
   it('demotes silently after 3 walkthroughs (R-ADP-3, R-ADP-6)', async () => {
     const events = [];
     for (let i = 0; i < 3; i++)
-      events.push(await finishAttempt(finished('EQ', 3, { maxHint: 3, clean: false, stars: 1 }), ADAPTIVE));
+      events.push(await finishAttempt(finished('EQ', 3, { maxHint: 3, clean: false }), ADAPTIVE));
     expect(await topicLevel('EQ')).toBe(2);
     expect(events.every((e) => e.levelUp === undefined)).toBe(true);
   });
@@ -142,7 +194,8 @@ describe('finishAttempt', () => {
 
   it('fixed-level practice earns nothing (assumption 4)', async () => {
     const e = await finishAttempt(finished('PC', 1), { adaptive: false, rewarded: false });
-    expect(e).toEqual({ stars: 3, shells: 0, badges: [] });
+    // Stars without the below-level rule (PC level 1: 1 ★), no shells.
+    expect(e).toEqual({ stars: 1, quality: 'full', shells: 0, badges: [] });
     expect(await db.rewards.get('default')).toBeUndefined();
   });
 
@@ -155,10 +208,7 @@ describe('finishAttempt', () => {
   it('10 EQ questions in a row without a walkthrough (R-RWD-3)', async () => {
     const got: string[] = [];
     for (let i = 0; i < 10; i++)
-      got.push(
-        ...(await finishAttempt(finished('EQ', 3, { stars: 2, clean: false, wrongTries: 1 }), ADAPTIVE))
-          .badges,
-      );
+      got.push(...(await finishAttempt(finished('EQ', 3, { clean: false, wrongTries: 1 }), ADAPTIVE)).badges);
     expect(got).toEqual(['first-solve', 'eq-no-walkthrough']);
   });
 });
@@ -170,7 +220,7 @@ describe('assignment completion (R-SES-2, R-SES-7)', () => {
     expect((await homeSnapshot()).freeOpen).toBe(true); // `always`, the default (R-SES-6, parent decision)
     await saveSettings({ freePractice: 'afterAssignment' });
     expect((await homeSnapshot()).freeOpen).toBe(false);
-    const first = await answerNext(a.id, { stars: 2, clean: false, wrongTries: 1 });
+    const first = await answerNext(a.id, { clean: false, wrongTries: 1 });
     expect(first.events.assignmentDone).toBeUndefined();
     const second = await answerNext(a.id);
     expect(second.events.assignmentDone).toBe(a.id);
@@ -182,10 +232,11 @@ describe('assignment completion (R-SES-2, R-SES-7)', () => {
     expect(s).toMatchObject({
       title: 'Test',
       questions: 2,
-      stars: 5,
+      stars: 2, // PC level 1 on the second try: 1; RD level 1 first try: 1
+      shells: 2,
       byTopic: [
-        { topic: 'PC', stars: { 3: 0, 2: 1, 1: 0 } },
-        { topic: 'RD', stars: { 3: 1, 2: 0, 1: 0 } },
+        { topic: 'PC', stars: 1, questions: 1 },
+        { topic: 'RD', stars: 1, questions: 1 },
       ],
     });
     expect(s?.badges).toContain('first-solve');
@@ -197,7 +248,7 @@ describe('assignment completion (R-SES-2, R-SES-7)', () => {
     await answerNext(a.id);
     const { events } = await answerNext(a.id);
     expect(events.badges).toContain('perfect-assignment');
-    expect(await homeSnapshot()).toMatchObject({ freeOpen: true, shells: 6 });
+    expect(await homeSnapshot()).toMatchObject({ freeOpen: true, shells: 2 }); // NC level 1: 1 ★ each
   });
 });
 

@@ -15,14 +15,12 @@ export function defaultSettings(): Settings {
     levelBounds: Object.fromEntries(TOPICS.map((t) => [t, defaultBounds(t)])) as Record<TopicId, LevelBounds>,
     allowSkipping: config.eq.allowSkippingDefault,
     fullBalanceAnim: config.eq.fullBalanceAnimDefault,
-    naturalIncludesZero: config.settings.naturalIncludesZero,
     // Off until the parent turns it on (parent decision, 2026-09-25).
     sound: false,
     reduceMotion: false,
     currency: config.settings.currency,
     mascotNames: { ...config.settings.mascotNames },
     shopItems: defaultShopItems(),
-    shellsPerStars: { ...config.shells.perStars },
   };
 }
 
@@ -37,14 +35,18 @@ export async function loadSettings(): Promise<Settings> {
     levelBounds: { ...d.levelBounds, ...s.levelBounds },
     mascotNames: { ...d.mascotNames, ...s.mascotNames },
     shopItems: (s.shopItems ?? d.shopItems).map(renameDefault),
-    shellsPerStars: { ...d.shellsPerStars!, ...s.shellsPerStars },
   };
 }
 
-/** A shop item still carrying an old default name gets the new one; names the parent chose stay. */
+/**
+ * A shop item still carrying an old default name or price gets the new one; names and prices the
+ * parent chose stay.
+ */
 function renameDefault(i: ShopItem): ShopItem {
   const r = config.shop.renamed[i.id];
-  const named = r && i.name === r.from ? { ...i, name: r.to } : i;
+  const p = config.shop.repriced[i.id];
+  const renamed = r && i.name === r.from ? { ...i, name: r.to } : i;
+  const named = p && renamed.price === p.from ? { ...renamed, price: p.to } : renamed;
   // Items stored before notes existed get their default note.
   const note = config.shop.items.find((d) => d.id === i.id)?.note;
   return named.note === undefined && note ? { ...named, note } : named;

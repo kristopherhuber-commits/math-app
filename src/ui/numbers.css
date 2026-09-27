@@ -229,26 +229,44 @@
   cursor: pointer;
   text-align: left;
 }
-.set-card.on {
+/* M7 (R-NC-2/3): one answer, so the cards act like McOption: selected, tried (greyed, ✕), correct. */
+.set-card.selected {
   background: var(--primary-soft);
   border: 4px solid var(--primary);
 }
-.set-card.flagged {
-  outline: 3px dashed var(--amber);
-  outline-offset: 3px;
+.set-card.correct {
+  background: var(--success-soft);
+  border: 4px solid var(--success);
+}
+.set-card.tried {
+  background: var(--surface-sunken);
+  color: var(--ink-muted);
+  cursor: default;
+}
+.set-card.shake {
+  animation: shake var(--dur-slow) var(--ease-standard);
 }
 .set-box {
   display: grid;
   place-items: center;
   width: 30px;
   height: 30px;
-  border-radius: 6px;
+  border-radius: 50%;
   border: 2px solid var(--primary);
   font-weight: 900;
 }
-.set-card.on .set-box {
+.set-card.selected .set-box {
   background: var(--primary);
   color: var(--on-primary);
+}
+.set-card.correct .set-box {
+  background: var(--success);
+  border-color: var(--success);
+  color: var(--on-primary);
+}
+.set-card.tried .set-box {
+  border-color: var(--amber);
+  color: var(--amber);
 }
 .set-name {
   font-size: 21px;

@@ -1,7 +1,7 @@
-// NC components (design.md §5): SetCheckbox cards and the SetsMap, nested boxes
+// NC components (design.md §5): SetCard (one answer, M7) and the SetsMap, nested boxes
 // Real ⊃ (Rational ⊃ Integer ⊃ Whole ⊃ Natural) with Irrational beside Rational. In H3 the number
 // sits in its innermost box and each enclosing box lights up in turn. Real is only the outer frame:
-// it has no checkbox, since every number shown is real (parent decision, 2026-09-25).
+// it has no card, since every number shown is real (parent decision, 2026-09-25).
 import type { CSSProperties, ReactNode } from 'react';
 import type { NcSet } from '../../engine/topics/walk';
 import { numStrings } from '../strings';
@@ -9,32 +9,31 @@ import { MathText } from './Math';
 
 interface CardProps {
   set: NcSet;
-  on: boolean;
-  flagged: boolean;
+  n: number;
+  selected: boolean;
+  tried: boolean;
+  correct: boolean;
+  shake: boolean;
   disabled: boolean;
-  naturalIncludesZero: boolean;
-  onToggle: () => void;
+  onSelect: () => void;
   onEnter: () => void;
 }
 
-/** A whole-card checkbox. Space toggles (native button), Enter checks the answer (design.md §10). */
-export function SetCheckbox({
-  set,
-  on,
-  flagged,
-  disabled,
-  naturalIncludesZero,
-  onToggle,
-  onEnter,
-}: CardProps) {
+/**
+ * One set card of five; the answer is one card, the smallest set (R-NC-2, M7). Like McOption: a radio,
+ * tried cards greyed with ✕ (R-NC-3). Space chooses (native button), Enter checks (design.md §10).
+ */
+export function SetCard({ set, n, selected, tried, correct, shake, disabled, onSelect, onEnter }: CardProps) {
+  const state = correct ? 'correct' : tried ? 'tried' : selected ? 'selected' : 'idle';
   return (
     <button
       type="button"
-      role="checkbox"
-      aria-checked={on}
-      aria-disabled={disabled}
-      className={`set-card ${on ? 'on' : ''} ${flagged ? 'flagged' : ''}`}
-      onClick={() => !disabled && onToggle()}
+      role="radio"
+      aria-checked={selected || correct}
+      aria-disabled={tried || disabled}
+      aria-label={`${n}: ${numStrings.nc.name[set]}, ${numStrings.nc.example(set)}`}
+      className={`set-card ${state} ${shake ? 'shake' : ''}`}
+      onClick={() => !tried && !disabled && onSelect()}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
           e.preventDefault();
@@ -43,10 +42,10 @@ export function SetCheckbox({
       }}
     >
       <span className="set-box" aria-hidden="true">
-        {on ? '✓' : ''}
+        {tried ? '✕' : selected || correct ? '●' : ''}
       </span>
       <span className="set-name">{numStrings.nc.name[set]}</span>
-      <span className="set-example">{numStrings.nc.example(set, naturalIncludesZero)}</span>
+      <span className="set-example">{numStrings.nc.example(set)}</span>
     </button>
   );
 }

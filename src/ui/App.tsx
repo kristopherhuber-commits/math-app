@@ -133,7 +133,6 @@ export function App() {
             key={route.key}
             kind={route.kind}
             currency={settings.currency}
-            naturalIncludesZero={settings.naturalIncludesZero}
             onHome={home}
             onSummary={(id) => setRoute({ name: 'summary', id })}
           />

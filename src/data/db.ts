@@ -32,14 +32,15 @@ export interface Settings {
   levelBounds: Record<TopicId, { min: number; max: number }>;
   allowSkipping: boolean;
   fullBalanceAnim: boolean;
-  naturalIncludesZero: boolean;
+  /** No longer read (M7: natural numbers start at 1, with no setting); older rows may have it. */
+  naturalIncludesZero?: boolean;
   sound: boolean;
   reduceMotion: boolean;
   currency: string;
   mascotNames: { turtle: string; penguin: string };
   /** v4: what the shop sells and for how many shells (parent decision, M6; an editable catalogue in M7). */
   shopItems: ShopItem[];
-  /** Shells per 3, 2 and 1 star answer (parent, 2026-09-25; optional, default 3 / 2 / 1). */
+  /** No longer read (M7: shells equal stars, R-RWD-4); older rows may have it. */
   shellsPerStars?: Record<1 | 2 | 3, number>;
 }
 
@@ -62,6 +63,8 @@ export interface TopicState {
   level: number;
   /** R-ADP-2…4: the last attempts at `level`, oldest first. */
   window: AttemptSummary[];
+  /** M7: the highest level adaptive free practice has promoted the learner to (R-RWD-1 current level). */
+  freeBest?: number;
 }
 
 export interface Assignment {
@@ -105,7 +108,8 @@ export interface Attempt {
   finishedAt?: string;
   tries: TryRecord[];
   maxHint: 0 | 1 | 2 | 3;
-  stars?: 1 | 2 | 3;
+  /** R-RWD-1: 1–3 before M7; 0–10 since (by level, tries and hints). */
+  stars?: number;
   clean: boolean;
   /** v2: wrong tries (EQ: two rejections on a step = one), for stars and R-ADP-3. */
   wrongTries?: number;
@@ -113,7 +117,7 @@ export interface Attempt {
   countedAt?: string;
   /** v3: a fixed-level question from a `?topic=&level=` link (parent and tests); left out of the dashboard. */
   fixed?: true;
-  /** Shells this answer earned (by the parent's table at the time); older attempts earned their stars. */
+  /** Shells this answer earned (= its stars since M7; before, by the parent's table at the time). */
   shellsEarned?: number;
 }
 

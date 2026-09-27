@@ -247,11 +247,6 @@ export function SettingsPage({ onChanged }: { onChanged: () => void }) {
         </Group>
 
         <Group title={s.numbers}>
-          <Toggle
-            label={s.naturalZero}
-            checked={st.naturalIncludesZero}
-            onChange={(naturalIncludesZero) => save({ naturalIncludesZero })}
-          />
           <label className="setting-row">
             <span className="setting-label">{s.currency}</span>
             <input

@@ -111,13 +111,13 @@ test('questions: multiple choice, not quite and the hint, the walkthrough, the c
   await page.goto('./?topic=PC&level=1&seed=4');
   await page.locator('.mc-option').nth(correct).click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+  await expect(page.getByText('1 star! Brilliant!')).toBeVisible();
   await check(page, 'celebration');
 });
 
 test('questions: number sets, typed equation with feedback, tile builder', async ({ page }) => {
   await page.goto('./?topic=NC&level=2&seed=3');
-  await expect(page.getByRole('checkbox').first()).toBeVisible();
+  await expect(page.getByRole('radio').first()).toBeVisible();
   await check(page, 'number sets');
 
   await page.goto('./?level=4&seed=2024');

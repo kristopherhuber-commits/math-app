@@ -5,16 +5,51 @@ import { config, TOPICS, type TopicId } from './config';
 // ---------------------------------------------------------------------------------------------
 // Stars (R-RWD-1)
 
-export type Stars = 1 | 2 | 3;
+/**
+ * How a question was answered (R-RWD-1, M7): `full` = first try with no hint above H1 (a clean
+ * solve, R-ADP-1); `one` = the second try, or after H2; `none` = three or more tries, or the
+ * walkthrough.
+ */
+export type Quality = 'full' | 'one' | 'none';
+
+export function answerQuality(o: { wrongTries: number; maxHint: number }): Quality {
+  if (o.maxHint >= 3 || o.wrongTries >= 2) return 'none';
+  if (o.wrongTries === 1 || o.maxHint === 2) return 'one';
+  return 'full';
+}
+
+/** Full stars for a question at this level (R-RWD-1 default: 1, 2, 4, 6, 8, 10). */
+export function fullStars(level: number): number {
+  const t = config.stars.fullByLevel;
+  return t[Math.min(Math.max(level, 1), t.length) - 1]!;
+}
+
+export interface StarsInput {
+  level: number;
+  wrongTries: number;
+  maxHint: number;
+  /**
+   * The learner's current level in the topic: the higher of the stored level and the highest level
+   * adaptive free practice promoted to. Absent (fixed-level links) or `locked` (a parent's level
+   * lock): the below-level rule doesn't apply.
+   */
+  currentLevel?: number;
+  locked?: boolean;
+}
 
 /**
- * 3 ★ = first try, no hints; 2 ★ = second try, or H1 only; 1 ★ = H2 or H3, or more than two
- * tries. Completing always earns at least one.
+ * Stars for a finished question (R-RWD-1, M7): full stars by level, 1 for a second try or H2, 0 for
+ * three or more tries or the walkthrough. One level below the current level pays at most 1; two or
+ * more below pay 0. Shells equal stars (R-RWD-4).
  */
-export function starsFor(o: { wrongTries: number; maxHint: number }): Stars {
-  if (o.wrongTries === 0 && o.maxHint === 0) return 3;
-  if (o.wrongTries <= 1 && o.maxHint <= 1) return 2;
-  return 1;
+export function starsFor(o: StarsInput): number {
+  const q = answerQuality(o);
+  const base = q === 'full' ? fullStars(o.level) : q === 'one' ? 1 : 0;
+  if (o.currentLevel === undefined || o.locked) return base;
+  const below = o.currentLevel - o.level;
+  if (below >= 2) return 0;
+  if (below === 1) return Math.min(base, 1);
+  return base;
 }
 
 // ---------------------------------------------------------------------------------------------

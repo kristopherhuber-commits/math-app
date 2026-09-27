@@ -4,12 +4,13 @@ import { rdWalkthrough } from '../src/engine/topics/rd/hints';
 import { generateFdp } from '../src/engine/topics/fdp/generator';
 import { generatePc } from '../src/engine/topics/pc/generator';
 import { generateNc } from '../src/engine/topics/nc/generator';
-import { NC_SETS, ncMembership } from '../src/engine/topics/nc/checker';
+import { innermostSet, NC_SETS, ncMembership } from '../src/engine/topics/nc/checker';
 import type { McQuestion } from '../src/engine/topics/mc';
-import { openHome } from './helpers';
+import { fullStarsText, openHome } from './helpers';
 
 // M3 (R-TEST-5): one question per number topic by mouse (or touch on the tablet project) and by
-// keyboard; wrong answers, the hint ladder, the RD walkthrough with its mini-questions, NC outlines.
+// keyboard; wrong answers, the hint ladder, the RD walkthrough with its mini-questions; NC's single
+// answer, the smallest set (M7).
 
 /** Tap on the touch project, click elsewhere (R-PLAT-5). */
 async function press(target: Locator, touch: boolean) {
@@ -26,10 +27,10 @@ const setNames: Record<string, string> = {
   irrational: 'Irrational',
 };
 
-async function answerMc(page: Page, q: McQuestion, touch: boolean) {
+async function answerMc(page: Page, q: McQuestion, level: number, touch: boolean) {
   await press(page.locator('.mc-option').nth(correctIndex(q)), touch);
   await press(page.getByRole('button', { name: 'Check' }), touch);
-  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+  await expect(page.getByText(fullStarsText(level))).toBeVisible();
 }
 
 for (const [topic, level, seed, gen] of [
@@ -40,7 +41,7 @@ for (const [topic, level, seed, gen] of [
   test(`${topic}: one question by mouse or touch, then the next`, async ({ page, hasTouch }) => {
     await page.goto(`./?topic=${topic}&level=${level}&seed=${seed}`);
     await expect(page.getByText(new RegExp(`· Level ${level}`))).toBeVisible();
-    await answerMc(page, gen(level, seed), hasTouch);
+    await answerMc(page, gen(level, seed), level, hasTouch);
     await press(page.getByRole('button', { name: 'Next question' }), hasTouch);
     await expect(page.getByText('Question 2')).toBeVisible();
   });
@@ -54,33 +55,30 @@ test('RD: keyboard only, 1–5 then Enter (design.md §10)', async ({ page }) =>
   await page.keyboard.press(`${correctIndex(q) + 1}`);
   await expect(page.locator('.mc-option.selected')).toHaveCount(1);
   await page.keyboard.press('Enter');
-  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+  await expect(page.getByText(fullStarsText(2))).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next question' })).toBeFocused();
 });
 
-test('NC: tick exactly the right sets by mouse or touch', async ({ page, hasTouch }) => {
+const setCard = (page: Page, set: string) =>
+  page.getByRole('radio', { name: new RegExp(`^\\d: ${setNames[set]},`) });
+
+test('NC: the smallest set, by mouse or touch (R-NC-2)', async ({ page, hasTouch }) => {
   const q = generateNc(3, 2);
-  const m = ncMembership(q.value, false);
   await page.goto('./?topic=NC&level=3&seed=2');
-  for (const set of NC_SETS.filter((s) => m[s]))
-    await press(page.getByRole('checkbox', { name: new RegExp(`^${setNames[set]}`) }), hasTouch);
+  await expect(page.getByText('What is the smallest set this number belongs to?')).toBeVisible();
+  await press(setCard(page, innermostSet(q.value)), hasTouch);
   await press(page.getByRole('button', { name: 'Check' }), hasTouch);
-  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+  await expect(page.getByText(fullStarsText(3))).toBeVisible();
 });
 
-test('NC: keyboard only, Tab and Space, Enter checks', async ({ page }) => {
+test('NC: keyboard only, 1–5 then Enter', async ({ page }) => {
   const q = generateNc(1, 4);
-  const m = ncMembership(q.value, false);
   await page.goto('./?topic=NC&level=1&seed=4');
-  const cards = page.getByRole('checkbox');
-  await cards.first().focus();
-  for (const set of NC_SETS) {
-    if (m[set]) await page.keyboard.press('Space');
-    await page.keyboard.press('Tab');
-  }
-  await cards.last().focus();
+  await expect(page.locator('.set-card')).toHaveCount(5);
+  await page.keyboard.press(`${NC_SETS.indexOf(innermostSet(q.value)) + 1}`);
+  await expect(page.locator('.set-card.selected')).toHaveCount(1);
   await page.keyboard.press('Enter');
-  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+  await expect(page.getByText(fullStarsText(1))).toBeVisible();
 });
 
 test('wrong answers: "Not quite" with the misconception line, then the hint (R-HELP-1/1a/2)', async ({
@@ -126,16 +124,22 @@ test('RD walkthrough: mini-questions gate Next, and it ends the question (R-HELP
   await expect(page.getByRole('button', { name: 'Next question' })).toBeVisible();
 });
 
-test('NC: the second wrong Check outlines the mismatched cards (R-NC-3)', async ({ page }) => {
-  const q = generateNc(3, 2);
-  const m = ncMembership(q.value, false);
+test('NC: a card that is not quite is greyed out, with a line that doesn’t give the answer (R-NC-3)', async ({
+  page,
+}) => {
+  const q = generateNc(3, 2); // a disguised integer: Rational contains it, Irrational doesn't
+  expect(ncMembership(q.value).rational).toBe(true);
   await page.goto('./?topic=NC&level=3&seed=2');
-  await page.getByRole('checkbox', { name: /^Irrational/ }).click();
+  await setCard(page, 'irrational').click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.locator('.set-card.flagged')).toHaveCount(0);
+  await expect(page.locator('.feedback-toast')).toContainText('Not quite. It isn’t in that set.');
+  await expect(page.locator('.set-card.tried')).toHaveCount(1);
+  await setCard(page, 'rational').click();
   await page.getByRole('button', { name: 'Check' }).click();
-  const mismatched = NC_SETS.filter((s) => m[s] !== (s === 'irrational')).length;
-  await expect(page.locator('.set-card.flagged')).toHaveCount(mismatched);
+  await expect(page.locator('.feedback-toast')).toContainText(
+    'It is in that set, but there’s a smaller one.',
+  );
+  await expect(page.locator('.set-card.tried')).toHaveCount(2);
   await expect(page.getByLabel('Hint 1 of 3')).toBeVisible();
 });
 

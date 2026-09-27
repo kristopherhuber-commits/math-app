@@ -31,7 +31,7 @@ test('crossing 20 lifetime shells unlocks a hat for Shelly, worn at once; the le
   page,
   hasTouch,
 }) => {
-  await openHome(page, { rewards: [rewardsRow(18)] });
+  await openHome(page, { rewards: [rewardsRow(19)] });
   await expect(page.getByText('Next to unlock: a hat for Shelly')).toBeVisible();
   await expect(page.locator('.beach-turtle .accessory-hat')).toHaveCount(0);
   await press(page.getByRole('button', { name: 'Price changes', exact: true }), hasTouch);
@@ -61,29 +61,29 @@ test('the shop: buy the treat, it waits for a grown-up, the parent marks it give
   page,
   hasTouch,
 }) => {
-  await openHome(page, { rewards: [rewardsRow(200, { badges: [{ id: 'first-solve', at: 'x' }] })] });
-  await expect(page.locator('.home-counter').nth(1)).toContainText('200');
+  await openHome(page, { rewards: [rewardsRow(250, { badges: [{ id: 'first-solve', at: 'x' }] })] });
+  await expect(page.locator('.home-counter').nth(1)).toContainText('250');
   await expect(page.locator('.beach-shell')).toHaveCount(12);
   await expect(page.getByRole('heading', { name: 'Badges: 1 of 12' })).toBeVisible();
 
   await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
   await expect(page.getByRole('heading', { name: 'Shop' })).toBeVisible();
   const robux = page.locator('.shop-card', { hasText: 'Roblox gift card, 2,000 Robux' });
-  await expect(robux).toContainText('1500 shells');
-  await expect(robux).toContainText('1300 more shells to go');
+  await expect(robux).toContainText('2000 shells');
+  await expect(robux).toContainText('1750 more shells to go');
   const treat = page.locator('.shop-card', { hasText: 'Strawberry Açaí Lemonade Refresher' });
   await press(treat.getByRole('button', { name: 'Buy' }), hasTouch);
   await press(page.getByRole('button', { name: 'Not now' }), hasTouch);
   await press(treat.getByRole('button', { name: 'Buy' }), hasTouch);
   await expect(page.getByRole('alertdialog')).toContainText(
-    'Buy Strawberry Açaí Lemonade Refresher for 150 shells?',
+    'Buy Strawberry Açaí Lemonade Refresher for 200 shells?',
   );
   await press(page.getByRole('button', { name: 'Yes, buy it' }), hasTouch);
   await expect(
     page.getByText('Done! A grown-up will get you Strawberry Açaí Lemonade Refresher.'),
   ).toBeVisible();
   await expect(page.locator('.home-counter')).toContainText('50');
-  await expect(treat).toContainText('100 more shells to go');
+  await expect(treat).toContainText('150 more shells to go');
   await expect(page.getByRole('region', { name: 'Waiting for a grown-up' })).toContainText(
     'Strawberry Açaí Lemonade Refresher',
   );
@@ -93,7 +93,7 @@ test('the shop: buy the treat, it waits for a grown-up, the parent marks it give
   await expect(page.locator('.beach-shell')).toHaveCount(12);
 
   await unlock(page, hasTouch);
-  await expect(page.getByText('Shells to spend: 50 · earned in all: 200')).toBeVisible();
+  await expect(page.getByText('Shells to spend: 50 · earned in all: 250')).toBeVisible();
   const waiting = page.getByRole('region', { name: 'Waiting to be given' });
   await expect(waiting).toContainText('Strawberry Açaí Lemonade Refresher');
   await press(waiting.getByRole('button', { name: 'Mark given' }), hasTouch);
@@ -104,7 +104,7 @@ test('the shop: buy the treat, it waits for a grown-up, the parent marks it give
 });
 
 test('the parent cancels a request (shells come back) and changes a price', async ({ page, hasTouch }) => {
-  await openHome(page, { rewards: [rewardsRow(160)] });
+  await openHome(page, { rewards: [rewardsRow(210)] });
   await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
   await press(
     page.locator('.shop-card', { hasText: 'Strawberry' }).getByRole('button', { name: 'Buy' }),
@@ -117,20 +117,20 @@ test('the parent cancels a request (shells come back) and changes a price', asyn
   await unlock(page, hasTouch);
   const waiting = page.getByRole('region', { name: 'Waiting to be given' });
   await press(waiting.getByRole('button', { name: 'Cancel and refund' }), hasTouch);
-  await expect(page.getByRole('alertdialog')).toContainText('give back 150 shells');
+  await expect(page.getByRole('alertdialog')).toContainText('give back 200 shells');
   await press(page.getByRole('alertdialog').getByRole('button', { name: 'Yes' }), hasTouch);
-  await expect(page.getByText('Shells to spend: 160 · earned in all: 160')).toBeVisible();
+  await expect(page.getByText('Shells to spend: 210 · earned in all: 210')).toBeVisible();
 
   const price = page.getByLabel('Price of Strawberry Açaí Lemonade Refresher, in shells');
   await price.fill('0');
   await press(page.locator('form', { has: price }).getByRole('button', { name: 'Save' }), hasTouch);
   await expect(page.getByText('A whole number from 1 to 100,000.')).toBeVisible();
-  await price.fill('170');
+  await price.fill('220');
   await press(page.locator('form', { has: price }).getByRole('button', { name: 'Save' }), hasTouch);
   await expect(page.locator('form', { has: price })).toContainText('Saved.');
   await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
   await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
-  await expect(page.locator('.shop-card', { hasText: 'Strawberry' })).toContainText('170 shells');
+  await expect(page.locator('.shop-card', { hasText: 'Strawberry' })).toContainText('220 shells');
   await expect(page.locator('.shop-card', { hasText: 'Strawberry' })).toContainText('10 more shells to go');
 });
 
@@ -176,7 +176,7 @@ test('the parent adds a picture; the shop shows it; it can be removed', async ({
   await expect(pictures.getByText('Removed.')).toBeVisible();
 });
 
-test("the parent sets the learner's shells and the shells per answer; the next answer earns the new amount", async ({
+test("the parent sets the learner's shells; the page explains shells = stars; the next answer adds its stars", async ({
   page,
   hasTouch,
 }) => {
@@ -192,11 +192,9 @@ test("the parent sets the learner's shells and the shells per answer; the next a
   await press(card.locator('form').first().getByRole('button', { name: 'Save' }), hasTouch);
   await expect(page.getByText('Shells to spend: 140 · earned in all: 30')).toBeVisible();
 
-  await expect(card.getByLabel('3 stars')).toHaveValue('3');
-  await card.getByLabel('3 stars').fill('10');
-  await card.getByLabel('2 stars').fill('4');
-  await press(card.getByRole('button', { name: 'Save' }).last(), hasTouch);
-  await expect(card.getByText('Saved.').last()).toBeVisible();
+  // M7 (R-RWD-1/4): no per-star table any more; the rule is explained instead.
+  await expect(card).toContainText('An answer earns as many shells as stars.');
+  await expect(card.getByLabel('3 stars')).toHaveCount(0);
 
   await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
   await expect(page.locator('.home-counter').nth(1)).toContainText('140');
@@ -206,6 +204,6 @@ test("the parent sets the learner's shells and the shells per answer; the next a
   const q = generatePc(level, seed, '$');
   await press(page.locator('.mc-option').nth(q.options.findIndex((o) => o.code === 'correct')), hasTouch);
   await press(page.getByRole('button', { name: 'Check' }), hasTouch);
-  await expect(page.getByText('+10 shells')).toBeVisible();
-  await expect(page.getByRole('status', { name: /150 shells/ })).toBeVisible();
+  await expect(page.getByText('+1 shell')).toBeVisible(); // level 1, first try: 1 ★ = 1 shell
+  await expect(page.getByRole('status', { name: /141 shells/ })).toBeVisible();
 });

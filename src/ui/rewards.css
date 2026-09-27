@@ -90,6 +90,12 @@
   position: relative;
   z-index: 1;
 }
+/* R-RWD-1 (M7): 6–10 stars sit in rows of five. */
+.celebration-stars.many {
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  justify-content: center;
+}
 .celebration-star {
   display: inline-flex;
   animation: star-pop 420ms var(--ease-pop) both;
@@ -134,8 +140,7 @@
   font-weight: 900;
   color: var(--ink);
 }
-.celebration.stars-1 .celebration-title,
-.celebration.stars-2 .celebration-title {
+.celebration.stars-some .celebration-title {
   font-size: 24px;
 }
 .celebration-shells {

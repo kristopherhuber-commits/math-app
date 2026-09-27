@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { TopicId } from '../../engine/config';
 import { newSeed } from '../../engine/rng';
 import { freeAdapt, freeStart, rightFirstTime, type FreeState } from '../../engine/adaptive';
+import { answerQuality } from '../../engine/scoring';
 import { useSettings } from '../settings';
 import { useWardrobe } from '../wardrobe';
 import { saveAttempt } from '../../data/attempts';
@@ -44,6 +45,8 @@ interface Current {
   itemIndex?: number;
   adaptive: boolean;
   rewarded: boolean;
+  /** A parent's level lock (R-SES-3): pays without the below-level rule (R-RWD-1). */
+  locked: boolean;
   progress: TopBarProgress;
   key: number;
 }
@@ -51,12 +54,11 @@ interface Current {
 interface Props {
   kind: SessionKind;
   currency: string;
-  naturalIncludesZero: boolean;
   onHome: () => void;
   onSummary: (assignmentId: string) => void;
 }
 
-export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary }: Props) {
+export function Session({ kind, currency, onHome, onSummary }: Props) {
   const [cur, setCur] = useState<Current | null>(null);
   const [stars, setStars] = useState(0);
   const [shells, setShells] = useState(0);
@@ -99,6 +101,7 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
         itemIndex: q.itemIndex,
         adaptive: q.adaptive,
         rewarded: true,
+        locked: !q.adaptive,
         progress,
         key: n,
       };
@@ -112,6 +115,7 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
         // The stored (assignment) level only moves in assignments; free practice keeps its own.
         adaptive: false,
         rewarded: true,
+        locked: false,
         progress: { n },
         key: n,
       };
@@ -123,6 +127,7 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
       seed,
       adaptive: false,
       rewarded: false,
+      locked: false,
       progress: { n },
       key: n,
     };
@@ -180,14 +185,18 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
           if (r.change === 'promote') levelUp = r.level;
         }
       }
-      const fallback: FinishEvents = { stars: a.stars ?? 1, shells, badges: [] };
-      pending.current = finishAttempt(tag(a), { adaptive: cur.adaptive, rewarded: cur.rewarded }).catch(
-        (e: unknown) => {
-          // R-NF-5: never surface storage errors to the learner.
-          void logError('finishAttempt', e);
-          return fallback;
-        },
-      );
+      const quality = answerQuality({ wrongTries: a.wrongTries ?? 0, maxHint: a.maxHint });
+      const fallback: FinishEvents = { stars: 0, quality, shells, badges: [] };
+      pending.current = finishAttempt(tag(a), {
+        adaptive: cur.adaptive,
+        rewarded: cur.rewarded,
+        locked: cur.locked,
+        ...(levelUp !== undefined ? { freePromotedTo: levelUp } : {}),
+      }).catch((e: unknown) => {
+        // R-NF-5: never surface storage errors to the learner.
+        void logError('finishAttempt', e);
+        return fallback;
+      });
       void pending.current.then((e) => {
         if (e.unlocked?.length) wardrobe.refresh();
         setEvents(levelUp !== undefined ? { ...e, levelUp } : e);
@@ -221,7 +230,7 @@ export function Session({ kind, currency, naturalIncludesZero, onHome, onSummary
   const screen = (): ReactNode => {
     switch (cur.topic) {
       case 'NC':
-        return <NcPractice key={cur.key} {...common} naturalIncludesZero={naturalIncludesZero} />;
+        return <NcPractice key={cur.key} {...common} />;
       case 'RD':
       case 'FDP':
       case 'PC':

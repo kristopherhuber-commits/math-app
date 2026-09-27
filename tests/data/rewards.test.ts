@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { db, MathDb } from '../../src/data/db';
+import { db, MathDb, type Attempt } from '../../src/data/db';
 import { newAttempt } from '../../src/data/attempts';
 import { assignmentSummary, finishAttempt, homeSnapshot, shellCount } from '../../src/data/progress';
 import {
@@ -15,7 +15,6 @@ import {
   setBalance,
   setImage,
   setPrice,
-  setShellsPerStars,
   setWorn,
 } from '../../src/data/rewards';
 import { exportData, importData, parseImport } from '../../src/data/backup';
@@ -60,8 +59,8 @@ describe('schema v4 (R-DATA-1)', () => {
       accessories: ['turtle-hat', 'penguin-scarf'],
     });
     expect((await d.settings.get('default'))?.shopItems).toMatchObject([
-      { id: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 150 },
-      { id: 'robux', name: 'Roblox gift card, 2,000 Robux', price: 1500 },
+      { id: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 200 },
+      { id: 'robux', name: 'Roblox gift card, 2,000 Robux', price: 2000 },
     ]);
     expect(await d.redemptions.count()).toBe(0);
     d.close();
@@ -93,20 +92,20 @@ describe('schema v4 (R-DATA-1)', () => {
 
 describe('the shop', () => {
   it('shells to spend = lifetime − spent; buying takes the price at once and leaves a request', async () => {
-    await rewards(200);
+    await rewards(250);
     const r = await buy('treat', new Date('2026-09-25T10:00:00Z'));
     expect(r).toMatchObject({ ok: true, balance: 50 });
     const shop = await loadShop();
-    expect(shop).toMatchObject({ balance: 50, lifetime: 200 });
+    expect(shop).toMatchObject({ balance: 50, lifetime: 250 });
     expect(shop.pending).toMatchObject([
-      { itemId: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 150, status: 'requested' },
+      { itemId: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 200, status: 'requested' },
     ]);
     expect(await shellCount()).toBe(50);
     expect((await homeSnapshot()).shells).toBe(50);
   });
 
   it('refuses when short, and says by how much', async () => {
-    await rewards(1400);
+    await rewards(1900);
     expect(await buy('robux')).toEqual({ ok: false, short: 100 });
     expect(await db.redemptions.count()).toBe(0);
     expect((await db.rewards.get('default'))?.spent).toBe(0);
@@ -129,7 +128,7 @@ describe('the shop', () => {
     await cancelRedemption(two.redemption.id);
     await markGiven(two.redemption.id);
     const shop = await loadShop();
-    expect(shop).toMatchObject({ balance: 250, lifetime: 400, pending: [] });
+    expect(shop).toMatchObject({ balance: 200, lifetime: 400, pending: [] });
     expect((await listRedemptions()).map((x) => x.status).sort()).toEqual(['cancelled', 'given']);
   });
 
@@ -138,33 +137,34 @@ describe('the shop', () => {
     await buy('treat');
     await setPrice('treat', 100);
     await buy('treat');
-    expect((await listRedemptions()).map((x) => x.price).sort()).toEqual([100, 150]);
-    expect((await loadShop()).balance).toBe(150);
+    expect((await listRedemptions()).map((x) => x.price).sort()).toEqual([100, 200]);
+    expect((await loadShop()).balance).toBe(100);
     await expect(setPrice('treat', 0)).rejects.toThrow();
     await expect(setPrice('treat', 2.5)).rejects.toThrow();
   });
 });
 
-describe('cosmetics', () => {
-  const finish = (stars: 1 | 2 | 3) =>
-    finishAttempt(
-      {
-        ...newAttempt({ topic: 'PC', level: 1, generatorId: 'test', seed: 1, params: {} }),
-        finishedAt: new Date().toISOString(),
-        stars,
-        clean: true,
-        wrongTries: 0,
-      },
-      { adaptive: false, rewarded: true },
-    );
+/** A clean PC answer at this level (PC's stored level is 1, so it pays full stars, R-RWD-1). */
+const cleanAnswer = (level: number, o: Partial<Attempt> = {}) =>
+  finishAttempt(
+    {
+      ...newAttempt({ topic: 'PC', level, generatorId: 'test', seed: 1, params: {} }),
+      finishedAt: new Date().toISOString(),
+      clean: true,
+      wrongTries: 0,
+      ...o,
+    },
+    { adaptive: false, rewarded: true },
+  );
 
+describe('cosmetics', () => {
   it('crossing 20 lifetime shells unlocks the turtle hat, worn at once, and says so once', async () => {
     await rewards(18, 10);
-    const e = await finish(3);
+    const e = await cleanAnswer(3); // 4 ★ = 4 shells
     expect(e.unlocked).toEqual(['turtle-hat']);
-    expect(e.shells).toBe(11); // shells to spend: 21 − 10
+    expect(e.shells).toBe(12); // shells to spend: 22 − 10
     expect((await loadWardrobe()).worn).toEqual(['turtle-hat']);
-    expect((await finish(3)).unlocked).toBeUndefined();
+    expect((await cleanAnswer(3)).unlocked).toBeUndefined();
   });
 
   it('spending shells never locks a cosmetic again', async () => {
@@ -214,18 +214,6 @@ describe('shop names and pictures (parent requests, 2026-09-25)', () => {
 });
 
 describe('the parent sets shells (2026-09-25)', () => {
-  const answer = (stars: 1 | 2 | 3) =>
-    finishAttempt(
-      {
-        ...newAttempt({ topic: 'PC', level: 1, generatorId: 'test', seed: 1, params: {} }),
-        finishedAt: new Date().toISOString(),
-        stars,
-        clean: stars === 3,
-        wrongTries: 3 - stars,
-      },
-      { adaptive: false, rewarded: true },
-    );
-
   it('shells to spend can go up or down; lifetime and cosmetics stay as earned', async () => {
     await rewards(60, 10, ['turtle-hat', 'penguin-scarf']);
     await setBalance(500);
@@ -236,25 +224,19 @@ describe('the parent sets shells (2026-09-25)', () => {
     for (const bad of [-1, 2.5, 1_000_001]) await expect(setBalance(bad)).rejects.toThrow();
     // Earning after a change adds on top of what the parent set.
     await setBalance(20);
-    await answer(3);
-    expect((await loadShop()).balance).toBe(23);
+    await cleanAnswer(3);
+    expect((await loadShop()).balance).toBe(24);
   });
 
-  it("shells per 3, 2 and 1 star answer: default 3 / 2 / 1, then the parent's table", async () => {
+  it('shells equal stars (R-RWD-4, M7)', async () => {
     await rewards(0);
-    expect((await loadShop()).shellsPerStars).toEqual({ 1: 1, 2: 2, 3: 3 });
-    expect((await answer(3)).shellsEarned).toBe(3);
-    await setShellsPerStars({ 1: 2, 2: 5, 3: 10 });
-    const e = await answer(3);
-    expect(e).toMatchObject({ shellsEarned: 10, shells: 13 });
-    expect((await answer(1)).shellsEarned).toBe(2);
-    expect((await loadShop()).lifetime).toBe(15);
-    await expect(setShellsPerStars({ 1: -1, 2: 2, 3: 3 })).rejects.toThrow();
-    await expect(setShellsPerStars({ 1: 1, 2: 2, 3: 101 })).rejects.toThrow();
+    expect((await cleanAnswer(5)).shellsEarned).toBe(8);
+    expect((await cleanAnswer(5, { clean: false, wrongTries: 1 })).shellsEarned).toBe(1);
+    expect((await cleanAnswer(5, { clean: false, maxHint: 3 })).shellsEarned).toBe(0);
+    expect((await loadShop()).lifetime).toBe(9);
   });
 
   it('the assignment summary counts the shells actually earned', async () => {
-    await setShellsPerStars({ 1: 1, 2: 2, 3: 5 });
     await db.assignments.put({
       id: 'a',
       profileId: 'default',
@@ -266,19 +248,31 @@ describe('the parent sets shells (2026-09-25)', () => {
       seed: 1,
       order: 'grouped',
     });
-    for (const stars of [3, 2] as const)
+    for (const wrongTries of [0, 1])
       await finishAttempt(
         {
-          ...newAttempt({ topic: 'PC', level: 1, generatorId: 'test', seed: 1, params: {} }),
+          ...newAttempt({ topic: 'PC', level: 3, generatorId: 'test', seed: 1, params: {} }),
           assignmentId: 'a',
           itemIndex: 0,
           finishedAt: new Date().toISOString(),
-          stars,
-          clean: stars === 3,
-          wrongTries: 3 - stars,
+          clean: wrongTries === 0,
+          wrongTries,
         },
-        { adaptive: false, rewarded: true },
+        { adaptive: false, rewarded: true, locked: true },
       );
-    expect(await assignmentSummary('a')).toMatchObject({ stars: 5, shells: 7 });
+    // First try at level 3: 4; second try: 1.
+    expect(await assignmentSummary('a')).toMatchObject({ stars: 5, shells: 5 });
+  });
+
+  it('a device that stored the old default prices gets the new ones; prices the parent chose stay (M7)', async () => {
+    await db.settings.put({
+      profileId: 'default',
+      pinHash: 'h',
+      shopItems: [
+        { id: 'treat', name: 'Strawberry Açaí Lemonade Refresher', price: 150 },
+        { id: 'robux', name: 'Roblox gift card, 2,000 Robux', price: 1800 },
+      ],
+    } as never);
+    expect((await loadShop()).items.map((i) => i.price)).toEqual([200, 1800]);
   });
 });

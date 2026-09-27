@@ -106,7 +106,7 @@ describe('practiceReducer', () => {
     expect(s.solved).toBe(true);
     expect(s.attempt.finishedAt).toBeDefined();
     expect(s.attempt.clean).toBe(false);
-    expect(s.attempt).toMatchObject({ stars: 1, maxHint: 3 });
+    expect(s.attempt).toMatchObject({ maxHint: 3 }); // walkthrough: 0 stars, set by finishAttempt (R-RWD-1)
   });
 
   it('level 6: typing the final answer straight away solves the question, clean', () => {

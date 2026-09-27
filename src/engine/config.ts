@@ -111,8 +111,6 @@ export const config = {
     order: 'grouped' as const,
     /** R-SES-6. `always` by the parent's decision (M5); the spec's default is `afterAssignment`. */
     freePractice: 'always' as 'always' | 'afterAssignment' | 'never',
-    /** §6.1 */
-    naturalIncludesZero: false,
     /** R-PC-4 */
     currency: '$',
     /** R-RWD-7 */
@@ -144,13 +142,13 @@ export const config = {
       {
         id: 'treat',
         name: 'Strawberry Açaí Lemonade Refresher',
-        price: 150,
+        price: 200,
         note: 'A real drink from Starbucks. A grown-up gets it for you.',
       },
       {
         id: 'robux',
         name: 'Roblox gift card, 2,000 Robux',
-        price: 1500,
+        price: 2000,
         note: 'A real Roblox gift card with 2,000 Robux. A grown-up gets it for you.',
       },
     ] as readonly { id: string; name: string; price: number; note: string }[],
@@ -159,6 +157,11 @@ export const config = {
     renamed: { treat: { from: 'Starbucks treat', to: 'Strawberry Açaí Lemonade Refresher' } } as Record<
       string,
       { from: string; to: string }
+    >,
+    /** Earlier default prices, replaced on load if still stored unchanged (rebalanced for M7, 2026-09-27). */
+    repriced: { treat: { from: 150, to: 200 }, robux: { from: 1500, to: 2000 } } as Record<
+      string,
+      { from: number; to: number }
     >,
     /** A picture the parent adds is scaled to fit this square and kept on the device only. */
     imageMaxPx: 320,
@@ -182,11 +185,10 @@ export const config = {
     kind: 'hat' | 'scarf' | 'sunglasses' | 'bowtie';
     at: number;
   }[],
-  /**
-   * Shells earned per answer by its stars (R-RWD-4 has 1 ★ = 1 shell); the parent can change them
-   * in Parent › Rewards (2026-09-25). `maxPerAnswer` and `maxBalance` bound what the parent can enter.
-   */
-  shells: { perStars: { 1: 1, 2: 2, 3: 3 }, maxPerAnswer: 100, maxBalance: 1_000_000 },
+  /** R-RWD-1 (M7): full stars by level, index = level − 1. Shells equal stars (R-RWD-4). */
+  stars: { fullByLevel: [1, 2, 4, 6, 8, 10] as readonly number[] },
+  /** The most shells to spend the parent can set (R-PAR-7). */
+  shells: { maxBalance: 1_000_000 },
   /** Home beach: at most this many shells drawn on the sand (design.md §7.1). */
   beachShellsMax: 12,
   /** R-RWD-2/3/5 */

@@ -3,7 +3,6 @@
 // type: EQ's balance-scale steps, or the number topics' steps.
 import { config } from '../../engine/config';
 import { eqWalkthrough, type WalkStep } from '../../engine/topics/eq/hints';
-import { starsFor } from '../../engine/scoring';
 import type { Attempt } from '../../data/db';
 import { withTry } from '../../data/attempts';
 
@@ -82,8 +81,9 @@ export function onStepAccepted<S extends AnyHelp>(s: S): S {
 }
 
 /**
- * The question is finished. Clean solve (R-ADP-1): no wrong try and no hint above H1. Stars
- * (R-RWD-1) and the wrong-try count are stored with the attempt.
+ * The question is finished. Clean solve (R-ADP-1): no wrong try and no hint above H1. The wrong-try
+ * count is stored with the attempt; its stars (R-RWD-1) depend on the learner's level, so
+ * `finishAttempt` sets them.
  */
 export function onSolved<S extends AnyHelp>(s: S): S {
   return {
@@ -96,7 +96,6 @@ export function onSolved<S extends AnyHelp>(s: S): S {
       finishedAt: new Date().toISOString(),
       clean: s.wrongTries === 0 && s.attempt.maxHint <= 1,
       wrongTries: s.wrongTries,
-      stars: starsFor({ wrongTries: s.wrongTries, maxHint: s.attempt.maxHint }),
     },
   };
 }

@@ -7,7 +7,7 @@ import { wrongTriesOf } from '../../engine/parent';
 import { formatRational } from '../../engine/rational';
 import { regenerate, type Regenerated } from '../../engine/review';
 import { correctOption } from '../../engine/topics/mc';
-import { ncMembership, NC_SETS } from '../../engine/topics/nc/checker';
+import { innermostSet } from '../../engine/topics/nc/checker';
 import type { Attempt, TryRecord } from '../../data/db';
 import { logError } from '../../data/errors';
 import { localDay } from '../../data/progress';
@@ -25,7 +25,6 @@ const time = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 
 function QuestionView({ r }: { r: Regenerated }) {
-  const settings = useSettings();
   switch (r.topic) {
     case 'EQ':
       return (
@@ -36,21 +35,17 @@ function QuestionView({ r }: { r: Regenerated }) {
           </p>
         </div>
       );
-    case 'NC': {
-      const m = ncMembership(r.question.value, settings.naturalIncludesZero);
+    case 'NC':
+      // Since M7 the answer is the smallest set; older attempts' answers (every set ticked) still show below.
       return (
         <div className="review-question">
           <p className="label">{numStrings.nc.prompt}</p>
           <MathHero shown={r.question.shown} />
           <p className="label muted">
-            {s.answer}:{' '}
-            {NC_SETS.filter((x) => m[x])
-              .map((x) => numStrings.nc.name[x])
-              .join(', ')}
+            {s.answer}: {numStrings.nc.name[innermostSet(r.question.value)]}
           </p>
         </div>
       );
-    }
     default: {
       const q = r.question;
       return (

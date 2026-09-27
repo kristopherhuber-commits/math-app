@@ -31,7 +31,7 @@ test('reloads offline after the first load, and a question can be completed offl
     .nth(q.options.findIndex((o) => o.code === 'correct'))
     .click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+  await expect(page.getByText('1 star! Brilliant!')).toBeVisible();
   await page.getByRole('button', { name: 'Next question' }).click();
   await expect(page.getByText('Question 2', { exact: true })).toBeVisible();
   await context.setOffline(false);

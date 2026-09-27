@@ -3,7 +3,7 @@
 // Free-practice seeds are random, so each question's seed is read from its stored attempt.
 import { expect, test, type Page } from '@playwright/test';
 import { generatePc } from '../src/engine/topics/pc/generator';
-import { current, openHome } from './helpers';
+import { current, fullStarsText, openHome } from './helpers';
 
 async function answer(page: Page, right: boolean) {
   const { level, seed } = await current(page);
@@ -19,7 +19,7 @@ async function answer(page: Page, right: boolean) {
   }
   await page.locator('.mc-option').nth(correct).click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByText(right ? '3 stars! Brilliant!' : '2 stars! Nice work!')).toBeVisible();
+  await expect(page.getByText(right ? fullStarsText(level) : '1 star. Nice work!')).toBeVisible();
 }
 
 const next = (page: Page) => page.getByRole('button', { name: 'Next question' }).click();

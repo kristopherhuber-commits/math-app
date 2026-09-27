@@ -177,6 +177,6 @@ describe('tileReducer', () => {
     expect(tileReducer(s, { type: 'padKey', key: '1' })).toBe(s);
     while (!s.solved) s = tileReducer(s, { type: 'walkNext' });
     expect(s.attempt).toMatchObject({ maxHint: 3, clean: false });
-    expect(s.attempt).toMatchObject({ stars: 1, wrongTries: 0 });
+    expect(s.attempt).toMatchObject({ wrongTries: 0 }); // walkthrough: 0 stars, set by finishAttempt (R-RWD-1)
   });
 });

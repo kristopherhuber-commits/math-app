@@ -1,5 +1,5 @@
 // Pip's celebrations (design.md §5 Celebration, mockup 08, R-RWD-5, R-ADP-6): stars pop in, Pip
-// cheers (3 ★) or claps (2 ★, 1 ★), "+n shells", "Level up!" and new badges. Under 1.2 s, never
+// cheers (full stars, up to 10, R-RWD-1) or claps (1 or 0 ★), "+n shells", "Level up!" and new badges. Under 1.2 s, never
 // blocking: Next is focused at once, and a tap anywhere on it skips to the end. Reduced motion: a
 // static star row. The streak milestone is full screen and dismissable.
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -56,30 +56,36 @@ export function Celebration({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const s = rewardStrings.celebrate;
-  const big = events.stars === 3;
+  // R-RWD-5: full stars get the bigger celebration; up to 10 stars, smaller when there are many.
+  const big = events.quality === 'full' && !events.capped && events.stars > 0;
   const pose = events.levelUp ? 'hop' : big ? 'cheer' : 'clap';
   const still = reduced || skipped;
+  const starSize = events.stars > 5 ? 30 : big ? 44 : 34;
   return (
     <div
-      className={`celebration stars-${events.stars} ${still ? 'still' : ''}`}
+      className={`celebration ${big ? 'stars-full' : 'stars-some'} ${still ? 'still' : ''}`}
       role="status"
       data-testid="celebration"
       onPointerDown={() => setSkipped(true)}
     >
       <div className="celebration-art" aria-hidden="true">
         {big && !still && <Confetti />}
-        <span className="celebration-stars">
+        <span className={`celebration-stars ${events.stars > 5 ? 'many' : ''}`}>
           {Array.from({ length: events.stars }, (_, i) => (
             <span key={i} className="celebration-star" style={{ '--i': i } as CSSProperties}>
-              <StarIcon size={big ? 44 : 34} />
+              <StarIcon size={starSize} />
             </span>
           ))}
         </span>
         <Penguin pose={pose} size={big ? 132 : 104} />
       </div>
       <div className="celebration-text">
-        <p className="celebration-title">{s.headline[events.stars]}</p>
-        {showShells && <p className="celebration-shells">{s.shells(events.shellsEarned ?? events.stars)}</p>}
+        <p className="celebration-title">
+          {s.headline(events.stars, events.quality, events.capped ?? false)}
+        </p>
+        {showShells && events.stars > 0 && (
+          <p className="celebration-shells">{s.shells(events.shellsEarned ?? events.stars)}</p>
+        )}
         {events.levelUp !== undefined && <p className="celebration-level">{s.levelUp}</p>}
         {events.badges.map((b) => (
           <p key={b} className="celebration-badge">

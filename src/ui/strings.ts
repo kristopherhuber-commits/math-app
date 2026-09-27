@@ -60,7 +60,7 @@ export const strings = {
     close: 'Close',
     offer: 'Want a hint? I can help.',
     showMe: 'Show me step by step',
-    walkNote: "Walkthrough = 1 star, and that's OK!",
+    walkNote: "Walkthrough: no stars this time, and that's OK!",
   },
   tiles: {
     prompt: (v: string) => `Solve for $${v}$`,
@@ -321,13 +321,12 @@ export const numStrings = {
   options: 'Answer options',
   option: (n: number, speech: string) => `Option ${n}: ${speech}`,
   nc: {
-    prompt: 'Which sets does this number belong to? Tick all that apply.',
-    keyboard: 'Tap the sets, then Check. Keyboard: Tab to a set, Space to tick, Enter to check.',
+    prompt: 'What is the smallest set this number belongs to?',
+    keyboard: 'Tap a set, then Check. Keyboard: 1–5 to choose, Enter to check.',
     sets: 'Number sets',
     setsMap: 'Sets map',
     setsMapTitle: 'The sets map',
     close: 'Close',
-    flagged: 'Have another look at the outlined boxes.',
     name: {
       natural: 'Natural',
       whole: 'Whole',
@@ -335,11 +334,11 @@ export const numStrings = {
       rational: 'Rational',
       irrational: 'Irrational',
     } as Record<string, string>,
-    /** The sets map's outer frame (not a checkbox). */
+    /** The sets map's outer frame (not a card). */
     realFrame: 'Real numbers',
-    example: (set: string, naturalIncludesZero: boolean): string =>
+    example: (set: string): string =>
       ({
-        natural: naturalIncludesZero ? '0, 1, 2, …' : '1, 2, 3, …',
+        natural: '1, 2, 3, …',
         whole: '0, 1, 2, …',
         integer: '…, −1, 0, 1, …',
         rational: 'fractions p/q',
@@ -357,10 +356,6 @@ export const numStrings = {
 
 const digitWord = (k: string) => (k === '1' ? '1 digit' : `${k} digits`);
 const placeWord = (k: string) => (k === '1' ? '1 place' : `${k} places`);
-const setList = (ids: string): string => {
-  const names = ids.split(',').map((s) => numStrings.nc.name[s] ?? s);
-  return names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : (names[0] ?? '');
-};
 
 /** "Not quite." plus one misconception line (R-HELP-1a, design.md §9). Never reveals the answer. */
 export function misconceptionLine(code: string, kind = ''): string | null {
@@ -413,6 +408,11 @@ export function misconceptionLine(code: string, kind = ''): string | null {
     case 'PC-M6':
     case 'PC-M7':
       return 'The percent was taken of the original price, not of the price after.';
+    // NC (R-NC-3, M7): which way it is off, never which set is right.
+    case 'NC-CONTAINS':
+      return 'It is in that set, but there’s a smaller one.';
+    case 'NC-NOT-IN':
+      return 'It isn’t in that set.';
     default:
       return null;
   }
@@ -642,13 +642,11 @@ export function numText(h: HintContent): string {
     case 'nc.h2.fraction':
       return `§${p.x}§ is written as one integer over another. Is it a whole number of ones, or in between?`;
     case 'nc.h2.zero':
-      return '0 isn’t a counting number here, but it is a whole number. Which bigger sets contain the whole numbers?';
-    case 'nc.h2.zero.natural':
-      return 'Here 0 counts as a natural number. Which bigger sets contain the natural numbers?';
+      return 'Is 0 a counting number (1, 2, 3, …)? If not, which is the next box out on the sets map?';
     case 'nc.h2.negInt':
-      return `§${p.x}§ is negative, so it isn’t a whole number. Is it an integer?`;
+      return `§${p.x}§ is negative, so it isn’t a whole number. Which is the next box out on the sets map?`;
     case 'nc.h2.posInt':
-      return `§${p.x}§ is a counting number. Which bigger sets contain every counting number?`;
+      return `§${p.x}§ is positive with no fraction part. Which is the innermost box on the sets map for numbers like that?`;
     case 'nc.h2.irrational':
       return 'Read the rule under the number. Does a block of digits ever repeat? Does it ever stop?';
 
@@ -697,8 +695,8 @@ export function numText(h: HintContent): string {
       return 'A rational number that is not an integer is only rational.';
     case 'nc.walk.contains.irrational':
       return 'An irrational number is never rational, so Irrational is its only box.';
-    case 'nc.walk.tick':
-      return `So tick: ${setList(p.sets ?? '')}.`;
+    case 'nc.walk.answer':
+      return `So the smallest set is ${numStrings.nc.name[p.set ?? ''] ?? p.set}.`;
     default:
       return '';
   }
@@ -715,10 +713,14 @@ export const rewardStrings = {
     shells: (n: number) => `${n} ${n === 1 ? 'shell' : 'shells'}`,
   },
   celebrate: {
-    headline: { 3: '3 stars! Brilliant!', 2: '2 stars! Nice work!', 1: '1 star. You did it!' } as Record<
-      1 | 2 | 3,
-      string
-    >,
+    /** R-RWD-1 (M7): by how it was answered; `capped` = a level below the learner's own paid less. */
+    headline: (stars: number, quality: 'full' | 'one' | 'none', capped: boolean): string => {
+      if (capped)
+        return stars === 0 ? 'Done! A harder level earns stars.' : '1 star. A harder level earns more!';
+      if (quality === 'full') return `${stars} ${stars === 1 ? 'star' : 'stars'}! Brilliant!`;
+      if (quality === 'one') return '1 star. Nice work!';
+      return 'You finished it! First-try answers earn stars.';
+    },
     shells: (n: number) => `+${n} ${n === 1 ? 'shell' : 'shells'}`,
     levelUp: 'Level up!',
     badge: (name: string) => `New badge: ${name}`,
@@ -791,8 +793,9 @@ export const rewardStrings = {
     sub: (title: string | undefined, n: number) => `${title ? `${title} · ` : ''}${n} questions`,
     totals: (stars: number, shells: number) => `${stars} stars · +${shells} shells`,
     byTopic: 'Stars by topic',
-    row: (stars: 1 | 2 | 3, n: number) => `${'★'.repeat(stars)} ×${n}`,
-    rowSpeech: (stars: 1 | 2 | 3, n: number) => `${n} with ${stars} ${stars === 1 ? 'star' : 'stars'}`,
+    row: (stars: number, n: number) => `★ ${stars} · ${n} ${n === 1 ? 'question' : 'questions'}`,
+    rowSpeech: (stars: number, n: number) =>
+      `${stars} ${stars === 1 ? 'star' : 'stars'} from ${n} ${n === 1 ? 'question' : 'questions'}`,
     freePractice: 'Free practice ›',
     home: 'Home',
   },
@@ -985,9 +988,8 @@ export const parentStrings = {
     balanceInvalid: 'A whole number from 0 to 1,000,000.',
     saved: 'Saved.',
     perAnswer: 'Shells per answer',
-    perAnswerSub: 'From the next answer on.',
-    perStars: (n: number) => `${n} ${n === 1 ? 'star' : 'stars'}`,
-    perStarsInvalid: 'Whole numbers from 0 to 100.',
+    perAnswerSub:
+      'An answer earns as many shells as stars. First try (at most hint 1): level 1 = 1, 2 = 2, 3 = 4, 4 = 6, 5 = 8, equations 6 = 10. Second try or hint 2: 1. More tries or the walkthrough: 0. One level below the learner’s own: at most 1; two or more below: 0 (not for levels you lock in an assignment).',
     pictures: 'Pictures',
     picturesSub:
       'The shop shows a drawing of each reward. You can use your own picture instead; it stays on this device (and in exports) and is never uploaded.',
@@ -1023,7 +1025,6 @@ export const parentStrings = {
     fullBalance: 'Always play the full balance animation (tile builder)',
     fullBalanceSub: 'Off: it shortens after 10 correct sign choices.',
     numbers: 'Numbers',
-    naturalZero: 'Natural numbers include 0',
     currency: 'Currency symbol',
     comfort: 'Sound and motion',
     sound: 'Sounds',

@@ -3,7 +3,13 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { generateNc, patternDigits, type NcQuestion } from '../../src/engine/topics/nc/generator';
-import { checkSets, NC_SETS, ncMembership, type NcValue } from '../../src/engine/topics/nc/checker';
+import {
+  checkSmallest,
+  innermostSet,
+  NC_SETS,
+  ncMembership,
+  type NcValue,
+} from '../../src/engine/topics/nc/checker';
 import { ncHint, ncWalkthrough } from '../../src/engine/topics/nc/hints';
 import { add, rat, type Rational } from '../../src/engine/rational';
 import type { NcSet } from '../../src/engine/topics/walk';
@@ -42,17 +48,21 @@ function readValue(q: NcQuestion): Rational | 'irrational' {
   return withSign(rat(BigInt(m[1]! + frac), 10n ** BigInt(frac.length)));
 }
 
-/** Test-local membership (§6.1 definitions). */
-function oracle(v: Rational | 'irrational', zeroNatural: boolean): Set<NcSet> {
+/** Test-local membership (§6.1 definitions: natural = 1, 2, 3, …). */
+function oracle(v: Rational | 'irrational'): Set<NcSet> {
   if (v === 'irrational') return new Set(['irrational']);
   const out = new Set<NcSet>(['rational']);
   if (v.d === 1n) {
     out.add('integer');
     if (v.n >= 0n) out.add('whole');
-    if (v.n > 0n || (zeroNatural && v.n === 0n)) out.add('natural');
+    if (v.n > 0n) out.add('natural');
   }
   return out;
 }
+
+/** Test-local smallest set (R-NC-2): the innermost of natural ⊂ whole ⊂ integer ⊂ rational, or irrational. */
+const smallestOf = (s: Set<NcSet>): NcSet =>
+  (['natural', 'whole', 'integer', 'rational', 'irrational'] as const).find((x) => s.has(x))!;
 
 const FORMS: Record<number, string[]> = {
   1: ['posInt', 'zero', 'fraction', 'decimal'],
@@ -63,12 +73,20 @@ const FORMS: Record<number, string[]> = {
 describe.each([1, 2, 3, 4, 5])('NC level %i (R-TEST-2)', (level) => {
   it('membership verified independently; level forms; captions (R-NC-1, R-DISP-1/3/4)', () => {
     fc.assert(
-      fc.property(seedArb, fc.boolean(), (seed, zeroNatural) => {
+      fc.property(seedArb, (seed) => {
         const q = generateNc(level, seed);
         const read = readValue(q);
-        const expected = oracle(read, zeroNatural);
-        expect(checkSets(q.value, expected, zeroNatural).correct).toBe(true);
-        const m = ncMembership(q.value, zeroNatural);
+        const expected = oracle(read);
+        // R-NC-2: exactly one card is right, the smallest set; every other card is not quite.
+        const smallest = smallestOf(expected);
+        expect(innermostSet(q.value)).toBe(smallest);
+        for (const s of NC_SETS)
+          expect(checkSmallest(q.value, s)).toEqual(
+            s === smallest
+              ? { correct: true }
+              : { correct: false, code: expected.has(s) ? 'NC-CONTAINS' : 'NC-NOT-IN' },
+          );
+        const m = ncMembership(q.value);
         expect(new Set(NC_SETS.filter((s) => m[s]))).toEqual(expected);
         expect(q.shown.text).not.toContain('-'); // R-DISP-1
         if (q.shown.text.includes('…')) expect(q.shown.caption).toBeDefined(); // R-DISP-3/4
@@ -92,16 +110,17 @@ describe.each([1, 2, 3, 4, 5])('NC level %i (R-TEST-2)', (level) => {
     );
   });
 
-  it('hints use the number; the walkthrough places it and lists exactly the right sets', () => {
+  it('hints use the number; the walkthrough places it and ends on the smallest set', () => {
     fc.assert(
-      fc.property(seedArb, fc.boolean(), (seed, zeroNatural) => {
+      fc.property(seedArb, (seed) => {
         const q = generateNc(level, seed);
-        expect(ncHint(q, 1, zeroNatural).params.x).toBe(q.shown.latex);
-        expect(ncHint(q, 2, zeroNatural).id).toMatch(/^nc\.h2\./);
-        const steps = ncWalkthrough(q, zeroNatural);
-        const expected = oracle(readValue(q), zeroNatural);
+        expect(ncHint(q, 1).params.x).toBe(q.shown.latex);
+        expect(ncHint(q, 2).id).toMatch(/^nc\.h2\./);
+        const steps = ncWalkthrough(q);
+        const expected = oracle(readValue(q));
         const last = steps.at(-1)!;
-        expect(new Set(last.explain.params.sets!.split(','))).toEqual(expected);
+        expect(last.explain).toEqual({ id: 'nc.walk.answer', params: { set: smallestOf(expected) } });
+        expect(new Set(last.sets!.lit)).toEqual(expected); // the nesting is still shown (R-NC-4)
         const place = steps.find((s) => s.mini && s.sets)!;
         if (q.form === 'nines') {
           // The x-method: 10x − x = 9x, and 9x / 9 is the number without its sign.
@@ -111,7 +130,7 @@ describe.each([1, 2, 3, 4, 5])('NC level %i (R-TEST-2)', (level) => {
           expect(cols.result.whole).toBe(`${9n * abs}`);
           expect(BigInt(cols.top.whole) - BigInt(cols.bottom.whole)).toBe(9n * abs);
           expect(steps.some((s) => s.math?.includes(`x = \\frac{${9n * abs}}{9} = ${abs}`))).toBe(true);
-          expect(ncHint(q, 2, zeroNatural).id).toBe(read.n < 0n ? 'nc.h2.nines.neg' : 'nc.h2.nines');
+          expect(ncHint(q, 2).id).toBe(read.n < 0n ? 'nc.h2.nines.neg' : 'nc.h2.nines');
         }
         const smallest = NC_SETS.find((s) => expected.has(s))!;
         expect(place.mini!.options[place.mini!.correct]!.text).toBe(smallest);
@@ -125,22 +144,20 @@ describe.each([1, 2, 3, 4, 5])('NC level %i (R-TEST-2)', (level) => {
 
 describe('NC examples (§6.1)', () => {
   const r = (n: number, d = 1): NcValue => ({ kind: 'rational', value: rat(n, d) });
-  const sets = (v: NcValue, z = false) => NC_SETS.filter((s) => ncMembership(v, z)[s]);
+  const sets = (v: NcValue) => NC_SETS.filter((s) => ncMembership(v)[s]);
 
   it.each([
-    [r(7), ['natural', 'whole', 'integer', 'rational']],
-    [r(0), ['whole', 'integer', 'rational']],
-    [r(3, 4), ['rational']],
-    [r(-12), ['integer', 'rational']],
-    [r(12, 4), ['natural', 'whole', 'integer', 'rational']],
-    [r(-8, -2), ['natural', 'whole', 'integer', 'rational']],
-    [r(1), ['natural', 'whole', 'integer', 'rational']], // 0.999… = 1
-  ])('%o', (v, expected) => {
+    [r(7), ['natural', 'whole', 'integer', 'rational'], 'natural'],
+    [r(0), ['whole', 'integer', 'rational'], 'whole'], // 0 is whole, not natural (parent decision)
+    [r(3, 4), ['rational'], 'rational'],
+    [r(-12), ['integer', 'rational'], 'integer'],
+    [r(-3), ['integer', 'rational'], 'integer'],
+    [r(12, 4), ['natural', 'whole', 'integer', 'rational'], 'natural'],
+    [r(-8, -2), ['natural', 'whole', 'integer', 'rational'], 'natural'],
+    [r(1), ['natural', 'whole', 'integer', 'rational'], 'natural'], // 0.999… = 1
+  ])('%o → smallest %s', (v, expected, smallest) => {
     expect(sets(v)).toEqual(expected);
-  });
-
-  it('0 is natural only when the parent setting says so', () => {
-    expect(sets(r(0), true)).toContain('natural');
+    expect(innermostSet(v)).toBe(smallest);
   });
 
   it('irrational patterns: 0.1010010001… and 0.123456789101112…', () => {
@@ -151,14 +168,12 @@ describe('NC examples (§6.1)', () => {
     expect(sets({ kind: 'irrational', pattern: g })).toEqual(['irrational']);
   });
 
-  it('R-NC-2: exactly the right boxes; mismatches listed without direction', () => {
-    const v = r(12, 4);
-    expect(checkSets(v, new Set(['natural', 'whole', 'integer']), false)).toEqual({
-      correct: false,
-      mismatched: ['rational'],
-    });
-    expect(
-      checkSets(v, new Set(['natural', 'whole', 'integer', 'rational', 'irrational']), false).mismatched,
-    ).toEqual(['irrational']);
+  it('R-NC-2/3: only the smallest set is right; a larger set that contains it vs one that does not', () => {
+    expect(checkSmallest(r(0), 'whole')).toEqual({ correct: true });
+    expect(checkSmallest(r(0), 'natural')).toEqual({ correct: false, code: 'NC-NOT-IN' });
+    expect(checkSmallest(r(0), 'integer')).toEqual({ correct: false, code: 'NC-CONTAINS' });
+    expect(checkSmallest(r(12, 4), 'rational')).toEqual({ correct: false, code: 'NC-CONTAINS' });
+    expect(checkSmallest(r(-3), 'whole')).toEqual({ correct: false, code: 'NC-NOT-IN' });
+    expect(checkSmallest(r(3, 4), 'irrational')).toEqual({ correct: false, code: 'NC-NOT-IN' });
   });
 });

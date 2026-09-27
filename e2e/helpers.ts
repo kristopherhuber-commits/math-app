@@ -4,8 +4,15 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { expect, type Page } from '@playwright/test';
 import type { TopicId } from '../src/engine/config';
+import { fullStars } from '../src/engine/scoring';
 
 export const PIN = '2468';
+
+/** The celebration headline for a first-try answer at this level (R-RWD-1, M7: 1, 2, 4, 6, 8, 10 ★). */
+export function fullStarsText(level: number): string {
+  const n = fullStars(level);
+  return `${n} ${n === 1 ? 'star' : 'stars'}! Brilliant!`;
+}
 
 /** The app's stored form (R-DATA-2): `sha256$<salt>$<sha256(salt:pin)>`. */
 export function pinHash(pin: string = PIN): string {

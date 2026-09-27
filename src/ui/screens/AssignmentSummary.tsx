@@ -47,17 +47,13 @@ export function AssignmentSummary({
         <p className="summary-totals">{s.totals(summary.stars, summary.shells)}</p>
         <h2 className="visually-hidden">{s.byTopic}</h2>
         <dl className="summary-topics">
-          {summary.byTopic.map(({ topic, stars }) => (
+          {summary.byTopic.map(({ topic, stars, questions }) => (
             <div key={topic} className="summary-row">
               <dt>{topicStrings.name[topic]}</dt>
               <dd>
-                {([3, 2, 1] as const)
-                  .filter((n) => stars[n] > 0)
-                  .map((n) => (
-                    <span key={n} className="summary-count" aria-label={s.rowSpeech(n, stars[n])}>
-                      {s.row(n, stars[n])}
-                    </span>
-                  ))}
+                <span className="summary-count" aria-label={s.rowSpeech(stars, questions)}>
+                  {s.row(stars, questions)}
+                </span>
               </dd>
             </div>
           ))}

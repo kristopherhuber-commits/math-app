@@ -1,7 +1,9 @@
 // R-RWD-1 stars, R-RWD-2 streaks, R-RWD-3 badges.
 import { describe, expect, it } from 'vitest';
 import {
+  answerQuality,
   BADGE_IDS,
+  fullStars,
   currentStreak,
   dayNumber,
   eqRunWithoutWalkthrough,
@@ -14,23 +16,60 @@ import {
   type BadgeFacts,
 } from '../../src/engine/scoring';
 
-describe('starsFor (R-RWD-1)', () => {
-  // rows: wrongTries 0…3; columns: maxHint 0…3
-  const expected = [
-    [3, 2, 1, 1],
-    [2, 2, 1, 1],
-    [1, 1, 1, 1],
-    [1, 1, 1, 1],
-  ];
-  for (let wrongTries = 0; wrongTries <= 3; wrongTries++)
-    for (let maxHint = 0; maxHint <= 3; maxHint++)
-      it(`${wrongTries} wrong tries, H${maxHint} → ${expected[wrongTries]![maxHint]} ★`, () => {
-        expect(starsFor({ wrongTries, maxHint })).toBe(expected[wrongTries]![maxHint]);
-      });
+describe('stars (R-RWD-1, M7)', () => {
+  it('full stars by level: 1, 2, 4, 6, 8, 10', () => {
+    expect([1, 2, 3, 4, 5, 6].map(fullStars)).toEqual([1, 2, 4, 6, 8, 10]);
+  });
 
-  it('never 0 stars', () => {
-    for (let w = 0; w < 10; w++)
-      for (let h = 0; h <= 3; h++) expect(starsFor({ wrongTries: w, maxHint: h })).toBeGreaterThan(0);
+  // rows: wrongTries 0…3; columns: maxHint 0…3. F = full, 1 = one star, 0 = none.
+  const quality = [
+    ['full', 'full', 'one', 'none'],
+    ['one', 'one', 'one', 'none'],
+    ['none', 'none', 'none', 'none'],
+    ['none', 'none', 'none', 'none'],
+  ] as const;
+  for (let wrongTries = 0; wrongTries <= 3; wrongTries++)
+    for (let maxHint = 0; maxHint <= 3; maxHint++) {
+      const q = quality[wrongTries]![maxHint]!;
+      it(`${wrongTries} wrong tries, H${maxHint} → ${q}`, () => {
+        expect(answerQuality({ wrongTries, maxHint })).toBe(q);
+        for (let level = 1; level <= 6; level++)
+          expect(starsFor({ level, wrongTries, maxHint })).toBe(
+            q === 'full' ? fullStars(level) : q === 'one' ? 1 : 0,
+          );
+      });
+    }
+
+  it.each([
+    // [level, currentLevel, locked, wrongTries, maxHint, stars]
+    [4, 4, false, 0, 0, 6], // at the current level: full
+    [5, 4, false, 0, 0, 8], // above it: full for that level
+    [3, 4, false, 0, 0, 1], // one below: at most 1
+    [3, 4, false, 1, 0, 1], // one below, second try: 1
+    [3, 4, false, 2, 0, 0], // one below, third try: 0
+    [2, 4, false, 0, 0, 0], // two below: 0
+    [1, 4, false, 0, 0, 0],
+    [2, 4, true, 0, 0, 2], // a parent's level lock pays normally
+    [4, 4, false, 0, 3, 0], // walkthrough: 0
+    [4, 4, false, 0, 1, 6], // H1 still full
+    [4, 4, false, 0, 2, 1], // H2: 1
+  ])(
+    'level %i, current %i, locked %s, %i wrong, H%i → %i ★',
+    (level, currentLevel, locked, wrongTries, maxHint, stars) => {
+      expect(starsFor({ level, currentLevel, locked, wrongTries, maxHint })).toBe(stars);
+    },
+  );
+
+  it('fixed-level links (no current level) skip the below-level rule', () => {
+    expect(starsFor({ level: 1, wrongTries: 0, maxHint: 0 })).toBe(1);
+  });
+
+  it('blind guessing at level 5 pays less than honest first tries at level 2', () => {
+    // 5 options: right on the first try 1 in 5, on the second 1 in 5; after that 0.
+    const guess =
+      0.2 * starsFor({ level: 5, wrongTries: 0, maxHint: 0 }) +
+      0.2 * starsFor({ level: 5, wrongTries: 1, maxHint: 0 });
+    expect(guess).toBeLessThan(starsFor({ level: 2, wrongTries: 0, maxHint: 0 }));
   });
 });
 
@@ -147,7 +186,7 @@ describe('badges (R-RWD-3)', () => {
     expect(earned({})).toEqual([]);
   });
 
-  it('first perfect assignment, only when it is all 3 ★', () => {
+  it('first perfect assignment, only when every answer was clean', () => {
     expect(earned({ assignmentDone: { perfect: true } })).toEqual(['perfect-assignment']);
     expect(earned({ assignmentDone: { perfect: false } })).toEqual([]);
   });

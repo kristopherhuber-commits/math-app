@@ -9,7 +9,7 @@ import { generateRd } from '../src/engine/topics/rd/generator';
 import { generateEq } from '../src/engine/topics/eq/generator';
 import { eqWalkthrough } from '../src/engine/topics/eq/hints';
 import type { McQuestion } from '../src/engine/topics/mc';
-import { assignment, openHome } from './helpers';
+import { assignment, fullStarsText, openHome } from './helpers';
 
 async function press(target: Locator, touch: boolean) {
   if (touch) await target.tap();
@@ -18,10 +18,10 @@ async function press(target: Locator, touch: boolean) {
 
 const correctIndex = (q: McQuestion) => q.options.findIndex((o) => o.code === 'correct');
 
-async function answerMc(page: Page, q: McQuestion, touch: boolean) {
+async function answerMc(page: Page, q: McQuestion, touch: boolean, level = 1) {
   await press(page.locator('.mc-option').nth(correctIndex(q)), touch);
   await press(page.getByRole('button', { name: 'Check' }), touch);
-  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+  await expect(page.getByText(fullStarsText(level))).toBeVisible();
 }
 
 const next = (page: Page, touch: boolean) =>
@@ -50,8 +50,8 @@ test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
   await expect(page.getByText('Price changes · Level 1')).toBeVisible();
   await answerMc(page, generatePc(1, questionSeed(seed, 0), '$'), hasTouch);
-  await expect(page.getByText('+3 shells')).toBeVisible();
-  await expect(page.getByRole('status', { name: '3 stars', exact: true })).toBeVisible();
+  await expect(page.getByText('+1 shell')).toBeVisible();
+  await expect(page.getByRole('status', { name: '1 star', exact: true })).toBeVisible();
   await expect(page.getByText('New badge: First question solved')).toBeVisible();
   await next(page, hasTouch);
 
@@ -71,17 +71,18 @@ test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)
     await input.fill(s.line);
     await input.press('Enter');
   }
-  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+  await expect(page.getByText(fullStarsText(3))).toBeVisible();
   await next(page, hasTouch);
 
-  // The summary: stars by topic, as counts (R-SES-7), and the badges earned on the way.
+  // The summary: stars by topic, as totals (R-SES-7), and the badges earned on the way. Levels 1 pay 1 ★,
+  // the locked equation at level 3 pays 4 (R-RWD-1).
   await expect(page.getByRole('heading', { name: 'Assignment done!' })).toBeVisible();
   await expect(page.getByText('Test day · 4 questions')).toBeVisible();
-  await expect(page.getByText('12 stars · +12 shells')).toBeVisible();
+  await expect(page.getByText('7 stars · +7 shells')).toBeVisible();
   await expect(page.locator('.summary-row')).toHaveText([
-    /Price changes\s*★★★ ×2/,
-    /Repeating decimals\s*★★★ ×1/,
-    /Equations\s*★★★ ×1/,
+    /Price changes\s*★ 2 · 2 questions/,
+    /Repeating decimals\s*★ 1 · 1 question/,
+    /Equations\s*★ 4 · 1 question/,
   ]);
   await expect(page.getByText('New badge: A perfect assignment')).toBeVisible();
   await expect(page.getByText('%')).toHaveCount(0);
@@ -90,7 +91,7 @@ test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)
   await press(page.getByRole('button', { name: 'Free practice ›' }), hasTouch);
   await expect(page.getByRole('button', { name: 'Number sets', exact: true })).toBeFocused();
   await expect(page.getByText('No assignment right now.')).toBeVisible();
-  await expect(page.locator('.home-counter')).toHaveText([/1 day\s*streak/, /12\s*shells/]);
+  await expect(page.locator('.home-counter')).toHaveText([/1 day\s*streak/, /7\s*shells/]);
 });
 
 test('leave mid-assignment, reload, and Keep going resumes at the same question (R-SES-5)', async ({
@@ -113,7 +114,7 @@ test('leave mid-assignment, reload, and Keep going resumes at the same question 
   await page.reload();
   await page.getByRole('button', { name: 'Keep going ›' }).click();
   await expect(page.getByText('Question 2 of 3')).toBeVisible();
-  await expect(page.getByRole('status', { name: '3 stars', exact: true })).toBeVisible();
+  await expect(page.getByRole('status', { name: '1 star', exact: true })).toBeVisible();
   await answerMc(page, second, false);
 });
 
@@ -132,7 +133,7 @@ test('four clean answers out of five level up, and Pip says so (R-ADP-2, R-ADP-6
   await expect(page.getByText('Level up!')).toBeVisible();
   await next(page, false);
   await expect(page.getByText('Price changes · Level 2')).toBeVisible();
-  await answerMc(page, generatePc(2, questionSeed(seed, 5), '$'), false);
+  await answerMc(page, generatePc(2, questionSeed(seed, 5), '$'), false, 2);
 });
 
 test('keyboard only: start, answer with 1–5 and Enter, next (design.md §10)', async ({ page }) => {
@@ -145,7 +146,7 @@ test('keyboard only: start, answer with 1–5 and Enter, next (design.md §10)',
     const q = generateRd(1, questionSeed(seed, i));
     await page.keyboard.press(String(correctIndex(q) + 1));
     await page.keyboard.press('Enter');
-    await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+    await expect(page.getByText(fullStarsText(1))).toBeVisible();
     await expect(page.getByRole('button', { name: 'Next question' })).toBeFocused();
     await page.keyboard.press('Enter');
   }

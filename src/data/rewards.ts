@@ -1,15 +1,6 @@
 // The shop and the cosmetics over Dexie (R-RWD-4 as the parent reshaped it, M6). Buying takes shells
 // to spend at once and leaves a request for the parent, who marks it given or cancels it (refund).
-import {
-  isValidBalance,
-  isValidPrice,
-  isValidShellsTable,
-  shellsShort,
-  spendable,
-  unlockedAt,
-  wear,
-  type ShellsPerStars,
-} from '../engine/rewards';
+import { isValidBalance, isValidPrice, shellsShort, spendable, unlockedAt, wear } from '../engine/rewards';
 import { db, PROFILE_ID, type Redemption, type Rewards, type ShopItem } from './db';
 import { loadSettings, saveSettings } from './settings';
 
@@ -30,8 +21,6 @@ export interface ShopSnapshot {
   balance: number;
   lifetime: number;
   pending: Redemption[];
-  /** Shells per 3, 2 and 1 star answer. */
-  shellsPerStars: ShellsPerStars;
 }
 
 export async function loadShop(): Promise<ShopSnapshot> {
@@ -45,7 +34,6 @@ export async function loadShop(): Promise<ShopSnapshot> {
     balance: spendable(r),
     lifetime: r.shells,
     pending: pending.sort((a, b) => a.requestedAt.localeCompare(b.requestedAt)),
-    shellsPerStars: s.shellsPerStars!,
   };
 }
 
@@ -106,12 +94,6 @@ export async function setBalance(n: number): Promise<void> {
     const r = await rewardsRow();
     await db.rewards.put({ ...r, spent: r.shells - n });
   });
-}
-
-/** The parent's shells per 3, 2 and 1 star answer (from the next answer on). */
-export async function setShellsPerStars(t: ShellsPerStars): Promise<void> {
-  if (!isValidShellsTable(t)) throw new Error('invalid table');
-  await saveSettings({ shellsPerStars: { 1: t[1], 2: t[2], 3: t[3] } });
 }
 
 /** The parent adds or removes an item's picture (a data: URL made on the device). */

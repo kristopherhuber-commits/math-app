@@ -3,20 +3,22 @@
 import { config, TOPICS, type TopicId } from '../engine/config';
 import { adapt, clampLevel, initialState, summarize } from '../engine/adaptive';
 import {
+  answerQuality,
   currentStreak,
   eqRunWithoutWalkthrough,
   isStreakMilestone,
   newBadges,
+  starsFor,
   updateStreak,
   type ActiveInterval,
   type BadgeId,
-  type Stars,
+  type Quality,
 } from '../engine/scoring';
 import { itemProgress, nextSlot } from '../engine/session';
-import { db, PROFILE_ID, type Assignment, type Attempt, type Settings } from './db';
+import { db, PROFILE_ID, type Assignment, type Attempt, type Settings, type TopicState } from './db';
 import { loadSettings } from './settings';
 import { emptyRewards } from './rewards';
-import { newlyUnlocked, shellsFor, spendable } from '../engine/rewards';
+import { newlyUnlocked, spendable } from '../engine/rewards';
 
 /** A local calendar day, 'YYYY-MM-DD' (streaks follow the learner's days, R-RWD-2). */
 export function localDay(d: Date | string = new Date()): string {
@@ -46,6 +48,19 @@ export async function topicLevel(topic: TopicId): Promise<number> {
   const bounds = (await practiceSettings()).levelBounds[topic];
   const ts = await topicState(topic);
   return ts ? clampLevel(ts.level, bounds) : initialState(topic, bounds).level;
+}
+
+/**
+ * The level that pays full stars (R-RWD-1, M7): the higher of the stored level and the highest level
+ * adaptive free practice promoted to, within the parent's bounds.
+ */
+export function starsLevel(
+  topic: TopicId,
+  ts: TopicState | undefined,
+  bounds: { min: number; max: number },
+): number {
+  const stored = ts ? clampLevel(ts.level, bounds) : initialState(topic, bounds).level;
+  return Math.max(stored, Math.min(ts?.freeBest ?? 0, bounds.max));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -132,13 +147,22 @@ export interface FinishContext {
   adaptive: boolean;
   /** Count stars, shells, streak and badges (not for fixed-level links). */
   rewarded: boolean;
+  /** A parent's level lock (R-SES-3): pays normally, without the below-level rule (R-RWD-1). */
+  locked?: boolean;
+  /** Adaptive free practice promoted to this level after this attempt (kept as `freeBest`, R-RWD-1). */
+  freePromotedTo?: number;
 }
 
 export interface FinishEvents {
-  stars: Stars;
+  /** R-RWD-1 (M7): 0–10. */
+  stars: number;
+  /** How the question was answered; sizes the celebration. */
+  quality: Quality;
+  /** R-RWD-1: a level below the learner's current level paid less than the answer would have earned. */
+  capped?: boolean;
   /** Shells to spend after this attempt. */
   shells: number;
-  /** Shells this attempt earned (the parent's table by stars). */
+  /** Shells this attempt earned (= its stars, R-RWD-4). */
   shellsEarned?: number;
   /** Cosmetics this attempt unlocked (worn at once). */
   unlocked?: string[];
@@ -165,30 +189,49 @@ const intervals = (all: Assignment[]): ActiveInterval[] =>
  * which activates the next queued assignment (R-SES-2).
  */
 export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promise<FinishEvents> {
-  const stars = attempt.stars ?? 1;
-  const bounds = ctx.adaptive ? (await practiceSettings()).levelBounds : null;
-  const earned = ctx.rewarded ? shellsFor(stars, (await loadSettings()).shellsPerStars!) : 0;
+  const how = { level: attempt.level, wrongTries: attempt.wrongTries ?? 0, maxHint: attempt.maxHint };
+  const quality = answerQuality(how);
+  const bounds = (await practiceSettings()).levelBounds[attempt.topic];
   return db.transaction('rw', [db.attempts, db.topicStates, db.rewards, db.assignments], async () => {
     const stored = await db.attempts.get(attempt.id);
     const rewards = (await db.rewards.get(PROFILE_ID)) ?? emptyRewards();
-    if (stored?.countedAt) return { stars, shells: spendable(rewards), badges: [] };
+    if (stored?.countedAt)
+      return { stars: stored.stars ?? 0, quality, shells: spendable(rewards), badges: [] };
     const now = new Date().toISOString();
-    await db.attempts.put({ ...attempt, countedAt: now, ...(ctx.rewarded ? { shellsEarned: earned } : {}) });
-    if (!ctx.rewarded) return { stars, shells: spendable(rewards), badges: [] };
-
-    const events: FinishEvents = { stars, shells: 0, shellsEarned: earned, badges: [] };
     const key = { profileId: PROFILE_ID, topic: attempt.topic };
+    const ts = await topicState(attempt.topic);
+    // R-RWD-1: fixed-level links skip the below-level rule; level locks pay normally.
+    const stars = ctx.rewarded
+      ? starsFor({ ...how, currentLevel: starsLevel(attempt.topic, ts, bounds), locked: ctx.locked ?? false })
+      : starsFor(how);
+    const earned = ctx.rewarded ? stars : 0;
+    await db.attempts.put({
+      ...attempt,
+      stars,
+      countedAt: now,
+      ...(ctx.rewarded ? { shellsEarned: earned } : {}),
+    });
+    if (!ctx.rewarded) return { stars, quality, shells: spendable(rewards), badges: [] };
+
+    const events: FinishEvents = { stars, quality, shells: 0, shellsEarned: earned, badges: [] };
+    if (stars < starsFor(how)) events.capped = true;
 
     // Adaptive level (R-ADP-2…5). Attempts at another level (after a walkthrough) don't count.
-    if (bounds) {
-      const b = bounds[attempt.topic];
-      const ts = (await topicState(attempt.topic)) ?? { ...key, ...initialState(attempt.topic, b) };
-      if (attempt.level === ts.level) {
-        const r = adapt(ts, summarize(attempt.id, { ...attempt, wrongTries: attempt.wrongTries ?? 0 }), b);
-        await db.topicStates.put({ ...key, level: r.level, window: r.window });
-        if (r.change === 'promote') events.levelUp = r.level;
-      }
+    const state = ts ?? { ...key, ...initialState(attempt.topic, bounds) };
+    let next: TopicState = state;
+    if (ctx.adaptive && attempt.level === state.level) {
+      const r = adapt(
+        state,
+        summarize(attempt.id, { ...attempt, wrongTries: attempt.wrongTries ?? 0 }),
+        bounds,
+      );
+      next = { ...state, level: r.level, window: r.window };
+      if (r.change === 'promote') events.levelUp = r.level;
     }
+    // Adaptive free practice promotions raise the level that pays full stars (R-RWD-1).
+    if (ctx.freePromotedTo !== undefined && ctx.freePromotedTo > (next.freeBest ?? 0))
+      next = { ...next, freeBest: ctx.freePromotedTo };
+    if (next !== state) await db.topicStates.put(next);
 
     // Lifetime shells (never go down) unlock cosmetics, which are worn at once (R-RWD-4, M6).
     const unlocked = newlyUnlocked(rewards.shells, rewards.shells + earned).map((c) => c.id);
@@ -218,7 +261,8 @@ export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promi
           await db.assignments.put({ ...a, status: 'done', completedAt: now });
           const next = all.filter((x) => x.status === 'queued').sort((x, y) => x.position - y.position)[0];
           if (next) await db.assignments.put({ ...next, status: 'active', activatedAt: now });
-          assignmentDone = { perfect: finished.every((f) => f.stars === 3) };
+          // R-RWD-3: every answer on the first try with no hint above H1.
+          assignmentDone = { perfect: finished.every((f) => f.clean) };
           events.assignmentDone = a.id;
         }
       }
@@ -295,8 +339,8 @@ export interface Summary {
   stars: number;
   /** Shells earned in this assignment. */
   shells: number;
-  /** Per item topic, in the assignment's order: how many 3, 2 and 1 star answers. */
-  byTopic: { topic: TopicId; stars: Record<Stars, number> }[];
+  /** Per item topic, in the assignment's order: stars earned and questions answered. */
+  byTopic: { topic: TopicId; stars: number; questions: number }[];
   /** Badges earned while this assignment was active. */
   badges: string[];
   freeOpen: boolean;
@@ -316,9 +360,8 @@ export async function assignmentSummary(id: string): Promise<Summary | null> {
     stars: finished.reduce((s, f) => s + (f.stars ?? 0), 0),
     shells: finished.reduce((s, f) => s + (f.shellsEarned ?? f.stars ?? 0), 0),
     byTopic: topics.map((topic) => {
-      const stars: Record<Stars, number> = { 3: 0, 2: 0, 1: 0 };
-      for (const f of finished) if (f.topic === topic && f.stars) stars[f.stars]++;
-      return { topic, stars };
+      const mine = finished.filter((f) => f.topic === topic);
+      return { topic, stars: mine.reduce((s, f) => s + (f.stars ?? 0), 0), questions: mine.length };
     }),
     badges: rewards.badges.filter((b) => b.at >= from && b.at <= to).map((b) => b.id),
     freeOpen: (await homeSnapshot()).freeOpen,

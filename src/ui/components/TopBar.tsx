@@ -28,11 +28,11 @@ export function Counter({ value, label, icon }: { value: number; label: string; 
   const [initial] = useState(value);
   return (
     <span className="counter-pill" aria-label={label} role="status">
-      <span key={value} className={value !== initial ? 'counter-icon bumped' : 'counter-icon'}>
+      <span key={`icon-${value}`} className={value !== initial ? 'counter-icon bumped' : 'counter-icon'}>
         {icon}
       </span>
       <span
-        key={value}
+        key={`value-${value}`}
         className={value !== initial ? 'counter-value bumped' : 'counter-value'}
         aria-hidden="true"
       >

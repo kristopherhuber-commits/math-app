@@ -1,10 +1,12 @@
-// Multiple-choice and select-all flows (R-HELP-1…6, R-NC-2/3, R-ANS-1), without a browser.
+// Multiple-choice and number-set flows (R-HELP-1…6, R-NC-2/3, R-ANS-1), without a browser.
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 import { mcReducer, startMc, type McState } from '../../src/ui/practice/mcReducer';
-import { ncReducer, startNc } from '../../src/ui/practice/ncReducer';
+import { ncReducer, startNc, type NcState } from '../../src/ui/practice/ncReducer';
 import { CORRECT } from '../../src/engine/topics/mc';
-import { NC_SETS, ncMembership } from '../../src/engine/topics/nc/checker';
+import { innermostSet, NC_SETS } from '../../src/engine/topics/nc/checker';
+import { answerQuality } from '../../src/engine/scoring';
+import type { NcSet } from '../../src/engine/topics/walk';
 
 const wrongIds = (s: McState) => s.question.options.filter((o) => o.code !== CORRECT).map((o) => o.id);
 const rightId = (s: McState) => s.question.options.find((o) => o.code === CORRECT)!.id;
@@ -25,16 +27,17 @@ describe('multiple choice (RD, FDP, PC)', () => {
   });
 
   it.each([
-    ['second try', 1, false, 2],
-    ['H1 only', 0, true, 2],
-    ['second try with H1', 1, true, 2],
-    ['third try (H1 opened by the second wrong)', 2, false, 1],
-  ] as const)('stars on solve: %s → %i ★ (R-RWD-1)', (_n, wrong, h1, stars) => {
+    ['second try', 1, false, 'one'],
+    ['H1 only', 0, true, 'full'],
+    ['second try with H1', 1, true, 'one'],
+    ['third try (H1 opened by the second wrong)', 2, false, 'none'],
+  ] as const)('how it was answered: %s → %s (R-RWD-1)', (_n, wrong, h1, quality) => {
     let s = startMc('PC', 2, 5);
     if (h1) s = mcReducer(s, { type: 'help' });
     for (const id of wrongIds(s).slice(0, wrong)) s = pick(s, id);
     s = pick(s, rightId(s));
-    expect(s.attempt).toMatchObject({ stars, wrongTries: wrong });
+    expect(s.attempt.wrongTries).toBe(wrong);
+    expect(answerQuality({ wrongTries: s.attempt.wrongTries!, maxHint: s.attempt.maxHint })).toBe(quality);
   });
 
   it('second wrong opens H1 and pulses Help; later wrongs advance and offer the walkthrough (R-HELP-2)', () => {
@@ -52,13 +55,13 @@ describe('multiple choice (RD, FDP, PC)', () => {
     expect(s.attempt.maxHint).toBe(2);
   });
 
-  it('correct first time is a clean solve with 3 stars (R-ADP-1, R-RWD-1)', () => {
+  it('correct first time is a clean solve (R-ADP-1; full stars, R-RWD-1)', () => {
     let s = startMc('PC', 1, 3);
     s = pick(s, rightId(s));
     expect(s.solved).toBe(true);
     expect(s.attempt.clean).toBe(true);
     expect(s.attempt.tries).toEqual([expect.objectContaining({ verdict: 'correct' })]);
-    expect(s.attempt).toMatchObject({ stars: 3, wrongTries: 0 });
+    expect(s.attempt).toMatchObject({ wrongTries: 0, maxHint: 0 });
   });
 
   it('Help any time, then the walkthrough to the end counts as done (R-HELP-3/6)', () => {
@@ -93,45 +96,62 @@ describe('multiple choice (RD, FDP, PC)', () => {
   });
 });
 
-describe('select-all (NC)', () => {
-  const answer = (level: number, seed: number) => {
-    const s = startNc(level, seed);
-    const m = ncMembership(s.question.value, false);
-    return { s, right: NC_SETS.filter((x) => m[x]) };
-  };
-  const tick = (s: ReturnType<typeof startNc>, sets: readonly string[]) =>
-    sets.reduce((acc, set) => ncReducer(acc, { type: 'toggle', set: set as never }), s);
+describe('number sets: the smallest set only (NC, R-NC-2/3, M7)', () => {
+  const choose = (s: NcState, set: NcSet) =>
+    ncReducer(ncReducer(s, { type: 'select', set }), { type: 'check' });
 
-  it('exactly the right boxes solve it; nothing is ticked for the learner (R-NC-2/4)', () => {
-    const { s, right } = answer(3, 5);
-    expect(s.ticked).toEqual([]);
-    const done = ncReducer(tick(s, right), { type: 'check' });
+  it('the smallest set solves it; nothing is chosen for the learner', () => {
+    const s = startNc(3, 5);
+    expect(s.selected).toBeNull();
+    const done = choose(s, innermostSet(s.question.value));
     expect(done.solved).toBe(true);
+    expect(done.attempt.tries).toEqual([expect.objectContaining({ verdict: 'correct' })]);
   });
 
-  it('second wrong outlines the mismatched boxes, without direction (R-NC-3)', () => {
-    const { s, right } = answer(3, 5);
-    // Level 3 numbers are rational, so Irrational alone misses every right box and adds one.
-    let t = ncReducer(tick(s, ['irrational']), { type: 'check' });
-    expect(t.flagged).toEqual([]); // first wrong: "Not quite" only
-    expect(t.feedback).not.toBeNull();
-    t = ncReducer(t, { type: 'check' });
-    expect(t.flagged.sort()).toEqual([...right, 'irrational'].sort());
-    expect(t.hintOpen).toBe(true);
-    // Toggling a flagged box clears its outline.
-    t = ncReducer(t, { type: 'toggle', set: t.flagged[0]! });
-    expect(t.flagged).toHaveLength(right.length);
+  it('a larger set that contains it is not quite: greyed, with the "smaller one" line (R-NC-3)', () => {
+    const s = startNc(3, 5); // level 3: a disguised integer
+    const smallest = innermostSet(s.question.value);
+    const t = choose(s, 'rational');
+    expect(smallest).not.toBe('rational');
+    expect(t.solved).toBe(false);
+    expect(t.tried).toEqual(['rational']);
+    expect(t.feedback?.code).toBe('NC-CONTAINS');
+    expect(t.attempt.tries.at(-1)).toMatchObject({
+      answer: 'rational',
+      verdict: 'wrong',
+      diagnostic: 'NC-CONTAINS',
+    });
+    // A greyed card can't be chosen again.
+    expect(ncReducer(t, { type: 'select', set: 'rational' }).selected).toBeNull();
   });
 
-  it('the natural-numbers setting changes the answer for 0 (§6.1)', () => {
+  it('a set it is not in says so; the second wrong opens H1 (R-HELP-2)', () => {
+    let t = choose(startNc(3, 5), 'irrational');
+    expect(t.feedback?.code).toBe('NC-NOT-IN');
+    expect(t.hintOpen).toBe(false);
+    t = choose(t, 'rational');
+    expect([t.hintOpen, t.hintTier]).toEqual([true, 1]);
+  });
+
+  it('0 is whole, not natural (parent decision 2026-09-27)', () => {
     let s = startNc(1, 0);
-    // Find a seed whose number is 0.
-    for (let seed = 0; seed < 500 && !(s.question.form === 'zero'); seed++) s = startNc(1, seed);
+    for (let seed = 0; seed < 500 && s.question.form !== 'zero'; seed++) s = startNc(1, seed);
     expect(s.question.form).toBe('zero');
-    const withZero = ncReducer(s, { type: 'naturalIncludesZero', value: true });
-    const ticked = tick(withZero, ['natural', 'whole', 'integer', 'rational']);
-    expect(ncReducer(ticked, { type: 'check' }).solved).toBe(true);
-    const ticked2 = tick(s, ['natural', 'whole', 'integer', 'rational']);
-    expect(ncReducer(ticked2, { type: 'check' }).solved).toBe(false);
+    expect(choose(s, 'natural').feedback?.code).toBe('NC-NOT-IN');
+    expect(choose(s, 'whole').solved).toBe(true);
+  });
+
+  it('any seed: at most 4 not-quite cards, then the smallest set solves it', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 1, max: 5 }), fc.integer({ min: 0, max: 0xffffffff }), (level, seed) => {
+        let s = startNc(level, seed);
+        const smallest = innermostSet(s.question.value);
+        for (const set of NC_SETS.filter((x) => x !== smallest)) s = choose(s, set);
+        expect(s.solved).toBe(false);
+        expect(s.tried).toHaveLength(4);
+        expect(choose(s, smallest).solved).toBe(true);
+      }),
+      { numRuns: 200 },
+    );
   });
 });

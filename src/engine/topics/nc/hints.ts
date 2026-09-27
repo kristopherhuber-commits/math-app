@@ -1,6 +1,7 @@
 // NC hints and the sets-map walkthrough (requirements §6.1, R-HELP-4/5, design.md §5 SetsMap).
 // H1 starts at the smallest set; H2 is specific to the written form; H3 reduces the number, places it
-// in its innermost set, lights up every set containing that one, and lists the boxes to tick.
+// in its innermost set, lights up every set containing that one, and names the smallest set, the
+// answer (R-NC-2, M7).
 import { rat, sign, type Rational } from '../../rational';
 import { mulberry32, type Rng } from '../../rng';
 import { fromRational } from '../../numbers/decimal';
@@ -10,7 +11,7 @@ import { miniQuestion, type ColumnRow, type NcSet, type NumWalkStep } from '../w
 import { innermostSet, NC_SETS, ncMembership } from './checker';
 import type { NcQuestion } from './generator';
 
-export function ncHint(q: NcQuestion, tier: 1 | 2, naturalIncludesZero: boolean): HintContent {
+export function ncHint(q: NcQuestion, tier: 1 | 2): HintContent {
   const x = q.shown.latex;
   if (tier === 1) return content('nc.h1', { x });
   const p: Record<string, string> = { x };
@@ -39,7 +40,7 @@ export function ncHint(q: NcQuestion, tier: 1 | 2, naturalIncludesZero: boolean)
       case 'negFraction':
         return content('nc.h2.fraction', p);
       case 'zero':
-        return content(naturalIncludesZero ? 'nc.h2.zero.natural' : 'nc.h2.zero', p);
+        return content('nc.h2.zero', p);
       case 'negInt':
         return content('nc.h2.negInt', p);
       default:
@@ -115,12 +116,12 @@ function ninesSteps(v: Rational, rng: Rng): NumWalkStep[] {
 }
 
 /** H3 on the sets map (R-HELP-4). */
-export function ncWalkthrough(q: NcQuestion, naturalIncludesZero: boolean): NumWalkStep[] {
+export function ncWalkthrough(q: NcQuestion): NumWalkStep[] {
   const rng = mulberry32(q.seed ^ 0x5e75);
   const steps: NumWalkStep[] = [];
   const x = q.shown.latex;
-  const place = innermostSet(q.value, naturalIncludesZero);
-  const m = ncMembership(q.value, naturalIncludesZero);
+  const place = innermostSet(q.value);
+  const m = ncMembership(q.value);
 
   // 1. What number is it, really? (disguised forms are reduced first, R-NC-1)
   if (q.value.kind === 'irrational') {
@@ -190,7 +191,7 @@ export function ncWalkthrough(q: NcQuestion, naturalIncludesZero: boolean): NumW
     sets: { place, lit },
   });
 
-  // 4. The boxes to tick.
-  steps.push({ explain: content('nc.walk.tick', { sets: lit.join(',') }), sets: { place, lit } });
+  // 4. The answer: the smallest set (R-NC-2, M7).
+  steps.push({ explain: content('nc.walk.answer', { set: place }), sets: { place, lit } });
   return steps;
 }

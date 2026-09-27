@@ -2,7 +2,7 @@
 // attempts persisted to IndexedDB.
 import { expect, test, type Page } from '@playwright/test';
 import { generateEq } from '../src/engine/topics/eq/generator';
-import { openHome } from './helpers';
+import { fullStarsText, openHome } from './helpers';
 import { eqWalkthrough } from '../src/engine/topics/eq/hints';
 
 const LEVEL = 4;
@@ -41,7 +41,7 @@ test('solve a typed equation with the on-screen keypad (mouse or touch)', async 
   const how = info.project.use.hasTouch ? 'tap' : 'click';
   for (const line of lines) await enterByKeypad(page, line, how);
   await expect(page.getByText('Solved!')).toBeVisible();
-  await expect(page.getByText('3 stars! Brilliant!')).toBeVisible();
+  await expect(page.getByText(fullStarsText(LEVEL))).toBeVisible();
   await expect(page.getByRole('button', { name: 'Next question' })).toBeFocused();
   await expect(page.locator('.step-line')).toHaveCount(lines.length + 1);
 });

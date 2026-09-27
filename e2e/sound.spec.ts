@@ -19,7 +19,7 @@ async function answerWrongThenRight(page: Page) {
   await expect(page.getByText('Not quite.')).toBeVisible();
   await page.locator('.mc-option').nth(correct).click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByText('2 stars! Nice work!')).toBeVisible();
+  await expect(page.getByText('1 star. Nice work!')).toBeVisible();
 }
 
 test.beforeEach(async ({ page }) => {
