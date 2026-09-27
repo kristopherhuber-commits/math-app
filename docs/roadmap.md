@@ -4,7 +4,7 @@ Future work only: everything here is still to be done. Each item moves **idea �
 
 Precedence is unchanged: `requirements.md` > `design.md` > mockups. Nothing here overrides them until it is approved and written in.
 
-To build an item, a session reads `CLAUDE.md`, `docs/requirements.md`, `docs/design.md`, `progress.md` and this file, plans the item in plan mode, asks the open questions listed under it, and waits for the parent's approval.
+To build an item, a session reads `docs/requirements.md`, `docs/design.md`, `progress.md` and this file, plans the item in plan mode, asks the open questions listed under it, and waits for the parent's approval.
 
 ---
 
@@ -12,17 +12,17 @@ To build an item, a session reads `CLAUDE.md`, `docs/requirements.md`, `docs/des
 
 | # | Item | Status | Priority |
 |---|---|---|---|
-| R1 | Stars by level, and shells = stars | proposed (decisions in progress) | high |
-| R2 | Number sets: the smallest set only | proposed | high |
-| R3 | Tutorials for each topic | idea | — |
-| R4 | Editable shop list (was M7) | deferred by the parent | low |
-| R5 | Compact portrait keypad for typed equations; touch-drag check on the Surface Pro | parked | low |
-| R6 | Dark-mode switch | idea | low |
-| R7 | Run the Playwright specs in CI | idea | low |
+| RM-1 | Stars by level, and shells = stars | proposed (decisions in progress) | high |
+| RM-2 | Number sets: the smallest set only | proposed | high |
+| RM-3 | Tutorials for each topic | idea | — |
+| RM-4 | Editable shop list (was M7) | deferred by the parent | low |
+| RM-5 | Compact portrait keypad for typed equations; touch-drag check on the Surface Pro | parked | low |
+| RM-6 | Dark-mode switch | idea | low |
+| RM-7 | Run the Playwright specs in CI | idea | low |
 
 ---
 
-### R1 Stars by level, and shells = stars
+### RM-1 Stars by level, and shells = stars
 
 **Problem.** Every question pays 1–3 stars whatever its level, so staying at easy levels pays as well as moving up, and guessing on multiple choice pays.
 
@@ -43,7 +43,7 @@ To build an item, a session reads `CLAUDE.md`, `docs/requirements.md`, `docs/des
 
 **Touches:** R-RWD-1, R-RWD-4, R-HELP-6, R-PAR-7, R-SES-7; design.md §5 Celebration; `src/engine/scoring.ts`, `config.ts`.
 
-### R2 Number sets: the smallest set only
+### RM-2 Number sets: the smallest set only
 
 **Problem.** The parent wants the learner to name the one smallest set a number belongs to, not tick every set.
 
@@ -55,16 +55,16 @@ To build an item, a session reads `CLAUDE.md`, `docs/requirements.md`, `docs/des
 
 **Touches:** §6.1 R-NC-2/3/4, R-PAR-5, design.md §5 SetCheckbox; `src/engine/topics/nc/`, `NcPractice.tsx`, `ncReducer.ts`. Old attempts must still replay in Missed questions.
 
-### R3 Tutorials for each topic
+### RM-3 Tutorials for each topic
 
 **Idea.** A short tutorial per topic (NC, RD, FDP, PC, EQ) that teaches the method before practice.
 
 **Open questions:** interactive (like the walkthrough) or read-only? Where it is opened (topic tile, Help, first visit)? Does it earn anything? Which examples? (Examples must come from seeded generators and be verified in tests, like all math content.)
 
-### R4 Editable shop list
+### RM-4 Editable shop list
 
 See `progress.md` §10: add, rename and remove rewards in Parent › Rewards; new items need art or the parent's picture; a rule for removing an item with a pending request.
 
-### R5–R7
+### RM-5 to RM-7
 
 See `progress.md` §10.

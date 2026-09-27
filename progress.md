@@ -2,7 +2,7 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-27 · Current state: **v1 finished (M0–M6 done and deployed, 2026-09-25). Future work is in `docs/roadmap.md`; R1 (stars by level) and R2 (smallest number set) are being decided.**
+Last updated: 2026-09-27 · Current state: **v1 finished (M0–M6 done and deployed, 2026-09-25). Future work is in `docs/roadmap.md`; RM-1 (stars by level) and RM-2 (smallest number set) are being decided.**
 
 ---
 
@@ -99,8 +99,8 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-25 | After M6: sounds | **Off by default**; the parent turns them on in Settings. A device that saved its settings before this keeps what it had. |
 | 2026-09-25 | M6: compact portrait keypad; real-tablet drag check | **Stay parked.** |
 | 2026-09-26 | The 0.999… walkthrough and H2 hint in Number sets | **Use the x-method** (x = 0.999…, 10x = 9.999…, 9x = 9), as in Repeating decimals, instead of "3 × 1/3". Built and deployed (`fa82d80`). |
-| 2026-09-26/27 | Stars, shells and levels | Stars = shells; harder levels pay more (steep); current level and above pay full, one below 1, two or more below 0; no bonus for 0.999…; shop prices 200 / 2,000. Details and open questions: `docs/roadmap.md` R1. **Not built; `requirements.md` not yet changed.** |
-| 2026-09-26/27 | Number sets | **The smallest set only** (one answer); natural numbers start at 1, so 0 → Whole; the "natural numbers include 0" setting goes. `docs/roadmap.md` R2. **Not built.** |
+| 2026-09-26/27 | Stars, shells and levels | Stars = shells; harder levels pay more (steep); current level and above pay full, one below 1, two or more below 0; no bonus for 0.999…; shop prices 200 / 2,000. Details and open questions: `docs/roadmap.md` RM-1. **Not built; `requirements.md` not yet changed.** |
+| 2026-09-26/27 | Number sets | **The smallest set only** (one answer); natural numbers start at 1, so 0 → Whole; the "natural numbers include 0" setting goes. `docs/roadmap.md` RM-2. **Not built.** |
 | 2026-09-27 | Future work | Kept in a new `docs/roadmap.md`. |
 | 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. |
 
