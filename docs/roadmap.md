@@ -1,6 +1,6 @@
 # Roadmap: Turtle & Penguin Math
 
-Future work that is not built yet. Each item moves **idea → proposed → approved → scheduled (M-number) → done**. Once an item is approved, its rules are written into `docs/requirements.md` (new or changed `R-…` IDs) and it gets a milestone; `progress.md` tracks the build. This file then only links to it.
+Future work only: everything here is still to be done. Each item moves **idea → proposed → approved → scheduled (M-number)**. Once an item is approved, its rules are written into `docs/requirements.md` (new or changed `R-…` IDs) and it gets a milestone; `progress.md` tracks the build. **When it is built, it is deleted from this file.** The history is in `progress.md` and `requirements.md` §15.
 
 Precedence is unchanged: `requirements.md` > `design.md` > mockups. Nothing here overrides them until it is approved and written in.
 
