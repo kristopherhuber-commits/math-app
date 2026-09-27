@@ -102,7 +102,17 @@ describe.each([1, 2, 3, 4, 5])('NC level %i (R-TEST-2)', (level) => {
         const expected = oracle(readValue(q), zeroNatural);
         const last = steps.at(-1)!;
         expect(new Set(last.explain.params.sets!.split(','))).toEqual(expected);
-        const place = steps.find((s) => s.mini)!;
+        const place = steps.find((s) => s.mini && s.sets)!;
+        if (q.form === 'nines') {
+          // The x-method: 10x − x = 9x, and 9x / 9 is the number without its sign.
+          const read = readValue(q) as Rational;
+          const abs = read.n < 0n ? -read.n : read.n;
+          const cols = steps.find((s) => s.columns)!.columns!;
+          expect(cols.result.whole).toBe(`${9n * abs}`);
+          expect(BigInt(cols.top.whole) - BigInt(cols.bottom.whole)).toBe(9n * abs);
+          expect(steps.some((s) => s.math?.includes(`x = \\frac{${9n * abs}}{9} = ${abs}`))).toBe(true);
+          expect(ncHint(q, 2, zeroNatural).id).toBe(read.n < 0n ? 'nc.h2.nines.neg' : 'nc.h2.nines');
+        }
         const smallest = NC_SETS.find((s) => expected.has(s))!;
         expect(place.mini!.options[place.mini!.correct]!.text).toBe(smallest);
         expect(new Set(place.mini!.options.map((o) => o.text)).size).toBe(3);

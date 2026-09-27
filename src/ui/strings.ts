@@ -632,7 +632,9 @@ export function numText(h: HintContent): string {
     case 'nc.h2.pointZero':
       return `§${p.x}§ has only zeros after the point. Which integer is it?`;
     case 'nc.h2.nines':
-      return `What is §3 \\times 0.333\\text{…}§? And what is §3 \\times \\frac{1}{3}§? What does that tell you about §${p.x}§?`;
+      return `Try the x-method: call §x = ${p.xs}§. What is §10x§? Take §x§ away from §10x§: what is left?`;
+    case 'nc.h2.nines.neg':
+      return `Leave the minus sign aside and try the x-method: call §x = ${p.xs}§. What is §10x§? Take §x§ away from §10x§: what is left?`;
     case 'nc.h2.decimal':
       return `§${p.x}§ stops. Can you write it as a fraction over §${p.over}§?`;
     case 'nc.h2.repeating':
@@ -659,8 +661,10 @@ export function numText(h: HintContent): string {
       return 'First, what number is it? Divide:';
     case 'nc.walk.value.pointZero':
       return 'Zeros after the point don’t change the value:';
+    case 'nc.walk.nines.sign':
+      return `The number is negative. Leave the minus sign aside for now and work with §${p.x}§.`;
     case 'nc.walk.value.nines':
-      return `§${p.x}§ is a number in disguise. Three thirds make one whole:`;
+      return `So §${p.x}§ is really §${p.v}§. It is a number in disguise:`;
     case 'nc.walk.value.decimal':
       return `§${p.x}§ stops, so write it over §${p.over}§:`;
     case 'nc.walk.value.repeating':

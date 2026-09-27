@@ -1,12 +1,12 @@
 // NC hints and the sets-map walkthrough (requirements §6.1, R-HELP-4/5, design.md §5 SetsMap).
 // H1 starts at the smallest set; H2 is specific to the written form; H3 reduces the number, places it
 // in its innermost set, lights up every set containing that one, and lists the boxes to tick.
-import { rat, sign } from '../../rational';
-import { mulberry32 } from '../../rng';
+import { rat, sign, type Rational } from '../../rational';
+import { mulberry32, type Rng } from '../../rng';
 import { fromRational } from '../../numbers/decimal';
-import { showFraction, type Shown } from '../../numbers/display';
+import { showDecimal, showFraction, showInteger, type Shown } from '../../numbers/display';
 import { content, type HintContent } from '../content';
-import { miniQuestion, type NcSet, type NumWalkStep } from '../walk';
+import { miniQuestion, type ColumnRow, type NcSet, type NumWalkStep } from '../walk';
 import { innermostSet, NC_SETS, ncMembership } from './checker';
 import type { NcQuestion } from './generator';
 
@@ -25,8 +25,10 @@ export function ncHint(q: NcQuestion, tier: 1 | 2, naturalIncludesZero: boolean)
         return content('nc.h2.zeroFraction', { x, b: q.shown.text.split('/')[1]! });
       case 'pointZero':
         return content('nc.h2.pointZero', p);
-      case 'nines':
-        return content('nc.h2.nines', p);
+      case 'nines': {
+        const w = (v.n < 0n ? -v.n : v.n) - 1n;
+        return content(v.n < 0n ? 'nc.h2.nines.neg' : 'nc.h2.nines', { x, xs: nines(w).latex });
+      }
       case 'decimal':
       case 'negDecimal':
         return content('nc.h2.decimal', { x, over: `${10 ** fromRational(v).nonRep.length}` });
@@ -48,6 +50,69 @@ export function ncHint(q: NcQuestion, tier: 1 | 2, naturalIncludesZero: boolean)
 }
 
 const setShown = (s: NcSet): Shown => ({ kind: 'text', latex: s, text: s, speech: s });
+
+/** w.999… for a whole part w, written digit by digit (as a Rational it would read as w + 1). */
+const nines = (w: bigint): Shown =>
+  showDecimal({ negative: false, whole: w, nonRep: '', block: '9' }, 'ellipsis');
+const int = (n: bigint) => ({ value: rat(n), shown: showInteger(n) });
+const ninesRow = (label: string, w: bigint, sign: '' | '−' = ''): ColumnRow => ({
+  label,
+  sign,
+  whole: `${w}`,
+  frac: '999',
+  ellipsis: true,
+  tail: true,
+});
+
+/**
+ * The x-method for ±w.999… (the level 5 challenge), as in the RD walkthrough (§6.2): x = w.999…,
+ * 10x = (10w + 9).999…, subtract, 9x = 9w + 9, x = w + 1. Built from digits, because the value
+ * v = ±(w + 1) can't show its own nines. A minus sign is set aside first and put back at the end.
+ */
+function ninesSteps(v: Rational, rng: Rng): NumWalkStep[] {
+  const neg = v.n < 0n;
+  const one = neg ? -v.n : v.n; // w + 1
+  const w = one - 1n;
+  const xs = nines(w).latex;
+  const steps: NumWalkStep[] = [];
+  if (neg) steps.push({ explain: content('nc.walk.nines.sign', { x: xs }) });
+  steps.push({ explain: content('rd.walk.let', { x: xs }), math: [`x = ${xs}`] });
+  steps.push({
+    explain: content('rd.walk.block', { block: '9' }),
+    mini: miniQuestion(rng, content('rd.walk.mini.blockLength'), int(1n), [int(2n), int(3n)]),
+    reveal: content('rd.walk.block.reveal', { k: '1', pow: '10' }),
+  });
+  const times = (p: bigint) => ({ value: rat(one * p), shown: nines(one * p - 1n) });
+  steps.push({
+    explain: content('rd.walk.shift', { pow: '10', k: '1', block: '9' }),
+    mini: miniQuestion(rng, content('rd.walk.mini.times', { pow: '10', x: xs }), times(10n), [
+      times(1n),
+      times(100n),
+    ]),
+    math: [`10x = ${nines(10n * w + 9n).latex}`],
+  });
+  const diff = 9n * w + 9n;
+  steps.push({
+    explain: content('rd.walk.subtract', { left: '10x - x', right: `${nines(10n * w + 9n).latex} - ${xs}` }),
+    columns: {
+      top: ninesRow('10x', 10n * w + 9n),
+      bottom: ninesRow('x', w, '−'),
+      result: { label: '9x', sign: '', whole: `${diff}`, frac: '', ellipsis: false, tail: false },
+    },
+    mini: miniQuestion(rng, content('rd.walk.mini.difference', { coef: '9' }), int(diff), [
+      int(10n * w + 9n),
+      int(diff + 1n),
+      int(diff - 1n),
+    ]),
+    reveal: content('rd.walk.cancel'),
+    math: [`9x = ${diff}`],
+  });
+  steps.push({
+    explain: content('rd.walk.divide', { coef: '9' }),
+    math: [`x = \\frac{${diff}}{9} = ${one}`],
+  });
+  return steps;
+}
 
 /** H3 on the sets map (R-HELP-4). */
 export function ncWalkthrough(q: NcQuestion, naturalIncludesZero: boolean): NumWalkStep[] {
@@ -72,13 +137,9 @@ export function ncWalkthrough(q: NcQuestion, naturalIncludesZero: boolean): NumW
         steps.push({ explain: content('nc.walk.value.pointZero', { x }), math: [`${x} = ${exact}`] });
         break;
       case 'nines':
-        steps.push({
-          explain: content('nc.walk.value.nines', { x }),
-          math: [
-            '3 \\times 0.333\\text{…} = 0.999\\text{…}',
-            '3 \\times \\frac{1}{3} = 1',
-            `${x} = ${exact}`,
-          ],
+        steps.push(...ninesSteps(v, rng), {
+          explain: content('nc.walk.value.nines', { x, v: exact }),
+          math: [`${x} = ${exact}`],
         });
         break;
       case 'decimal':
