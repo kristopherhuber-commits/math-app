@@ -108,7 +108,7 @@ export interface Attempt {
   finishedAt?: string;
   tries: TryRecord[];
   maxHint: 0 | 1 | 2 | 3;
-  /** R-RWD-1: 1–3 before M7; 0–10 since (by level, tries and hints). */
+  /** R-RWD-1: 1–3 before M7; 0–8 since (by level, tries and hints). */
   stars?: number;
   clean: boolean;
   /** v2: wrong tries (EQ: two rejections on a step = one), for stars and R-ADP-3. */

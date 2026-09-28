@@ -18,7 +18,7 @@ export function answerQuality(o: { wrongTries: number; maxHint: number }): Quali
   return 'full';
 }
 
-/** Full stars for a question at this level (R-RWD-1 default: 1, 2, 4, 6, 8, 10). */
+/** Full stars for a question at this level (R-RWD-1 default: 1, 2, 4, 6, 8). */
 export function fullStars(level: number): number {
   const t = config.stars.fullByLevel;
   return t[Math.min(Math.max(level, 1), t.length) - 1]!;
@@ -26,6 +26,8 @@ export function fullStars(level: number): number {
 
 export interface StarsInput {
   level: number;
+  /** The level whose full stars it pays, when not its own: EQ L6 pays the level it reviews (3–5). */
+  paysAs?: number;
   wrongTries: number;
   maxHint: number;
   /**
@@ -38,13 +40,14 @@ export interface StarsInput {
 }
 
 /**
- * Stars for a finished question (R-RWD-1, M7): full stars by level, 1 for a second try or H2, 0 for
+ * Stars for a finished question (R-RWD-1, M7): full stars by level (an EQ L6 review question
+ * pays its source level), 1 for a second try or H2, 0 for
  * three or more tries or the walkthrough. One level below the current level pays at most 1; two or
  * more below pay 0. Shells equal stars (R-RWD-4).
  */
 export function starsFor(o: StarsInput): number {
   const q = answerQuality(o);
-  const base = q === 'full' ? fullStars(o.level) : q === 'one' ? 1 : 0;
+  const base = q === 'full' ? fullStars(o.paysAs ?? o.level) : q === 'one' ? 1 : 0;
   if (o.currentLevel === undefined || o.locked) return base;
   const below = o.currentLevel - o.level;
   if (below >= 2) return 0;

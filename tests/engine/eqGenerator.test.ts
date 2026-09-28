@@ -189,6 +189,21 @@ function linOf(text: string, v: string) {
 }
 
 describe('level coverage', () => {
+  it('R-RWD-1: levels 1–5 pay their own stars; level 6 pays the level it reviews (3, 4 and 5 all occur)', () => {
+    for (let level = 1; level <= 5; level++)
+      for (let seed = 0; seed < 50; seed++) expect(generateEq(level, seed).starsLevel).toBe(level);
+    const seen = new Set<number>();
+    for (let seed = 0; seed < 300; seed++) seen.add(generateEq(6, seed).starsLevel);
+    expect([...seen].sort()).toEqual([3, 4, 5]);
+  });
+  it('R-RWD-1: an L6 question pays level 5 exactly when it has fraction coefficients or a level-5 form', () => {
+    const l5Forms = new Set<string>();
+    for (let seed = 0; seed < 300; seed++) l5Forms.add(generateEq(5, seed).form);
+    for (let seed = 0; seed < 300; seed++) {
+      const q = generateEq(6, seed);
+      expect(l5Forms.has(q.form)).toBe(q.starsLevel === 5);
+    }
+  });
   it('level 6 includes negative fraction solutions', () => {
     let found = false;
     for (let seed = 0; seed < 2000 && !found; seed++) {

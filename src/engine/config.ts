@@ -186,7 +186,7 @@ export const config = {
     at: number;
   }[],
   /** R-RWD-1 (M7): full stars by level, index = level − 1. Shells equal stars (R-RWD-4). */
-  stars: { fullByLevel: [1, 2, 4, 6, 8, 10] as readonly number[] },
+  stars: { fullByLevel: [1, 2, 4, 6, 8] as readonly number[] },
   /** The most shells to spend the parent can set (R-PAR-7). */
   shells: { maxBalance: 1_000_000 },
   /** Home beach: at most this many shells drawn on the sand (design.md §7.1). */

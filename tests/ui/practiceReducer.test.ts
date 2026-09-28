@@ -20,6 +20,15 @@ describe('practiceReducer', () => {
     expect(s.attempt.seed).toBe(12345);
   });
 
+  it('stores the level a question pays as (R-RWD-1): its own, or the one an L6 question reviews', () => {
+    expect(startPractice(4, 1).attempt.params).toMatchObject({ level: 4, starsLevel: 4 });
+    for (let seed = 0; seed < 20; seed++) {
+      const s = startPractice(6, seed);
+      expect(s.attempt.params).toMatchObject({ level: 6, starsLevel: s.question.starsLevel });
+      expect([3, 4, 5]).toContain(s.question.starsLevel);
+    }
+  });
+
   it('normalises keyboard input to the keypad symbols', () => {
     const s = practiceReducer(startPractice(3, 1), { type: 'input', value: '3*a - 2' });
     expect(s.input).toBe('3×a − 2');

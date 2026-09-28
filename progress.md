@@ -2,7 +2,7 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-27 · Current state: **v1 finished (M0–M6, 2026-09-25); M7 (stars by level; the smallest number set) built and deployed 2026-09-27. Future work: `docs/roadmap.md`.**
+Last updated: 2026-09-28 · Current state: **v1 finished (M0–M6, 2026-09-25); M7 (stars by level; the smallest number set) built and deployed 2026-09-27; EQ level 6 stars changed 2026-09-28. Future work: `docs/roadmap.md`.**
 
 ---
 
@@ -105,6 +105,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-27 | M7: what is the "current level" for stars? | **The higher of the stored level and the highest level adaptive free practice has promoted to.** |
 | 2026-09-27 | M7: hints and tries | **First try (H1 at most) = full; second try or H2 = 1; three or more tries or the walkthrough = 0.** |
 | 2026-09-27 | M7: a parent's level lock below the current level | **Pays normally.** |
+| 2026-09-28 | EQ level 6 stars | **No 10 ★ level.** A level 6 (mixed review) question pays the full stars of the level it reviews (3 → 4, 4 → 6, 5 → 8). The try/hint cuts and the below-level rule stay. Built 2026-09-28 (requirements R-RWD-1, §15). |
 | 2026-09-27 | M7: process | **Build now**: update requirements and design, build RM-1 and RM-2 as M7, commit and push. |
 | 2026-09-27 | Handoff | The project documents (requirements, design, progress, roadmap) are the handoff for any tool; project information is not kept in agent files. |
 | 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. |
@@ -208,6 +209,7 @@ From M7 (details in `docs/milestones/M7-report.md` §3):
 80. A device whose stored shop price equals the old default (150, 1,500) gets the new one (200, 2,000); any other price is the parent's and stays.
 81. New celebration copy for 0 stars and for below-level answers ("A harder level earns stars/more").
 82. NC feedback codes `NC-CONTAINS` / `NC-NOT-IN`; H2 hints for integers and 0 reworded so they don't give the answer.
+83. *(2026-09-28)* An EQ L6 question's source level is stored in the attempt's `params.starsLevel`; the below-level rule compares the practised level (6), not the source level, so an L6 review question from level 3 is not "below level".
 
 ## 6. Spec conflicts found and how they were resolved
 

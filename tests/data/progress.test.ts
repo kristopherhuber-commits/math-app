@@ -154,6 +154,19 @@ describe('finishAttempt', () => {
     ).toMatchObject({ stars: 2 });
   });
 
+  it('an EQ L6 review question pays the level it comes from, not "below level" (R-RWD-1)', async () => {
+    await db.topicStates.put({ profileId: 'default', topic: 'EQ', level: 6, window: [] });
+    const at6 = (starsLevel: number, o: Partial<Attempt> = {}) =>
+      finished('EQ', 6, { params: { level: 6, starsLevel }, ...o });
+    const pay = { adaptive: false, rewarded: true };
+    expect(await finishAttempt(at6(3), pay)).toMatchObject({ stars: 4, shellsEarned: 4 });
+    expect(await finishAttempt(at6(4), pay)).toMatchObject({ stars: 6 });
+    expect(await finishAttempt(at6(5), pay)).toMatchObject({ stars: 8 });
+    const second = await finishAttempt(at6(5, { clean: false, wrongTries: 1 }), pay);
+    expect(second).toMatchObject({ stars: 1 });
+    expect(second.capped).toBeUndefined();
+  });
+
   it('adaptive free practice promotions raise the level that pays full stars (R-RWD-1)', async () => {
     // RD's stored level is 1; free practice promotes to 4.
     await finishAttempt(finished('RD', 3), { adaptive: false, rewarded: true, freePromotedTo: 4 });

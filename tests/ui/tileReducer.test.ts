@@ -53,6 +53,7 @@ const example = (text: string, variable: string, solution: number): TileState =>
     text,
     solution: rat(solution),
     form: 'test',
+    starsLevel: 2,
   });
 const P = '3a + 3 = a + 23';
 

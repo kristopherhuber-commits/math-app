@@ -189,7 +189,14 @@ const intervals = (all: Assignment[]): ActiveInterval[] =>
  * which activates the next queued assignment (R-SES-2).
  */
 export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promise<FinishEvents> {
-  const how = { level: attempt.level, wrongTries: attempt.wrongTries ?? 0, maxHint: attempt.maxHint };
+  const paysAs = (attempt.params as { starsLevel?: unknown } | null)?.starsLevel;
+  const how = {
+    level: attempt.level,
+    wrongTries: attempt.wrongTries ?? 0,
+    maxHint: attempt.maxHint,
+    // R-RWD-1: an EQ L6 review question pays the level it comes from.
+    ...(typeof paysAs === 'number' ? { paysAs } : {}),
+  };
   const quality = answerQuality(how);
   const bounds = (await practiceSettings()).levelBounds[attempt.topic];
   return db.transaction('rw', [db.attempts, db.topicStates, db.rewards, db.assignments], async () => {

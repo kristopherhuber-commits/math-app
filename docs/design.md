@@ -189,7 +189,7 @@ Names match the intended React components. "States" lists every visual state tha
 | **ErrorMark** | Amber wavy underline under the offending term(s), from the diagnostic's term span | — |
 | **StepFeedback** | Under the current line: `--help-bg` box with a small turtle and the diagnostic message (R-EQ, §7.4 table). Title line 19/900, detail 17/700, balance reminder 15 | `hidden` · `shown` |
 | **MathKeypad** | 4 columns × 5 rows of 80×64 keys, radius 14, 8 px gap. Digits on `--bg`; operators on `--surface-sunken`; the variable key on `--var-bg`, showing **only this problem's letter**. Row 5: `( ) = ⌫`. Below: `Clear line` + `Check step` | key `idle` · `pressed` (translateY 2 px, lip shrinks) · `disabled` |
-| **Celebration** | *As built (M7, R-RWD-1):* full stars → Pip `cheer`, the stars popping in sequence (`--ease-pop`, 80 ms stagger; up to 10, smaller when more than 5) + confetti; text "Full stars! Brilliant!" + "+n shells". 1 ★ → Pip `clap`, one star, "1 star. Nice work!". 0 ★ → Pip `clap`, no stars, "Done! Try it on the first go next time." | `full` · `one` · `none` · `levelUp` · `streak` (full screen) |
+| **Celebration** | *As built (M7, R-RWD-1):* full stars → Pip `cheer`, the stars popping in sequence (`--ease-pop`, 80 ms stagger; up to 8, smaller when more than 5) + confetti; text "Full stars! Brilliant!" + "+n shells". 1 ★ → Pip `clap`, one star, "1 star. Nice work!". 0 ★ → Pip `clap`, no stars, "Done! Try it on the first go next time." | `full` · `one` · `none` · `levelUp` · `streak` (full screen) |
 | **StarCounter / ShellCounter** | Pills. When they increment, the number rolls up and the icon pulses | — |
 | **AssignmentCard** (Home) | Overline, title, one row per item (name, n / N, progress bar, ✓ when done), a primary **Keep going ›** button and "x of N done" | `notStarted` ("Start ›") · `inProgress` · `done` |
 | **TopicTile** (Home free practice) | 216×136, glyph (math face) + name. Tapping it opens the LevelPicker | `locked` (55% veil + padlock) · `open` · `hover` |
@@ -387,7 +387,7 @@ The app follows this document, with the changes below. The mockups were not redr
 |---|---|---|
 | Hints | mockup 03, §5 HintDrawer | A panel inside the question card, not a docked drawer (parent approved, M3). |
 | Number sets | mockup 04, §7.4 | Five set cards; Real is the outer frame of the sets map only. Since M7 one card is the answer (the smallest set), chosen like a multiple-choice option; tried cards are greyed out. |
-| Stars | mockups 08, 09, §5 Celebration | Since M7 stars depend on the level (up to 10) and shells equal stars; the summary shows stars per topic as a total. |
+| Stars | mockups 08, 09, §5 Celebration | Since M7 stars depend on the level (up to 8) and shells equal stars; the summary shows stars per topic as a total. |
 | Home | mockup 01, §7.1 | Free practice open by default; a level picker (Adaptive or a level) on each tile; Shop button; waiting-for-a-grown-up note; Dress up; badge shelf; shells on the sand = shells to spend. |
 | Rewards | §4.3, §7 "accessory shop" | Cosmetics unlock from lifetime shells (no shop for them). The shop sells real rewards for shells to spend, with original cartoon pictures and a line saying what each reward is; the parent gives or cancels them in Parent › Rewards. |
 | Parent area | mockups 10, 11 | Adds a Rewards page and "Edit assignment" from a queue card; Missed questions, Settings and Data as described in §7. |

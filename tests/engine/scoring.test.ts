@@ -17,9 +17,27 @@ import {
 } from '../../src/engine/scoring';
 
 describe('stars (R-RWD-1, M7)', () => {
-  it('full stars by level: 1, 2, 4, 6, 8, 10', () => {
-    expect([1, 2, 3, 4, 5, 6].map(fullStars)).toEqual([1, 2, 4, 6, 8, 10]);
+  it('full stars by level: 1, 2, 4, 6, 8', () => {
+    expect([1, 2, 3, 4, 5].map(fullStars)).toEqual([1, 2, 4, 6, 8]);
   });
+
+  it.each([
+    // [paysAs, currentLevel, wrongTries, maxHint, stars]: an EQ L6 review question
+    [3, undefined, 0, 0, 4], // reviews level 3: full = 4
+    [4, undefined, 0, 1, 6], // reviews level 4, H1: 6
+    [5, undefined, 0, 0, 8], // reviews level 5: 8
+    [5, undefined, 1, 0, 1], // second try: 1
+    [5, undefined, 0, 3, 0], // walkthrough: 0
+    [3, 6, 0, 0, 4], // at current level 6: the below-level rule compares 6, not 3
+    [3, 7, 0, 0, 1], // hypothetically one below: at most 1
+  ] as const)(
+    'EQ L6 pays as level %s (current %s, %i wrong, H%i) → %i ★',
+    (paysAs, currentLevel, wrongTries, maxHint, stars) => {
+      expect(
+        starsFor({ level: 6, paysAs, wrongTries, maxHint, ...(currentLevel ? { currentLevel } : {}) }),
+      ).toBe(stars);
+    },
+  );
 
   // rows: wrongTries 0…3; columns: maxHint 0…3. F = full, 1 = one star, 0 = none.
   const quality = [
@@ -33,7 +51,7 @@ describe('stars (R-RWD-1, M7)', () => {
       const q = quality[wrongTries]![maxHint]!;
       it(`${wrongTries} wrong tries, H${maxHint} → ${q}`, () => {
         expect(answerQuality({ wrongTries, maxHint })).toBe(q);
-        for (let level = 1; level <= 6; level++)
+        for (let level = 1; level <= 5; level++)
           expect(starsFor({ level, wrongTries, maxHint })).toBe(
             q === 'full' ? fullStars(level) : q === 'one' ? 1 : 0,
           );

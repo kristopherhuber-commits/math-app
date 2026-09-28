@@ -437,8 +437,8 @@ EQ uses no multiple choice. Every step is produced by the learner, either throug
 
 ## 8. Rewards (learner-visible, light)
 
-- **R-RWD-1** *(changed 2026-09-27, parent decisions)* **Stars per question** depend on the question's level and how it was answered, so harder work pays more and guessing pays less:
-  - **Full stars** by level *(default)*: level 1 = 1, 2 = 2, 3 = 4, 4 = 6, 5 = 8, EQ 6 = 10.
+- **R-RWD-1** *(changed 2026-09-27 and 2026-09-28, parent decisions)* **Stars per question** depend on the question's level and how it was answered, so harder work pays more and guessing pays less:
+  - **Full stars** by level *(default)*: level 1 = 1, 2 = 2, 3 = 4, 4 = 6, 5 = 8. An **EQ level 6** question (mixed review of 3–5, §7.2) pays the full stars of the level it reviews: 4, 6 or 8. The below-level rule still compares level 6.
   - **How it was answered:** correct on the first try with no hint or H1 only → full stars; correct on the second try, or after H2 → 1 ★; three or more tries, or the walkthrough (H3) → 0 ★. The question still counts as done.
   - **Levels below the learner's current level** in that topic: one level below pays at most 1 ★; two or more below pay 0. The **current level** is the higher of the stored level (R-ADP, moved by assignments) and the highest level adaptive free practice has promoted the learner to (R-ADP-7). An assignment item the parent level-locked (R-SES-3) pays normally.
   - Fixed-level links (`?topic=&level=`) show stars without the below-level rule and earn no shells.
@@ -576,3 +576,4 @@ Everything below is written into the requirements above; `progress.md` §4 has t
 | 2026-09-26 | §6.1 H3 | The 0.999… walkthrough uses the x-method. |
 | 2026-09-27 (M7) | R-RWD-1, R-RWD-3/4/5, R-HELP-6, R-PAR-7 | Stars by level (1, 2, 4, 6, 8, 10), cut by tries and hints, less below the current level; shells = stars; prices 200 / 2,000; walkthrough 0 ★. |
 | 2026-09-27 (M7) | §6.1, R-NC-2…4, R-ANS-1, R-PAR-5 | One answer: the smallest set; natural numbers start at 1 with no setting. |
+| 2026-09-28 | R-RWD-1 | EQ level 6 no longer pays 10 ★: a review question pays the stars of the level it comes from (3–5 → 4, 6, 8). |

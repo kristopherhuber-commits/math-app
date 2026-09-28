@@ -989,7 +989,7 @@ export const parentStrings = {
     saved: 'Saved.',
     perAnswer: 'Shells per answer',
     perAnswerSub:
-      'An answer earns as many shells as stars. First try (at most hint 1): level 1 = 1, 2 = 2, 3 = 4, 4 = 6, 5 = 8, equations 6 = 10. Second try or hint 2: 1. More tries or the walkthrough: 0. One level below the learner’s own: at most 1; two or more below: 0 (not for levels you lock in an assignment).',
+      'An answer earns as many shells as stars. First try (at most hint 1): level 1 = 1, 2 = 2, 3 = 4, 4 = 6, 5 = 8; equations level 6 (review) pays the level each question comes from. Second try or hint 2: 1. More tries or the walkthrough: 0. One level below the learner’s own: at most 1; two or more below: 0 (not for levels you lock in an assignment).',
     pictures: 'Pictures',
     picturesSub:
       'The shop shows a drawing of each reward. You can use your own picture instead; it stays on this device (and in exports) and is never uploaded.',

@@ -71,7 +71,13 @@ export function startPractice(
       level,
       generatorId: question.generatorId,
       seed,
-      params: { level, form: question.form, solution: formatRational(question.solution), mode: 'typed' },
+      params: {
+        level,
+        form: question.form,
+        starsLevel: question.starsLevel,
+        solution: formatRational(question.solution),
+        mode: 'typed',
+      },
     }),
   };
 }

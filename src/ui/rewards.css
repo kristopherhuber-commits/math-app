@@ -90,7 +90,7 @@
   position: relative;
   z-index: 1;
 }
-/* R-RWD-1 (M7): 6–10 stars sit in rows of five. */
+/* R-RWD-1 (M7): 6–8 stars sit in rows of five. */
 .celebration-stars.many {
   display: grid;
   grid-template-columns: repeat(5, auto);

@@ -1,5 +1,5 @@
 // Pip's celebrations (design.md §5 Celebration, mockup 08, R-RWD-5, R-ADP-6): stars pop in, Pip
-// cheers (full stars, up to 10, R-RWD-1) or claps (1 or 0 ★), "+n shells", "Level up!" and new badges. Under 1.2 s, never
+// cheers (full stars, up to 8, R-RWD-1) or claps (1 or 0 ★), "+n shells", "Level up!" and new badges. Under 1.2 s, never
 // blocking: Next is focused at once, and a tap anywhere on it skips to the end. Reduced motion: a
 // static star row. The streak milestone is full screen and dismissable.
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -56,7 +56,7 @@ export function Celebration({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const s = rewardStrings.celebrate;
-  // R-RWD-5: full stars get the bigger celebration; up to 10 stars, smaller when there are many.
+  // R-RWD-5: full stars get the bigger celebration; up to 8 stars, smaller when there are many.
   const big = events.quality === 'full' && !events.capped && events.stars > 0;
   const pose = events.levelUp ? 'hop' : big ? 'cheer' : 'clap';
   const still = reduced || skipped;

@@ -19,6 +19,8 @@ export interface EqQuestion {
   solution: Rational;
   /** Which template produced it (for the parent dashboard and bug reports). */
   form: string;
+  /** The level whose full stars it pays (R-RWD-1): its own, or for L6 the level (3–5) it reviews. */
+  starsLevel: number;
 }
 
 type Simple = { coef: Rational; isVar: boolean };
@@ -62,6 +64,8 @@ interface Candidate {
   right: Piece[];
   solution: Rational;
   form: string;
+  /** L6 only: the level this review question comes from. */
+  reviews?: number;
 }
 
 // ---------- invariants (R-EQ-GEN) used for rejection sampling ----------
@@ -277,10 +281,10 @@ function level5(r: Rng): Candidate {
 /** L6: mixed review of 3–5, including negative fraction solutions. */
 function level6(r: Rng): Candidate {
   const pick = r.int(0, 4);
-  if (pick === 0) return level3(r, true);
-  if (pick === 1) return level4(r, true);
-  if (pick === 2) return level4(r, false);
-  return level5(r);
+  if (pick === 0) return { ...level3(r, true), reviews: 3 };
+  if (pick === 1) return { ...level4(r, true), reviews: 4 };
+  if (pick === 2) return { ...level4(r, false), reviews: 4 };
+  return { ...level5(r), reviews: 5 };
 }
 
 const TEMPLATES: Record<number, (r: Rng) => Candidate> = {
@@ -304,7 +308,16 @@ export function generateEq(level: number, seed: number): EqQuestion {
     if (!parsed.ok) continue;
     const lin = linearize(parsed.eq);
     if (!valid(c, level, text, lin)) continue;
-    return { generatorId: EQ_GENERATOR_ID, seed, level, variable, text, solution: c.solution, form: c.form };
+    return {
+      generatorId: EQ_GENERATOR_ID,
+      seed,
+      level,
+      variable,
+      text,
+      solution: c.solution,
+      form: c.form,
+      starsLevel: c.reviews ?? level,
+    };
   }
   throw new Error(`EQ generator failed for level ${level}, seed ${seed}`);
 }
