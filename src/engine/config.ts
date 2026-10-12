@@ -183,7 +183,8 @@ export const config = {
   },
   /**
    * Cosmetics (R-RWD-4 as the parent reshaped it): each unlocks when the lifetime shell count reaches
-   * `at`, and is worn at once. Alternating turtle and penguin.
+   * `at`, and is worn at once. Alternating turtle and penguin. Eight more from 950 (parent request
+   * 2026-10-11): flower crowns, headphones, capes and crowns.
    */
   cosmetics: [
     { id: 'turtle-hat', mascot: 'turtle', kind: 'hat', at: 20 },
@@ -194,12 +195,33 @@ export const config = {
     { id: 'penguin-sunglasses', mascot: 'penguin', kind: 'sunglasses', at: 400 },
     { id: 'turtle-bowtie', mascot: 'turtle', kind: 'bowtie', at: 550 },
     { id: 'penguin-bowtie', mascot: 'penguin', kind: 'bowtie', at: 750 },
+    { id: 'turtle-flowers', mascot: 'turtle', kind: 'flowers', at: 950 },
+    { id: 'penguin-headphones', mascot: 'penguin', kind: 'headphones', at: 1200 },
+    { id: 'turtle-cape', mascot: 'turtle', kind: 'cape', at: 1500 },
+    { id: 'penguin-flowers', mascot: 'penguin', kind: 'flowers', at: 1850 },
+    { id: 'turtle-headphones', mascot: 'turtle', kind: 'headphones', at: 2250 },
+    { id: 'penguin-cape', mascot: 'penguin', kind: 'cape', at: 2700 },
+    { id: 'turtle-crown', mascot: 'turtle', kind: 'crown', at: 3200 },
+    { id: 'penguin-crown', mascot: 'penguin', kind: 'crown', at: 3750 },
   ] as readonly {
     id: string;
     mascot: 'turtle' | 'penguin';
-    kind: 'hat' | 'scarf' | 'sunglasses' | 'bowtie';
+    kind: 'hat' | 'scarf' | 'sunglasses' | 'bowtie' | 'flowers' | 'headphones' | 'cape' | 'crown';
     at: number;
   }[],
+  /**
+   * What can be worn together: one item per slot per mascot. Hat, crown, flower crown and headphones
+   * all sit on the head, so putting one on takes the other off. Kinds not listed are their own slot.
+   */
+  cosmeticSlots: { hat: 'head', crown: 'head', flowers: 'head', headphones: 'head' } as Record<
+    string,
+    string
+  >,
+  /**
+   * Mascot levels (parent request 2026-10-11): each mascot starts at level 1 and goes up one for each
+   * of its cosmetics unlocked, so Shelly and Pip level up as the learner earns shells.
+   */
+  mascotLevelStart: 1,
   /**
    * R-RWD-1 (parent decision 2026-10-11): full stars = perLevel × level. Hint 1 costs `hint1`, hint 2
    * `hint2` more (each once per question), each wrong try `wrongTry`; never below 0, and 0 shows the

@@ -3,6 +3,7 @@
 import type { AccessoryKind } from '../../engine/rewards';
 import { color } from '../theme/tokens';
 import { useWearing } from '../wardrobe';
+import { Flower } from './Flower';
 
 export type TurtlePose = 'idle' | 'wave' | 'think' | 'point' | 'nod';
 
@@ -28,6 +29,25 @@ function Shell() {
         />
       ))}
       <ellipse cx="0" cy="36" rx="50" ry="6" fill={color.turtleBelly} />
+    </g>
+  );
+}
+
+const FLOWERS: [number, number][] = [
+  [-79, -16],
+  [-70, -22],
+  [-62, -24],
+  [-54, -22],
+  [-45, -16],
+];
+
+/** A cape over the shell, tied at the neck (drawn after the shell, before the head). */
+function Cape({ fresh }: { fresh: boolean }) {
+  return (
+    <g className={`accessory accessory-cape${fresh ? ' accessory-new' : ''}`}>
+      <path d="M-44,10 Q-30,-30 10,-30 Q40,-28 50,-4 Q30,-14 8,-8 Q-20,0 -44,10 Z" fill={color.coral} />
+      <path d="M50,-4 Q30,-14 8,-8 Q-20,0 -44,10" stroke={color.star} strokeWidth="2.5" fill="none" />
+      <circle cx="-44" cy="10" r="3.5" fill={color.star} />
     </g>
   );
 }
@@ -95,6 +115,35 @@ function Head({
           <rect x="-72" y="-27" width="20" height="4" fill={color.coral} />
         </g>
       )}
+      {wearing.includes('flowers') && (
+        <g className={acc('flowers')}>
+          <path d="M-82,-14 Q-62,-30 -42,-14" stroke={color.turtleDark} strokeWidth="2.5" fill="none" />
+          {FLOWERS.map(([x, y], i) => (
+            <Flower key={i} x={x} y={y} petal={i % 2 ? color.star : color.coral} />
+          ))}
+        </g>
+      )}
+      {wearing.includes('headphones') && (
+        <g className={acc('headphones')}>
+          <path
+            d="M-84,-2 Q-84,-30 -62,-30 Q-40,-30 -40,-2"
+            stroke={color.penguin}
+            strokeWidth="4"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <rect x="-90" y="-8" width="10" height="16" rx="4" fill={color.coral} />
+          <rect x="-44" y="-8" width="10" height="16" rx="4" fill={color.coral} />
+        </g>
+      )}
+      {wearing.includes('crown') && (
+        <g className={acc('crown')}>
+          <path d="M-75,-20 L-75,-34 L-68,-27 L-62,-38 L-56,-27 L-49,-34 L-49,-20 Z" fill={color.star} />
+          <circle cx="-62" cy="-24" r="2.6" fill={color.coral} />
+          <circle cx="-70" cy="-24" r="1.8" fill={color.primary} />
+          <circle cx="-54" cy="-24" r="1.8" fill={color.primary} />
+        </g>
+      )}
     </g>
   );
 }
@@ -149,6 +198,7 @@ export function Turtle({
       <Flipper side="back" />
       {(pose === 'wave' || pose === 'point') && <RaisedFlipper pose={pose} />}
       <Shell />
+      {wearing.includes('cape') && <Cape fresh={fresh === 'cape'} />}
       {/* The outer group moves the head for the idle look-around and the peek (rewards.css). */}
       <g className="turtle-head">
         <Head {...(HEAD[pose] ? { transform: HEAD[pose] } : {})} wearing={wearing} fresh={fresh} />

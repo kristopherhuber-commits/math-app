@@ -18,7 +18,7 @@ import { itemProgress, nextSlot } from '../engine/session';
 import { db, PROFILE_ID, type Assignment, type Attempt, type Settings, type TopicState } from './db';
 import { loadSettings } from './settings';
 import { emptyRewards } from './rewards';
-import { newlyUnlocked, spendable } from '../engine/rewards';
+import { newlyUnlocked, putOn, spendable } from '../engine/rewards';
 
 /** A local calendar day, 'YYYY-MM-DD' (streaks follow the learner's days, R-RWD-2). */
 export function localDay(d: Date | string = new Date()): string {
@@ -207,11 +207,12 @@ export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promi
     }
     if (next !== state) await db.topicStates.put(next);
 
-    // Lifetime shells (never go down) unlock cosmetics, which are worn at once (R-RWD-4, M6).
+    // Lifetime shells (never go down) unlock cosmetics, which are worn at once (R-RWD-4, M6); a new
+    // head item takes the place of the one worn there.
     const unlocked = newlyUnlocked(rewards.shells, rewards.shells + earned).map((c) => c.id);
     rewards.shells += earned;
     if (unlocked.length) {
-      rewards.accessories = [...rewards.accessories.filter((a) => !unlocked.includes(a)), ...unlocked];
+      rewards.accessories = putOn(rewards.accessories, unlocked);
       events.unlocked = unlocked;
     }
 

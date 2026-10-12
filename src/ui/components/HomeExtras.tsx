@@ -2,7 +2,7 @@
 // shelf (R-RWD-3, design.md §7 "screens not mocked").
 import { useState } from 'react';
 import { config } from '../../engine/config';
-import { cosmetic, nextCosmetic, type Cosmetic } from '../../engine/rewards';
+import { cosmetic, mascotLevel, nextCosmetic, type Cosmetic } from '../../engine/rewards';
 import { logError } from '../../data/errors';
 import { setWorn } from '../../data/rewards';
 import { useSettings } from '../settings';
@@ -64,20 +64,38 @@ export function DressUp({ unlocked, lifetime }: { unlocked: readonly string[]; l
         {h.dressUp}
       </h2>
       {unlocked.length === 0 && <p className="muted">{h.dressUpNone}</p>}
-      {unlocked.length > 0 && (
-        <div className="dress-stage">
-          {(['turtle', 'penguin'] as const).map((m) => (
-            <MascotPlay
-              key={m}
-              mascot={m}
-              size={m === 'turtle' ? 120 : 80}
-              label={h.sayHi(names[m])}
-              state={mascots[m].state}
-              onPoke={mascots[m].poke}
-            />
-          ))}
-        </div>
-      )}
+      <div className="dress-stage">
+        {(['turtle', 'penguin'] as const).map((m) => {
+          const lv = mascotLevel(m, lifetime);
+          return (
+            <div key={m} className="dress-mascot">
+              <MascotPlay
+                mascot={m}
+                size={m === 'turtle' ? 120 : 80}
+                label={h.sayHi(names[m])}
+                state={mascots[m].state}
+                onPoke={mascots[m].poke}
+              />
+              <p className="mascot-level">{h.mascotLevel(names[m], lv.level)}</p>
+              <span
+                className="progress-track mascot-level-track"
+                role="progressbar"
+                aria-label={h.mascotProgress(names[m])}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(lv.progress * 100)}
+              >
+                <span className="progress-fill" style={{ width: `${lv.progress * 100}%` }} />
+              </span>
+              <p className="label muted mascot-level-next">
+                {lv.next && lv.toNext !== undefined
+                  ? h.mascotNext(lv.toNext, rewardStrings.accessory[lv.next.kind] ?? lv.next.kind)
+                  : h.mascotMax}
+              </p>
+            </div>
+          );
+        })}
+      </div>
       <div className="dress-grid">
         {unlocked.map((id) => {
           const c = cosmetic(id);

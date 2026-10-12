@@ -1020,12 +1020,34 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: var(--space-6);
+  flex-wrap: wrap;
+  gap: var(--space-4);
   min-height: 112px;
   margin-bottom: var(--space-3);
   padding: var(--space-3) var(--space-4) var(--space-2);
   border-radius: var(--radius-md);
   background: linear-gradient(to bottom, var(--primary-soft) 70%, var(--turtle-belly) 70%);
+}
+
+/* Each mascot's level (parent request 2026-10-11): name, level, progress to the next item. */
+.dress-mascot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: 136px;
+}
+.mascot-level {
+  margin: 0;
+  font-weight: 900;
+}
+.mascot-level-track {
+  width: 120px;
+  height: 10px;
+}
+.mascot-level-next {
+  margin: 0;
+  text-align: center;
 }
 
 @media (prefers-reduced-motion: reduce) {

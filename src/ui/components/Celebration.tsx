@@ -5,7 +5,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { FinishEvents } from '../../data/progress';
 import { Penguin } from '../mascots/Penguin';
-import { cosmetic } from '../../engine/rewards';
+import { cosmetic, mascotLevel } from '../../engine/rewards';
 import { useSettings } from '../settings';
 import { useSound } from '../sound';
 import { rewardStrings } from '../strings';
@@ -94,7 +94,8 @@ export function Celebration({
           const c = cosmetic(id);
           return c ? (
             <p key={id} className="celebration-badge celebration-new">
-              {s.newAccessory(names[c.mascot], rewardStrings.accessory[c.kind] ?? c.kind)}
+              {s.newAccessory(names[c.mascot], rewardStrings.accessory[c.kind] ?? c.kind)}{' '}
+              {rewardStrings.home.mascotLevelUp(names[c.mascot], mascotLevel(c.mascot, c.at).level)}
             </p>
           ) : null;
         })}

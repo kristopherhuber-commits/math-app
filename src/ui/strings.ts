@@ -748,6 +748,10 @@ export const rewardStrings = {
     scarf: 'a scarf',
     sunglasses: 'sunglasses',
     bowtie: 'a bow tie',
+    flowers: 'a flower crown',
+    headphones: 'headphones',
+    cape: 'a cape',
+    crown: 'a crown',
   } as Record<string, string>,
   badges: {
     'first-solve': 'First question solved',
@@ -812,6 +816,13 @@ export const rewardStrings = {
     dressUpNone: 'Keep earning shells: something fun unlocks soon!',
     accessoryFor: (who: string, what: string) => `${what} for ${who}`,
     nextAccessory: (what: string) => `Next to unlock: ${what}`,
+    /** Mascot levels in Dress up (parent request 2026-10-11). */
+    mascotLevel: (name: string, level: number) => `${name} · level ${level}`,
+    mascotNext: (n: number, what: string) => `${n} more ${n === 1 ? 'shell' : 'shells'} to ${what}`,
+    mascotMax: 'Top level! Everything unlocked.',
+    mascotProgress: (name: string) => `${name}: progress to the next level`,
+    /** A new level for a mascot, said in the celebration with its new item. */
+    mascotLevelUp: (name: string, level: number) => `${name} is now level ${level}!`,
     badges: (n: number, of: number) => `Badges: ${n} of ${of}`,
     badgeEarned: 'earned',
     badgeToGet: 'still to get',

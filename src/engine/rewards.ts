@@ -33,13 +33,59 @@ export const isValidPrice = (p: number): boolean =>
   Number.isInteger(p) && p >= 1 && p <= config.shop.maxPrice;
 
 /**
- * Worn items after a change: at most one of each kind per mascot, and only unlocked ones.
- * Putting on an item replaces the same kind on that mascot.
+ * Where a kind is worn: the head items share one slot (`config.cosmeticSlots`); the rest are their own.
+ */
+export const slotOf = (kind: AccessoryKind): string => config.cosmeticSlots[kind] ?? kind;
+
+/** Put items on: each replaces whatever that mascot wears in the same slot. Unknown ids are skipped. */
+export function putOn(worn: readonly string[], ids: readonly string[]): string[] {
+  let next = [...worn];
+  for (const id of ids) {
+    const c = cosmetic(id);
+    if (!c) continue;
+    next = [
+      ...next.filter((w) => {
+        const o = cosmetic(w);
+        return w !== id && !(o?.mascot === c.mascot && slotOf(o.kind) === slotOf(c.kind));
+      }),
+      id,
+    ];
+  }
+  return next;
+}
+
+/**
+ * Worn items after a change: at most one item per slot per mascot, and only unlocked ones.
+ * Putting on an item replaces the one in the same slot on that mascot.
  */
 export function wear(worn: readonly string[], id: string, on: boolean, lifetime: number): string[] {
-  const c = cosmetic(id);
   const unlocked = new Set(unlockedAt(lifetime).map((x) => x.id));
   const keep = worn.filter((w) => w !== id && unlocked.has(w));
-  if (!on || !c || !unlocked.has(id)) return keep;
-  return [...keep.filter((w) => !(cosmetic(w)?.mascot === c.mascot && cosmetic(w)?.kind === c.kind)), id];
+  if (!on || !cosmetic(id) || !unlocked.has(id)) return keep;
+  return putOn(keep, [id]);
+}
+
+/**
+ * A mascot's level (parent request 2026-10-11): 1, plus one for each of its cosmetics unlocked.
+ * With `toNext`, the shells still needed for its next item (absent once it has them all).
+ */
+export function mascotLevel(
+  mascot: Mascot,
+  lifetime: number,
+): { level: number; max: number; next?: Cosmetic; toNext?: number; progress: number } {
+  const mine = config.cosmetics.filter((c) => c.mascot === mascot);
+  const got = mine.filter((c) => lifetime >= c.at);
+  const next = mine.find((c) => lifetime < c.at);
+  const level = config.mascotLevelStart + got.length;
+  const max = config.mascotLevelStart + mine.length;
+  if (!next) return { level, max, progress: 1 };
+  // Progress from the last item unlocked (or 0) towards the next, 0…1.
+  const from = got.at(-1)?.at ?? 0;
+  return {
+    level,
+    max,
+    next,
+    toNext: next.at - lifetime,
+    progress: Math.max(0, Math.min(1, (lifetime - from) / (next.at - from))),
+  };
 }

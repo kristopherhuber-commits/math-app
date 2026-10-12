@@ -4,6 +4,7 @@
 import type { AccessoryKind } from '../../engine/rewards';
 import { color } from '../theme/tokens';
 import { useWearing } from '../wardrobe';
+import { Flower } from './Flower';
 
 export type PenguinPose = 'idle' | 'cheer' | 'hop' | 'slide' | 'clap';
 
@@ -51,6 +52,25 @@ function Body() {
   );
 }
 
+const PENGUIN_FLOWERS: [number, number][] = [
+  [-25, -50],
+  [-14, -59],
+  [0, -62],
+  [14, -59],
+  [25, -50],
+];
+
+/** A cape behind the body that flares out at the sides, with a gold clasp at the neck. */
+function Cape({ fresh }: { fresh: boolean }) {
+  return (
+    <path
+      className={`accessory accessory-cape${fresh ? ' accessory-new' : ''}`}
+      d="M-24,-10 Q-56,30 -50,56 Q0,66 50,56 Q56,30 24,-10 Z"
+      fill={color.coral}
+    />
+  );
+}
+
 function Head({ wearing, fresh }: { wearing: readonly AccessoryKind[]; fresh?: AccessoryKind }) {
   // An accessory just put on gets `accessory-new`, so it drops into place (rewards.css).
   const acc = (kind: AccessoryKind) => `accessory accessory-${kind}${kind === fresh ? ' accessory-new' : ''}`;
@@ -94,6 +114,35 @@ function Head({ wearing, fresh }: { wearing: readonly AccessoryKind[]; fresh?: A
           <rect x="-15" y="-66" width="30" height="5" fill={color.star} />
         </g>
       )}
+      {wearing.includes('flowers') && (
+        <g className={acc('flowers')}>
+          <path d="M-27,-48 Q0,-72 27,-48" stroke={color.turtle} strokeWidth="3" fill="none" />
+          {PENGUIN_FLOWERS.map(([x, y], i) => (
+            <Flower key={i} x={x} y={y} r={4} petal={i % 2 ? color.star : color.coral} />
+          ))}
+        </g>
+      )}
+      {wearing.includes('headphones') && (
+        <g className={acc('headphones')}>
+          <path
+            d="M-31,-30 Q-31,-70 0,-70 Q31,-70 31,-30"
+            stroke={color.coral}
+            strokeWidth="5"
+            fill="none"
+            strokeLinecap="round"
+          />
+          <rect x="-39" y="-42" width="13" height="22" rx="6" fill={color.star} />
+          <rect x="26" y="-42" width="13" height="22" rx="6" fill={color.star} />
+        </g>
+      )}
+      {wearing.includes('crown') && (
+        <g className={acc('crown')}>
+          <path d="M-18,-58 L-18,-78 L-9,-68 L0,-84 L9,-68 L18,-78 L18,-58 Z" fill={color.star} />
+          <circle cx="0" cy="-63" r="3.5" fill={color.coral} />
+          <circle cx="-11" cy="-63" r="2.4" fill={color.primary} />
+          <circle cx="11" cy="-63" r="2.4" fill={color.primary} />
+        </g>
+      )}
     </g>
   );
 }
@@ -111,8 +160,13 @@ export function Penguin({
   fresh?: AccessoryKind | undefined;
 }) {
   const wearing = useWearing('penguin');
-  // A hat needs room above the head.
-  const top = wearing.includes('hat') ? -86 : -70;
+  // A hat or a crown needs room above the head; headphones and flowers a little.
+  const top =
+    wearing.includes('hat') || wearing.includes('crown')
+      ? -88
+      : wearing.includes('headphones') || wearing.includes('flowers')
+        ? -74
+        : -70;
   const height = 66 - top;
   // Clapping flippers sit in front of the body; the others behind it.
   const flippers = (
@@ -132,9 +186,11 @@ export function Penguin({
       focusable="false"
     >
       <g className="penguin-figure" transform={pose === 'slide' ? 'rotate(-18 0 20)' : undefined}>
+        {wearing.includes('cape') && <Cape fresh={fresh === 'cape'} />}
         <Feet />
         {pose !== 'clap' && flippers}
         <Body />
+        {wearing.includes('cape') && <circle cx="0" cy="-2" r="4" fill={color.star} />}
         {pose === 'clap' && flippers}
         <Head wearing={wearing} fresh={fresh} />
       </g>
