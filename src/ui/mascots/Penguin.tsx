@@ -51,40 +51,44 @@ function Body() {
   );
 }
 
-function Head({ wearing }: { wearing: readonly AccessoryKind[] }) {
+function Head({ wearing, fresh }: { wearing: readonly AccessoryKind[]; fresh?: AccessoryKind }) {
+  // An accessory just put on gets `accessory-new`, so it drops into place (rewards.css).
+  const acc = (kind: AccessoryKind) => `accessory accessory-${kind}${kind === fresh ? ' accessory-new' : ''}`;
   return (
     <g className="penguin-head">
       <circle cx="0" cy="-34" r="30" fill={color.penguin} />
-      <ellipse cx="-10" cy="-32" rx="11" ry="12" fill={color.artEye} />
-      <ellipse cx="10" cy="-32" rx="11" ry="12" fill={color.artEye} />
-      <circle cx="-9" cy="-31" r="4" fill={color.artPupil} />
-      <circle cx="9" cy="-31" r="4" fill={color.artPupil} />
-      <circle cx="-7.5" cy="-33" r="1.4" fill={color.artEye} />
-      <circle cx="10.5" cy="-33" r="1.4" fill={color.artEye} />
+      <g className="mascot-eyes">
+        <ellipse cx="-10" cy="-32" rx="11" ry="12" fill={color.artEye} />
+        <ellipse cx="10" cy="-32" rx="11" ry="12" fill={color.artEye} />
+        <circle cx="-9" cy="-31" r="4" fill={color.artPupil} />
+        <circle cx="9" cy="-31" r="4" fill={color.artPupil} />
+        <circle cx="-7.5" cy="-33" r="1.4" fill={color.artEye} />
+        <circle cx="10.5" cy="-33" r="1.4" fill={color.artEye} />
+      </g>
       <path d="M-7,-20 L7,-20 L0,-11 Z" fill={color.beak} />
       <circle cx="-20" cy="-20" r="4" fill={color.shell} opacity="0.8" />
       <circle cx="20" cy="-20" r="4" fill={color.shell} opacity="0.8" />
       {wearing.includes('scarf') && (
-        <g className="accessory accessory-scarf">
+        <g className={acc('scarf')}>
           <path d="M-30,-10 Q0,4 30,-10 L30,-1 Q0,13 -30,-1 Z" fill={color.coral} />
           <rect x="12" y="-2" width="9" height="22" rx="4" fill={color.coral} transform="rotate(-12 16 -2)" />
         </g>
       )}
       {wearing.includes('bowtie') && (
-        <g className="accessory accessory-bowtie">
+        <g className={acc('bowtie')}>
           <path d="M0,6 L-13,-1 L-13,13 Z M0,6 L13,-1 L13,13 Z" fill={color.star} />
           <circle cx="0" cy="6" r="3.5" fill={color.coral} />
         </g>
       )}
       {wearing.includes('sunglasses') && (
-        <g className="accessory accessory-sunglasses">
+        <g className={acc('sunglasses')}>
           <rect x="-22" y="-39" width="20" height="14" rx="5" fill={color.artPupil} />
           <rect x="2" y="-39" width="20" height="14" rx="5" fill={color.artPupil} />
           <path d="M-2,-33 L2,-33" stroke={color.artPupil} strokeWidth="3" />
         </g>
       )}
       {wearing.includes('hat') && (
-        <g className="accessory accessory-hat">
+        <g className={acc('hat')}>
           <ellipse cx="0" cy="-60" rx="24" ry="5" fill={color.coral} />
           <rect x="-15" y="-82" width="30" height="23" rx="4" fill={color.coral} />
           <rect x="-15" y="-66" width="30" height="5" fill={color.star} />
@@ -98,10 +102,13 @@ export function Penguin({
   pose = 'idle',
   size = 96,
   className,
+  fresh,
 }: {
   pose?: PenguinPose;
   size?: number;
   className?: string;
+  /** An accessory just put on (dress up): it drops into place. */
+  fresh?: AccessoryKind | undefined;
 }) {
   const wearing = useWearing('penguin');
   // A hat needs room above the head.
@@ -129,7 +136,7 @@ export function Penguin({
         {pose !== 'clap' && flippers}
         <Body />
         {pose === 'clap' && flippers}
-        <Head wearing={wearing} />
+        <Head wearing={wearing} fresh={fresh} />
       </g>
     </svg>
   );

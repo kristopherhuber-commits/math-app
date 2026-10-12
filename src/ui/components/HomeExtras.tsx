@@ -8,6 +8,7 @@ import { setWorn } from '../../data/rewards';
 import { useSettings } from '../settings';
 import { rewardStrings } from '../strings';
 import { useWardrobe } from '../wardrobe';
+import { MascotPlay, useMascot } from './MascotPlay';
 
 const h = rewardStrings.home;
 
@@ -55,6 +56,7 @@ export function DressUp({ unlocked, lifetime }: { unlocked: readonly string[]; l
   const names = useSettings().mascotNames;
   const [busy, setBusy] = useState(false);
   const next = nextCosmetic(lifetime);
+  const mascots = { turtle: useMascot('turtle'), penguin: useMascot('penguin') };
   const label = (c: Cosmetic) => h.accessoryFor(names[c.mascot], rewardStrings.accessory[c.kind] ?? c.kind);
   return (
     <section className="card dress-up" aria-labelledby="dress-title">
@@ -62,6 +64,20 @@ export function DressUp({ unlocked, lifetime }: { unlocked: readonly string[]; l
         {h.dressUp}
       </h2>
       {unlocked.length === 0 && <p className="muted">{h.dressUpNone}</p>}
+      {unlocked.length > 0 && (
+        <div className="dress-stage">
+          {(['turtle', 'penguin'] as const).map((m) => (
+            <MascotPlay
+              key={m}
+              mascot={m}
+              size={m === 'turtle' ? 120 : 80}
+              label={h.sayHi(names[m])}
+              state={mascots[m].state}
+              onPoke={mascots[m].poke}
+            />
+          ))}
+        </div>
+      )}
       <div className="dress-grid">
         {unlocked.map((id) => {
           const c = cosmetic(id);
@@ -75,6 +91,7 @@ export function DressUp({ unlocked, lifetime }: { unlocked: readonly string[]; l
               aria-pressed={on}
               disabled={busy}
               onClick={() => {
+                mascots[c.mascot].dressed(c.kind, !on);
                 setBusy(true);
                 void setWorn(id, !on)
                   .then(refresh)
