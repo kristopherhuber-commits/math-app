@@ -11,10 +11,31 @@ import type { NcSet } from '../../src/engine/topics/walk';
 const wrongIds = (s: McState) => s.question.options.filter((o) => o.code !== CORRECT).map((o) => o.id);
 const rightId = (s: McState) => s.question.options.find((o) => o.code === CORRECT)!.id;
 const pick = (s: McState, id: string) => mcReducer(mcReducer(s, { type: 'select', id }), { type: 'check' });
+/** An FDP question made by the repeating-decimal generator (RD is part of FDP since 2026-10-11). */
+const startRd = (level: number, from: number): McState => {
+  for (let seed = from; ; seed++) {
+    const s = startMc('FDP', level, seed);
+    if (s.question.topic === 'RD') return s;
+  }
+};
 
-describe('multiple choice (RD, FDP, PC)', () => {
+describe('multiple choice (FDP with its repeating decimals, PC)', () => {
+  it('FDP draws repeating-decimal and conversion questions, about half each, at every level', () => {
+    for (let level = 1; level <= 4; level++) {
+      const sources = Array.from({ length: 400 }, (_, seed) => startMc('FDP', level, seed).question.topic);
+      const rd = sources.filter((t) => t === 'RD').length;
+      expect(sources.every((t) => t === 'RD' || t === 'FDP')).toBe(true);
+      expect(rd).toBeGreaterThan(150);
+      expect(rd).toBeLessThan(250);
+      // The attempt is stored under FDP, with the generator that made the question.
+      const s = startRd(level, 0);
+      expect(s.attempt.topic).toBe('FDP');
+      expect(s.attempt.generatorId).toMatch(/^rd\./);
+    }
+  });
+
   it('first wrong: "Not quite" with the code, option greyed, no hint yet (R-HELP-1/1a)', () => {
-    let s = startMc('RD', 3, 7);
+    let s = startRd(3, 7);
     const [w] = wrongIds(s);
     s = pick(s, w!);
     expect(s.tried).toEqual([w]);
@@ -68,7 +89,7 @@ describe('multiple choice (RD, FDP, PC)', () => {
   });
 
   it('level 1: one wrong try leaves 0 ★, so the walkthrough starts by itself (R-RWD-1)', () => {
-    let s = startMc('RD', 1, 4);
+    let s = startRd(1, 4);
     s = pick(s, wrongIds(s)[0]!);
     expect(s.walk).not.toBeNull();
     expect(s.attempt.maxHint).toBe(3);
@@ -108,7 +129,7 @@ describe('multiple choice (RD, FDP, PC)', () => {
   });
 
   it('Help any time, then the walkthrough to the end counts as done (R-HELP-3/6)', () => {
-    let s = startMc('RD', 4, 21);
+    let s = startRd(4, 21);
     s = mcReducer(s, { type: 'help' });
     expect(s.hintTier).toBe(1);
     s = mcReducer(s, { type: 'walkStart' });
@@ -122,7 +143,7 @@ describe('multiple choice (RD, FDP, PC)', () => {
   it('any seed: the walkthrough starts at the level-th wrong try (2 × level ★, 2 each); before that the right answer solves it', () => {
     fc.assert(
       fc.property(
-        fc.constantFrom('RD', 'FDP', 'PC' as const),
+        fc.constantFrom('FDP', 'PC' as const),
         fc.integer({ min: 1, max: 4 }),
         fc.integer({ min: 0, max: 0xffffffff }),
         (topic, level, seed) => {

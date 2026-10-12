@@ -1,15 +1,15 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { generateRd } from '../src/engine/topics/rd/generator';
 import { rdWalkthrough } from '../src/engine/topics/rd/hints';
-import { generateFdp } from '../src/engine/topics/fdp/generator';
+import { generateFdpTopic } from '../src/engine/topics/fdp/topic';
 import { generatePc } from '../src/engine/topics/pc/generator';
 import { generateNc } from '../src/engine/topics/nc/generator';
 import { innermostSet, NC_SETS, ncMembership } from '../src/engine/topics/nc/checker';
 import type { McQuestion } from '../src/engine/topics/mc';
-import { fullStarsText, openHome, starsText } from './helpers';
+import { fullStarsText, openHome, rdSeed, starsText } from './helpers';
 
 // M3 (R-TEST-5): one question per number topic by mouse (or touch on the tablet project) and by
-// keyboard; wrong answers, the hint ladder, the RD walkthrough with its mini-questions; NC's single
+// keyboard; wrong answers, the hint ladder, the repeating-decimal walkthrough (part of FDP since 2026-10-11) with its mini-questions; NC's single
 // answer, the smallest set (M7).
 
 /** Tap on the touch project, click elsewhere (R-PLAT-5). */
@@ -33,12 +33,17 @@ async function answerMc(page: Page, q: McQuestion, level: number, touch: boolean
   await expect(page.getByText(fullStarsText(level))).toBeVisible();
 }
 
-for (const [topic, level, seed, gen] of [
-  ['RD', 3, 7, generateRd],
-  ['FDP', 4, 5, generateFdp],
-  ['PC', 3, 4, generatePc],
+const gens = { FDP: generateFdpTopic, PC: generatePc };
+for (const [topic, level, seed] of [
+  ['FDP', 3, rdSeed(3, 7)], // a repeating-decimal question
+  ['FDP', 4, 5],
+  ['PC', 3, 4],
 ] as const) {
-  test(`${topic}: one question by mouse or touch, then the next`, async ({ page, hasTouch }) => {
+  const gen = gens[topic];
+  test(`${topic} level ${level}: one question by mouse or touch, then the next`, async ({
+    page,
+    hasTouch,
+  }) => {
     await page.goto(`./?topic=${topic}&level=${level}&seed=${seed}`);
     await expect(page.getByText(new RegExp(`· Level ${level}`))).toBeVisible();
     await answerMc(page, gen(level, seed), level, hasTouch);
@@ -47,9 +52,10 @@ for (const [topic, level, seed, gen] of [
   });
 }
 
-test('RD: keyboard only, 1–5 then Enter (design.md §10)', async ({ page }) => {
-  const q = generateRd(2, 13);
-  await page.goto('./?topic=RD&level=2&seed=13');
+test('FDP (repeating decimals): keyboard only, 1–5 then Enter (design.md §10)', async ({ page }) => {
+  const seed = rdSeed(2, 13);
+  const q = generateRd(2, seed);
+  await page.goto(`./?topic=FDP&level=2&seed=${seed}`);
   // The key handler is attached once the question is on screen.
   await expect(page.locator('.mc-option')).toHaveCount(5);
   await page.keyboard.press(`${correctIndex(q) + 1}`);
@@ -84,9 +90,10 @@ test('NC: keyboard only, 1–5 then Enter', async ({ page }) => {
 test('wrong answers: "Not quite" with the misconception line, then Help pulses; a hint opens only when asked (R-HELP-1/1a/2)', async ({
   page,
 }) => {
-  const q = generateRd(3, 7);
+  const seed = rdSeed(3, 7);
+  const q = generateRd(3, seed);
   const wrong = q.options.map((o, i) => [o, i] as const).filter(([o]) => o.code !== 'correct');
-  await page.goto('./?topic=RD&level=3&seed=7');
+  await page.goto(`./?topic=FDP&level=3&seed=${seed}`);
   await page.locator('.mc-option').nth(wrong[0]![1]).click();
   await page.getByRole('button', { name: 'Check' }).click();
   await expect(page.locator('.feedback-toast')).toContainText('Not quite.');
@@ -109,8 +116,9 @@ test('wrong answers: "Not quite" with the misconception line, then Help pulses; 
 });
 
 test('hints cost stars: hint 1 −1, hint 2 −2 more (R-RWD-1)', async ({ page }) => {
-  const q = generateRd(4, 7);
-  await page.goto('./?topic=RD&level=4&seed=7');
+  const seed = rdSeed(4, 7);
+  const q = generateRd(4, seed);
+  await page.goto(`./?topic=FDP&level=4&seed=${seed}`);
   await page.getByRole('button', { name: 'Help' }).click();
   await page.getByRole('button', { name: 'Another hint' }).click();
   await expect(page.getByText('Hint 2 of 3')).toBeVisible();
@@ -130,13 +138,14 @@ test('at 0 stars the walkthrough starts by itself (R-RWD-1): one mistake at leve
   await expect(page.getByText(/step 1 of \d+/)).toBeVisible();
 });
 
-test('RD walkthrough: mini-questions gate Next, and it ends the question (R-HELP-4/6)', async ({
+test('repeating-decimal walkthrough: mini-questions gate Next, and it ends the question (R-HELP-4/6)', async ({
   page,
   hasTouch,
 }) => {
-  const q = generateRd(3, 7);
+  const seed = rdSeed(3, 7, (x) => rdWalkthrough(x).some((st) => st.mini));
+  const q = generateRd(3, seed);
   const steps = rdWalkthrough(q);
-  await page.goto('./?topic=RD&level=3&seed=7');
+  await page.goto(`./?topic=FDP&level=3&seed=${seed}`);
   await press(page.getByRole('button', { name: 'Help' }), hasTouch);
   await press(page.getByRole('button', { name: 'Show me step by step' }), hasTouch);
   await expect(page.getByText("Let's do it together")).toBeVisible();

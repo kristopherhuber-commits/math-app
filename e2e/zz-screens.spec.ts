@@ -4,7 +4,7 @@ import { generatePc } from '../src/engine/topics/pc/generator';
 import { generateEq } from '../src/engine/topics/eq/generator';
 import { eqWalkthrough } from '../src/engine/topics/eq/hints';
 import { questionSeed } from '../src/engine/session';
-import { assignment, attemptRow, openHome, PIN } from './helpers';
+import { assignment, attemptRow, openHome, PIN, rdSeed } from './helpers';
 import { mulberry32 } from '../src/engine/rng';
 import { TOPICS } from '../src/engine/config';
 
@@ -38,8 +38,8 @@ test('number topic screens', async ({ page }, info) => {
     await page.screenshot({ path: `${OUT}/${tag}-${name}.png`, fullPage: true });
   };
   for (const [topic, level, seed] of [
-    ['RD', 3, 7],
-    ['RD', 1, 3],
+    ['FDP', 3, rdSeed(3, 7)],
+    ['FDP', 1, rdSeed(1, 3)],
     ['FDP', 4, 5],
     ['FDP', 3, 9],
     ['PC', 3, 4],
@@ -50,14 +50,14 @@ test('number topic screens', async ({ page }, info) => {
     await shot(`${topic}${level}`);
   }
   // The longest option text: RD level 4, F→D over 7 (block of 6, shown 3 times).
-  let s7 = 0;
-  while (generateRd(4, s7).params.shape !== 'f2d7') s7++;
-  await page.goto(`./?topic=RD&level=4&seed=${s7}`);
+  const s7 = rdSeed(4, 0, (x) => x.params.shape === 'f2d7');
+  await page.goto(`./?topic=FDP&level=4&seed=${s7}`);
   await shot('RD4-sevenths');
   // Wrong answers, the hint and the walkthrough with a mini-question (RD level 3, seed 7).
-  const q = generateRd(3, 7);
+  const s3 = rdSeed(3, 7);
+  const q = generateRd(3, s3);
   const wrong = q.options.findIndex((o) => o.code !== 'correct');
-  await page.goto('./?topic=RD&level=3&seed=7');
+  await page.goto(`./?topic=FDP&level=3&seed=${s3}`);
   await page.keyboard.press(`${wrong + 1}`);
   await page.getByRole('button', { name: 'Check' }).click();
   await shot('rd-wrong');
@@ -105,7 +105,7 @@ test('session and reward screens', async ({ page }, info) => {
     await page.getByRole('button', { name: 'Check' }).click();
   };
   await openHome(page, {
-    assignments: [assignment('PC:5,RD:1,EQ:1@3', { seed, title: 'Monday practice' })],
+    assignments: [assignment('PC:5,FDP:1,EQ:1@3', { seed, title: 'Monday practice' })],
   });
   await page.getByRole('button', { name: 'Start ›' }).waitFor();
   await shot('home-assignment', 200);
@@ -148,7 +148,7 @@ test('parent screens', async ({ page }, info) => {
     page.screenshot({ path: `${OUT}/${tag}-parent-${name}.png`, fullPage: true });
   await openHome(page, {
     assignments: [
-      assignment('EQ:10,PC:5@4,RD:5', { seed: 1, title: 'Monday practice' }),
+      assignment('EQ:10,PC:5@4,FDP:5', { seed: 1, title: 'Monday practice' }),
       assignment('FDP:6', { seed: 2, title: 'Fractions review', status: 'queued', position: 1 }),
       assignment('EQ:8', { seed: 3, title: 'Weekend equations', status: 'queued', position: 2 }),
     ],
@@ -159,7 +159,7 @@ test('parent screens', async ({ page }, info) => {
   await shot('pin');
   await page.keyboard.type(PIN);
   await page.getByLabel('Title (optional)').fill('Tuesday practice');
-  for (const t of ['Equations', 'Price changes', 'Repeating decimals']) {
+  for (const t of ['Equations', 'Price changes', 'Fractions, decimals and percents']) {
     await page.getByRole('button', { name: '+ Add topic' }).click();
     await page.getByRole('group', { name: 'Which topic?' }).getByRole('button', { name: t }).click();
   }
@@ -184,7 +184,7 @@ function sampleAttempts() {
       const eq = rng.next() < 0.4;
       rows.push(
         attemptRow({
-          topic: eq ? 'EQ' : rng.pick(['NC', 'RD', 'FDP', 'PC'] as const),
+          topic: eq ? 'EQ' : rng.pick(['NC', 'FDP', 'PC'] as const),
           finishedAt: t.toISOString(),
           maxHint: hint,
           clean: hint <= 1 && rng.next() < 0.8,

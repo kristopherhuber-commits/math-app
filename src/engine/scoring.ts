@@ -132,14 +132,20 @@ export const BADGE_IDS: readonly BadgeId[] = [
 
 export interface FinishedFacts {
   topic: TopicId;
+  /** Which generator made the question: RD questions are part of the FDP topic (2026-10-11). */
+  generatorId?: string;
   maxHint: number;
   params: unknown;
 }
 
-/** RD questions whose decimal has a delayed repeat: D→F shape `delayed`, F→D over 6, 12, 15, 22. */
+/**
+ * RD questions whose decimal has a delayed repeat: D→F shapes `delayed` and `delayedWhole`, F→D over
+ * 6, 12, 15, 22.
+ */
 export function isDelayedRd(a: FinishedFacts): boolean {
   const shape = (a.params as { shape?: unknown } | null)?.shape;
-  return a.topic === 'RD' && (shape === 'delayed' || shape === 'f2dB');
+  const rd = a.generatorId?.startsWith('rd.') ?? false;
+  return rd && (shape === 'delayed' || shape === 'delayedWhole' || shape === 'f2dB');
 }
 
 /** Two changes in a row: successive, or the Challenge's reverse of two changes. */

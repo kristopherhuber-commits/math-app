@@ -11,7 +11,7 @@ export const config = {
     /** R-ADP-3: "a second wrong answer" = this many wrong tries. */
     demoteWrongTries: 2,
     /** Starting level per topic (parent decision, M4): EQ starts at typed steps (level 2 of 4). */
-    startLevel: { NC: 1, RD: 1, FDP: 1, PC: 1, EQ: 2 },
+    startLevel: { NC: 1, FDP: 1, PC: 1, EQ: 2 },
   },
   /**
    * Adaptive free practice (parent decision, 2026-09-25; assignments keep R-ADP-2/3): start at
@@ -50,8 +50,8 @@ export const config = {
    * Levels per topic (requirements §6–7, parent decision 2026-10-11): 1 Basic, 2 General,
    * 3 Advanced, 4 Challenge. No mixed-review levels.
    */
-  levels: { NC: 4, RD: 4, FDP: 4, PC: 4, EQ: 4 },
-  /** RD (§6.2). Ranges the spec leaves open are M3 assumptions. */
+  levels: { NC: 4, FDP: 4, PC: 4, EQ: 4 },
+  /** RD questions (§6.2), part of the FDP topic since 2026-10-11. Ranges the spec leaves open are M3 assumptions. */
   rd: {
     /** L2: whole part 1…wholeMax, block length 1…3. L3: whole part 0…wholeMax. L4: 1…wholeMax. */
     wholeMax: 9,
@@ -225,6 +225,6 @@ export const config = {
 } as const;
 
 export type TopicId = keyof typeof config.levels;
-export const TOPICS: readonly TopicId[] = ['NC', 'RD', 'FDP', 'PC', 'EQ'];
+export const TOPICS: readonly TopicId[] = ['NC', 'FDP', 'PC', 'EQ'];
 
 export type VariableLetter = (typeof config.variables)[number];

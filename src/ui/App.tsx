@@ -29,7 +29,7 @@ type Route =
   | { name: 'shop' };
 
 /**
- * `?topic=RD&level=3&seed=42` opens a fixed level; `?level=3` alone opens EQ, as before (the parent,
+ * `?topic=FDP&level=3&seed=42` opens a fixed level; `?level=3` alone opens EQ, as before (the parent,
  * tests and bug reports, R-ARCH-3). They don't change adaptive levels or rewards, and they skip the
  * first-run setup. Everything else waits for the setup check.
  */

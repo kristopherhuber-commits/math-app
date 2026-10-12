@@ -224,7 +224,6 @@ export function Session({ kind, currency, onHome, onSummary }: Props) {
     switch (cur.topic) {
       case 'NC':
         return <NcPractice key={cur.key} {...common} />;
-      case 'RD':
       case 'FDP':
       case 'PC':
         return <McPractice key={cur.key} {...common} topic={cur.topic} currency={currency} />;

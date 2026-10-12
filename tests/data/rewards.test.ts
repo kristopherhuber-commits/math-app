@@ -52,7 +52,7 @@ describe('schema v4 (R-DATA-1)', () => {
 
     const d = new MathDb('v3-db');
     await d.open();
-    expect(d.verno).toBe(5);
+    expect(d.verno).toBe(6);
     expect(await d.rewards.get('default')).toMatchObject({
       shells: 60,
       spent: 0,

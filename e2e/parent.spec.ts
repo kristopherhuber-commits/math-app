@@ -187,7 +187,7 @@ test('the queue: add to queue, reorder by keyboard, make active, mark complete, 
     await expect(page.locator('.queue-card', { hasText: title })).toBeVisible();
   };
   await add('Alpha', 'Number sets');
-  await add('Bravo', 'Repeating decimals');
+  await add('Bravo', 'Fractions, decimals and percents');
   await add('Charlie', 'Price changes');
   const queue = page.getByRole('region', { name: 'Queue' });
   const queued = queue.locator('.queue-card:not(.active) strong');
@@ -236,7 +236,7 @@ test('the queue reorders by mouse drag', async ({ page }) => {
   await openHome(page, {
     assignments: [
       assignment('NC:1', { seed: 1, title: 'One' }),
-      assignment('RD:1', { seed: 2, title: 'Two', status: 'queued', position: 1 }),
+      assignment('FDP:1', { seed: 2, title: 'Two', status: 'queued', position: 1 }),
       assignment('PC:1', { seed: 3, title: 'Three', status: 'queued', position: 2 }),
     ],
   });
@@ -475,7 +475,7 @@ test('data: export, reset, import restores; a bad file changes nothing; the erro
   const saved = info.outputPath('export.json');
   await download.saveAs(saved);
   const exported = JSON.parse(readFileSync(saved, 'utf8'));
-  expect(exported).toMatchObject({ app: 'turtle-penguin-math', schemaVersion: 5 });
+  expect(exported).toMatchObject({ app: 'turtle-penguin-math', schemaVersion: 6 });
   expect(exported.attempts).toHaveLength(1);
 
   // Reset (asked first).
@@ -508,7 +508,7 @@ test('data: export, reset, import restores; a bad file changes nothing; the erro
   // Import the export (asked first).
   await input.setInputFiles(saved);
   await expect(page.getByRole('alertdialog')).toContainText(
-    'This file has 1 answer and 1 assignment (format v5)',
+    'This file has 1 answer and 1 assignment (format v6)',
   );
   await press(page.getByRole('button', { name: 'Replace my data' }), hasTouch);
   await expect(page.getByText('Imported.')).toBeVisible();

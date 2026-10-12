@@ -70,7 +70,7 @@ describe('editAllowed (R-PAR-2)', () => {
   const before: AssignmentItem[] = [
     { topic: 'EQ', count: 5 },
     { topic: 'PC', count: 3, levelLock: 2 },
-    { topic: 'RD', count: 2 },
+    { topic: 'FDP', count: 2 },
   ];
 
   it('before any question is done, anything goes', () => {
@@ -136,7 +136,7 @@ describe('nextSlot (R-SES-3/4, R-HELP-6)', () => {
   const items: AssignmentItem[] = [
     { topic: 'EQ', count: 3 },
     { topic: 'PC', count: 2 },
-    { topic: 'RD', count: 2 },
+    { topic: 'FDP', count: 2 },
   ];
 
   it('grouped: all of the first item, then the next', () => {

@@ -143,7 +143,7 @@ describe('export and import (R-PAR-6, R-DATA-1)', () => {
     expect(r.data.errors).toEqual([]);
   });
 
-  it('a v4 file is renumbered to the four levels, as the database upgrade does', () => {
+  it('a v4 file is renumbered to the four levels and its RD items move to FDP, as the database upgrades do', () => {
     const r = parseImport(
       JSON.stringify({
         app: 'turtle-penguin-math',
@@ -176,7 +176,7 @@ describe('export and import (R-PAR-6, R-DATA-1)', () => {
     expect(r.fromVersion).toBe(4);
     expect(r.data.settings[0]!.levelBounds).toEqual({ EQ: { min: 2, max: 4 } });
     expect(r.data.topicStates).toEqual([{ profileId: 'default', topic: 'EQ', level: 4, window: [] }]);
-    expect(r.data.assignments[0]!.items).toEqual([{ topic: 'RD', count: 3, levelLock: 3 }]);
+    expect(r.data.assignments[0]!.items).toEqual([{ topic: 'FDP', count: 3, levelLock: 3 }]);
     expect(r.data.attempts[0]).toMatchObject({ level: 1, stars: 2 });
   });
 

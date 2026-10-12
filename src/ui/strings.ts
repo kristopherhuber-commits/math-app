@@ -269,23 +269,21 @@ export function hintText(h: HintContent): string {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Number topics (M3: NC, RD, FDP, PC). Text between §…§ is LaTeX and is rendered by <Tex>
+// Number topics (M3: NC, RD, FDP, PC; since 2026-10-11 RD questions are part of FDP). Text between §…§ is LaTeX and is rendered by <Tex>
 // ($ is left alone here because prices use it).
 
-export type TopicKey = 'NC' | 'RD' | 'FDP' | 'PC' | 'EQ';
+export type TopicKey = 'NC' | 'FDP' | 'PC' | 'EQ';
 
 export const topicStrings = {
   name: {
     NC: 'Number sets',
-    RD: 'Repeating decimals',
-    FDP: 'Fractions, decimals, percents',
+    FDP: 'Fractions, decimals and percents',
     PC: 'Price changes',
     EQ: 'Equations',
   } satisfies Record<TopicKey, string>,
   /** The glyph on each Home topic tile (design.md §5 TopicTile), as LaTeX. */
   glyph: {
     NC: '\\mathbb{N} \\subset \\mathbb{Z} \\subset \\mathbb{Q}',
-    RD: '0.\\overline{3} = \\tfrac{1}{3}',
     FDP: '\\tfrac{3}{8} = 37.5\\%',
     PC: '\\text{\\$40} \\to \\text{\\$44}',
     EQ: '3x + 4 = 19',
@@ -299,17 +297,12 @@ export const topicStrings = {
       '§\\tfrac{12}{4},\\ 3.0§',
       '§0.1010010001\\text{…},\\ 0.999\\text{…}§',
     ],
-    RD: [
-      '§0.333\\text{…},\\ 0.4545\\text{…}§',
-      '§4.242424\\text{…}§',
-      '§0.41666\\text{…}§',
-      '§\\tfrac{1}{7} = 0.142857\\text{…}§',
-    ],
+    // Each level mixes repeating decimals and conversions, half each (2026-10-11).
     FDP: [
-      '§\\tfrac{3}{8} = 0.375 = 37.5\\%§',
-      '§2\\tfrac{1}{4} = 225\\%§',
-      '§\\tfrac{1}{3} = 33.\\overline{3}\\%§',
-      '§2\\tfrac{1}{6} = 216.\\overline{6}\\%§',
+      '§0.333\\text{…} = \\tfrac{1}{3},\\ \\tfrac{3}{8} = 37.5\\%§',
+      '§4.2424\\text{…},\\ 2\\tfrac{1}{4} = 225\\%§',
+      '§0.41666\\text{…},\\ \\tfrac{1}{3} = 33.\\overline{3}\\%§',
+      '§\\tfrac{1}{7} = 0.142857\\text{…},\\ 2\\tfrac{1}{6} = 216.\\overline{6}\\%§',
     ],
     PC: ['$40 up 10%', 'Up 20%, then down 20%', 'Find the original price', 'Two changes: find the original'],
   } as Record<string, string[]>,
@@ -765,8 +758,7 @@ export const rewardStrings = {
     'streak-7': '7-day streak',
     'streak-30': '30-day streak',
     'max-level-NC': 'Top level in number sets',
-    'max-level-RD': 'Top level in repeating decimals',
-    'max-level-FDP': 'Top level in fractions, decimals, percents',
+    'max-level-FDP': 'Top level in fractions, decimals and percents',
     'max-level-PC': 'Top level in price changes',
     'max-level-EQ': 'Top level in equations',
   } as Record<string, string>,

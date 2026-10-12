@@ -1,12 +1,11 @@
-// Multiple-choice practice state for RD, FDP and PC (R-ANS-1, R-HELP-1…6, design.md §6.1). A
+// Multiple-choice practice state for FDP (with its repeating decimals) and PC (R-ANS-1, R-HELP-1…6, design.md §6.1). A
 // reducer, so the flow is testable without a browser. All the math is in the engine.
 import { config } from '../../engine/config';
-import { checkChoice, type McQuestion, type McTopic } from '../../engine/topics/mc';
+import { checkChoice, type McQuestion, type McSource, type McTopic } from '../../engine/topics/mc';
 import type { HintContent } from '../../engine/topics/content';
 import type { NumWalkStep } from '../../engine/topics/walk';
-import { generateRd } from '../../engine/topics/rd/generator';
 import { rdHint, rdWalkthrough } from '../../engine/topics/rd/hints';
-import { generateFdp } from '../../engine/topics/fdp/generator';
+import { generateFdpTopic } from '../../engine/topics/fdp/topic';
 import { fdpHint, fdpWalkthrough } from '../../engine/topics/fdp/hints';
 import { generatePc } from '../../engine/topics/pc/generator';
 import { pcHint, pcWalkthrough } from '../../engine/topics/pc/hints';
@@ -25,16 +24,22 @@ import {
   type HelpFields,
 } from './help';
 
-interface TopicEngine {
-  generate: (level: number, seed: number, currency: string) => McQuestion;
+/** Help for a question comes from the generator that made it (`McQuestion.topic`). */
+interface SourceEngine {
   hint: (q: McQuestion, tier: 1 | 2) => HintContent;
   walkthrough: (q: McQuestion) => NumWalkStep[];
 }
 
-export const MC_TOPICS: Record<McTopic, TopicEngine> = {
-  RD: { generate: (l, s) => generateRd(l, s), hint: rdHint, walkthrough: rdWalkthrough },
-  FDP: { generate: (l, s) => generateFdp(l, s), hint: fdpHint, walkthrough: fdpWalkthrough },
-  PC: { generate: generatePc, hint: pcHint, walkthrough: pcWalkthrough },
+export const MC_SOURCES: Record<McSource, SourceEngine> = {
+  RD: { hint: rdHint, walkthrough: rdWalkthrough },
+  FDP: { hint: fdpHint, walkthrough: fdpWalkthrough },
+  PC: { hint: pcHint, walkthrough: pcWalkthrough },
+};
+
+/** The learner's topics. FDP questions are repeating decimals or conversions, half each (2026-10-11). */
+export const MC_TOPICS: Record<McTopic, (level: number, seed: number, currency: string) => McQuestion> = {
+  FDP: (l, s) => generateFdpTopic(l, s),
+  PC: generatePc,
 };
 
 export interface McState extends HelpFields<NumWalkStep> {
@@ -65,7 +70,7 @@ export function startMc(
   seed: number,
   currency: string = config.settings.currency,
 ): McState {
-  const question = MC_TOPICS[topic].generate(level, seed, currency);
+  const question = MC_TOPICS[topic](level, seed, currency);
   return {
     topic,
     level,
@@ -132,7 +137,7 @@ function step(s: McState, action: McAction): McState {
     case 'walkStart':
       return startWalk(
         { ...s, feedback: null },
-        MC_TOPICS[s.topic].walkthrough(s.question),
+        MC_SOURCES[s.question.topic].walkthrough(s.question),
         s.selected ? optionText(s.question, s.selected) : '',
       );
     case 'walkNext':

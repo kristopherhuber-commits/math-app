@@ -185,7 +185,7 @@ describe('streak (R-RWD-2)', () => {
 });
 
 describe('badges (R-RWD-3)', () => {
-  const levels = { NC: 1, RD: 1, FDP: 1, PC: 1, EQ: 2 };
+  const levels = { NC: 1, FDP: 1, PC: 1, EQ: 2 };
   const base: BadgeFacts = {
     have: [],
     attempt: { topic: 'NC', maxHint: 0, params: {} },
@@ -195,9 +195,10 @@ describe('badges (R-RWD-3)', () => {
   };
   const earned = (f: Partial<BadgeFacts>) => newBadges({ ...base, have: ['first-solve'], ...f });
 
-  it('there are 12 badges', () => {
-    expect(BADGE_IDS).toHaveLength(12);
-    expect(new Set(BADGE_IDS).size).toBe(12);
+  it('there are 11 badges (one "top level" per topic; RD is part of FDP since 2026-10-11)', () => {
+    expect(BADGE_IDS).toHaveLength(11);
+    expect(new Set(BADGE_IDS).size).toBe(11);
+    expect(BADGE_IDS).not.toContain('max-level-RD');
   });
 
   it('first question solved', () => {
@@ -218,15 +219,21 @@ describe('badges (R-RWD-3)', () => {
     expect(earned({ eqRun: 10 })).toEqual(['eq-no-walkthrough']);
   });
 
-  it('first delayed repeating decimal: D→F delayed or F→D with a delayed answer', () => {
-    expect(earned({ attempt: { topic: 'RD', maxHint: 0, params: { shape: 'delayed' } } })).toEqual([
-      'first-delayed-rd',
-    ]);
-    expect(earned({ attempt: { topic: 'RD', maxHint: 3, params: { shape: 'f2dB' } } })).toEqual([
-      'first-delayed-rd',
-    ]);
-    expect(earned({ attempt: { topic: 'RD', maxHint: 0, params: { shape: 'whole' } } })).toEqual([]);
-    expect(earned({ attempt: { topic: 'FDP', maxHint: 0, params: { shape: 'delayed' } } })).toEqual([]);
+  it('first delayed repeating decimal: an RD question (in FDP) with a delayed repeat', () => {
+    const rd = (shape: string, maxHint = 0) => ({
+      topic: 'FDP' as const,
+      generatorId: 'rd.v2',
+      maxHint,
+      params: { shape },
+    });
+    expect(earned({ attempt: rd('delayed') })).toEqual(['first-delayed-rd']);
+    expect(earned({ attempt: rd('delayedWhole') })).toEqual(['first-delayed-rd']);
+    expect(earned({ attempt: rd('f2dB', 3) })).toEqual(['first-delayed-rd']);
+    expect(earned({ attempt: rd('whole') })).toEqual([]);
+    // A conversion question is not a repeating-decimal question, whatever its params say.
+    expect(
+      earned({ attempt: { topic: 'FDP', generatorId: 'fdp.v2', maxHint: 0, params: { shape: 'delayed' } } }),
+    ).toEqual([]);
   });
 
   it('the Challenge reverse of two changes also counts as a successive-change problem', () => {
@@ -261,7 +268,7 @@ describe('badges (R-RWD-3)', () => {
       attempt: { topic: 'PC', maxHint: 0, params: { kind: 'successive' } },
       eqRun: 10,
       streak: 30,
-      levels: { NC: 4, RD: 4, FDP: 4, PC: 4, EQ: 4 },
+      levels: { NC: 4, FDP: 4, PC: 4, EQ: 4 },
       assignmentDone: { perfect: true },
     };
     const first = newBadges(all);

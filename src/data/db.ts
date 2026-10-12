@@ -4,6 +4,7 @@
 // v3 (M5): the `errors` store (R-NF-5) and Attempt.fixed.
 // v4 (M6): Rewards.spent, Settings.shopItems and the `redemptions` store (the rewards shop).
 // v5 (2026-10-11): four levels per topic; stored levels, level ranges, level locks and attempts renumbered.
+// v6 (2026-10-11): Repeating decimals is part of Fractions, decimals and percents; RD rows move to FDP.
 import Dexie, { type EntityTable } from 'dexie';
 import type { TopicId } from '../engine/config';
 import type { AttemptSummary } from '../engine/adaptive';
@@ -14,7 +15,7 @@ import { unlockedAt } from '../engine/rewards';
 
 export type { TopicId, AttemptSummary, AssignmentItem };
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 /** The single learner profile in v1 (requirements §9.1). */
 export const PROFILE_ID = 'default';
@@ -236,6 +237,53 @@ export function upgradeAssignmentToV5(a: Assignment): Assignment {
 /** Old attempts keep their stars; their level is renumbered so the dashboard groups them. */
 export const upgradeAttemptToV5 = (a: Attempt): Attempt => ({ ...a, level: levelToV5(a.level) });
 
+/**
+ * v5 → v6 (parent decision 2026-10-11): Repeating decimals (RD) is part of Fractions, decimals and
+ * percents (FDP). Rows stored under RD move to FDP.
+ */
+const wasRd = (topic: string): boolean => topic === 'RD';
+
+/** One FDP state per profile, at the higher of the two levels, with a new adaptive window. */
+export function mergeTopicStatesToV6(states: readonly TopicState[]): TopicState[] {
+  const rd = states.filter((s) => wasRd(s.topic));
+  const rest = states.filter((s) => !wasRd(s.topic));
+  for (const r of rd) {
+    const i = rest.findIndex((s) => s.profileId === r.profileId && s.topic === 'FDP');
+    const fdp = rest[i];
+    if (!fdp) rest.push({ ...r, topic: 'FDP', window: [] });
+    else rest[i] = { ...fdp, level: Math.max(fdp.level, r.level), window: [] };
+  }
+  return rest;
+}
+
+/** The FDP level range stays as it was; the RD one goes. */
+export function upgradeSettingsToV6(s: Settings): Settings {
+  if (!s.levelBounds) return s;
+  const levelBounds = Object.fromEntries(
+    Object.entries(s.levelBounds).filter(([t]) => !wasRd(t)),
+  ) as Settings['levelBounds'];
+  return { ...s, levelBounds };
+}
+
+export function upgradeAssignmentToV6(a: Assignment): Assignment {
+  return {
+    ...a,
+    items: a.items.map((it) => (wasRd(it.topic) ? { ...it, topic: 'FDP' } : it)),
+  };
+}
+
+/** Old RD answers count as FDP; their generator id still says RD, so they replay as before. */
+export const upgradeAttemptToV6 = (a: Attempt): Attempt => (wasRd(a.topic) ? { ...a, topic: 'FDP' } : a);
+
+/** "Top level in repeating decimals" becomes the FDP one, unless that was earned too. */
+export function upgradeRewardsToV6(r: Rewards): Rewards {
+  const hasFdp = r.badges.some((b) => b.id === 'max-level-FDP');
+  const badges = r.badges
+    .filter((b) => !(b.id === 'max-level-RD' && hasFdp))
+    .map((b) => (b.id === 'max-level-RD' ? { ...b, id: 'max-level-FDP' } : b));
+  return { ...r, badges };
+}
+
 export class MathDb extends Dexie {
   profiles!: EntityTable<Profile, 'id'>;
   settings!: EntityTable<Settings, 'profileId'>;
@@ -305,6 +353,26 @@ export class MathDb extends Dexie {
         await each<Assignment>('assignments', upgradeAssignmentToV5);
         await each<Attempt>('attempts', upgradeAttemptToV5);
         await tx.table('meta').put({ key: 'schemaVersion', value: 5 });
+      });
+    this.version(6)
+      .stores(STORES_V4)
+      .upgrade(async (tx) => {
+        const states = tx.table<TopicState>('topicStates');
+        const merged = mergeTopicStatesToV6(await states.toArray());
+        await states.clear();
+        await states.bulkPut(merged);
+        const each = <T extends object>(name: string, up: (row: T) => T) =>
+          tx
+            .table<T>(name)
+            .toCollection()
+            .modify((row) => {
+              Object.assign(row, up(row));
+            });
+        await each<Settings>('settings', upgradeSettingsToV6);
+        await each<Assignment>('assignments', upgradeAssignmentToV6);
+        await each<Attempt>('attempts', upgradeAttemptToV6);
+        await each<Rewards>('rewards', upgradeRewardsToV6);
+        await tx.table('meta').put({ key: 'schemaVersion', value: 6 });
       });
     this.on('populate', (tx) => {
       void tx.table('meta').put({ key: 'schemaVersion', value: SCHEMA_VERSION });

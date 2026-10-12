@@ -64,7 +64,7 @@ test('the shop: buy the treat, it waits for a grown-up, the parent marks it give
   await openHome(page, { rewards: [rewardsRow(250, { badges: [{ id: 'first-solve', at: 'x' }] })] });
   await expect(page.locator('.home-counter').nth(2)).toContainText('250');
   await expect(page.locator('.beach-shell')).toHaveCount(12);
-  await expect(page.getByRole('heading', { name: 'Badges: 1 of 12' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Badges: 1 of 11' })).toBeVisible();
 
   await press(page.getByRole('button', { name: 'Shop', exact: true }), hasTouch);
   await expect(page.getByRole('heading', { name: 'Shop' })).toBeVisible();

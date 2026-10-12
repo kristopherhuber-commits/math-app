@@ -6,7 +6,10 @@ import type { Rng } from '../rng';
 import type { Shown } from '../numbers/display';
 import type { HintContent, Params } from './content';
 
-export type McTopic = 'RD' | 'FDP' | 'PC';
+/** Which generator made a question: repeating decimals (§6.2), conversions (§6.3) or prices (§6.4). */
+export type McSource = 'RD' | 'FDP' | 'PC';
+/** The learner's multiple-choice topics: RD questions are part of FDP since 2026-10-11. */
+export type McTopic = 'FDP' | 'PC';
 export const FILLER = 'FILLER';
 export const CORRECT = 'correct';
 export const OPTION_COUNT = 5;
@@ -24,7 +27,8 @@ export interface McOption extends McCandidate {
 }
 
 export interface McQuestion {
-  topic: McTopic;
+  /** The generator that made it; the learner's topic is FDP for both RD and FDP questions. */
+  topic: McSource;
   generatorId: string;
   seed: number;
   level: number;

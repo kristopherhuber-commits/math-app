@@ -1,4 +1,4 @@
-// R-DATA-1: schema upgrades v1 → v2 → v3 → v4 → v5 (fake IndexedDB).
+// R-DATA-1: schema upgrades v1 → … → v6 (fake IndexedDB).
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
@@ -27,8 +27,8 @@ describe('schema upgrades (R-DATA-1)', () => {
   it('a new database starts at the current version', async () => {
     const db = new MathDb('fresh-db');
     await db.open();
-    expect(SCHEMA_VERSION).toBe(5);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 5 });
+    expect(SCHEMA_VERSION).toBe(6);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 6 });
     expect(await db.errors.count()).toBe(0);
     db.close();
   });
@@ -45,8 +45,8 @@ describe('schema upgrades (R-DATA-1)', () => {
 
     const db = new MathDb(name);
     await db.open();
-    expect(db.verno).toBe(5);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 5 });
+    expect(db.verno).toBe(6);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 6 });
     const [a1, a2] = [await db.assignments.get('a1'), await db.assignments.get('a2')];
     expect(a1?.activatedAt).toBe('2026-09-20T10:00:00.000Z');
     expect(a2?.activatedAt).toBeUndefined();
@@ -70,8 +70,8 @@ describe('schema upgrades (R-DATA-1)', () => {
 
     const db = new MathDb(name);
     await db.open();
-    expect(db.verno).toBe(5);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 5 });
+    expect(db.verno).toBe(6);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 6 });
     expect(await db.assignments.get('a1')).toEqual(a);
     expect(await db.settings.get('default')).toMatchObject({ pinHash: 'h', freePractice: 'never' });
     expect(await db.errors.count()).toBe(0);
@@ -82,7 +82,7 @@ describe('schema upgrades (R-DATA-1)', () => {
     expect([1, 2, 3, 4, 5, 6].map(levelToV5)).toEqual([1, 1, 2, 3, 4, 4]);
   });
 
-  it('upgrades a v4 database to v5: levels, ranges, locks and attempts renumbered; window reset', async () => {
+  it('upgrades a v4 database through v5 (levels, ranges, locks and attempts renumbered; window reset) and v6 (RD into FDP)', async () => {
     const name = 'v4-db';
     const old = new Dexie(name);
     const v4Stores = { ...v1Stores, errors: '++id, at', redemptions: 'id, status, requestedAt' };
@@ -120,15 +120,14 @@ describe('schema upgrades (R-DATA-1)', () => {
 
     const db = new MathDb(name);
     await db.open();
-    expect(db.verno).toBe(5);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 5 });
+    expect(db.verno).toBe(6);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 6 });
     const eq = await db.topicStates.get(['default', 'EQ'] as unknown as string);
     expect(eq).toEqual({ profileId: 'default', topic: 'EQ', level: 4, window: [] });
     expect(await db.topicStates.get(['default', 'NC'] as unknown as string)).toMatchObject({ level: 2 });
     expect((await db.settings.get('default'))?.levelBounds).toEqual({
       EQ: { min: 2, max: 4 },
       NC: { min: 1, max: 4 },
-      RD: { min: 1, max: 3 },
     });
     expect((await db.assignments.get('a1'))?.items).toEqual([
       { topic: 'EQ', count: 2, levelLock: 4 },
@@ -137,7 +136,71 @@ describe('schema upgrades (R-DATA-1)', () => {
     ]);
     // Old attempts keep their stars; only the level is renumbered.
     expect(await db.attempts.get('t1')).toMatchObject({ level: 4, stars: 8 });
-    expect(await db.attempts.get('t2')).toMatchObject({ level: 2, stars: 4 });
+    expect(await db.attempts.get('t2')).toMatchObject({ topic: 'FDP', level: 2, stars: 4 });
+    db.close();
+  });
+
+  it('upgrades a v5 database to v6: Repeating decimals moves into FDP (parent decision 2026-10-11)', async () => {
+    const name = 'v5-db';
+    const old = new Dexie(name);
+    old.version(5).stores({ ...v1Stores, errors: '++id, at', redemptions: 'id, status, requestedAt' });
+    await old.open();
+    await old.table('meta').put({ key: 'schemaVersion', value: 5 });
+    await old.table('topicStates').bulkPut([
+      { profileId: 'default', topic: 'RD', level: 3, window: [] },
+      {
+        profileId: 'default',
+        topic: 'FDP',
+        level: 2,
+        window: [{ attemptId: 'x', clean: true, needsDemote: false }],
+      },
+      { profileId: 'default', topic: 'NC', level: 2, window: [] },
+    ]);
+    await old.table('settings').put({
+      profileId: 'default',
+      pinHash: 'h',
+      levelBounds: { FDP: { min: 1, max: 3 }, RD: { min: 2, max: 4 } },
+    });
+    await old.table('assignments').put({
+      ...assignment('a1', 'active', 0),
+      items: [
+        { topic: 'RD', count: 2, levelLock: 3 },
+        { topic: 'FDP', count: 2 },
+      ],
+    });
+    await old.table('attempts').bulkPut([
+      { id: 't1', profileId: 'default', topic: 'RD', generatorId: 'rd.v2', level: 3, tries: [], maxHint: 0 },
+      { id: 't2', profileId: 'default', topic: 'NC', generatorId: 'nc.v2', level: 2, tries: [], maxHint: 0 },
+    ]);
+    await old.table('rewards').put({
+      profileId: 'default',
+      shells: 0,
+      streak: 0,
+      badges: [{ id: 'max-level-RD', at: '2026-10-01' }],
+      accessories: [],
+    });
+    old.close();
+
+    const db = new MathDb(name);
+    await db.open();
+    expect(db.verno).toBe(6);
+    const states = await db.topicStates.toArray();
+    expect(states.map((t) => t.topic).sort()).toEqual(['FDP', 'NC']);
+    // The higher of the two levels, with a new window.
+    expect(states.find((t) => t.topic === 'FDP')).toEqual({
+      profileId: 'default',
+      topic: 'FDP',
+      level: 3,
+      window: [],
+    });
+    expect((await db.settings.get('default'))?.levelBounds).toEqual({ FDP: { min: 1, max: 3 } });
+    expect((await db.assignments.get('a1'))?.items).toEqual([
+      { topic: 'FDP', count: 2, levelLock: 3 },
+      { topic: 'FDP', count: 2 },
+    ]);
+    expect(await db.attempts.get('t1')).toMatchObject({ topic: 'FDP', generatorId: 'rd.v2', level: 3 });
+    expect(await db.attempts.get('t2')).toMatchObject({ topic: 'NC' });
+    expect((await db.rewards.get('default'))?.badges).toEqual([{ id: 'max-level-FDP', at: '2026-10-01' }]);
     db.close();
   });
 

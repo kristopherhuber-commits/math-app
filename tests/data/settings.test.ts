@@ -54,7 +54,7 @@ describe('settings (R-PAR-5)', () => {
     } as never);
     const s = await loadSettings();
     expect(s.levelBounds.EQ).toEqual({ min: 2, max: 3 });
-    expect(s.levelBounds.RD).toEqual({ min: 1, max: 4 });
+    expect(s.levelBounds.FDP).toEqual({ min: 1, max: 4 });
     expect(s.currency).toBe('$');
     expect(s.mascotNames.penguin).toBe('Pip');
   });

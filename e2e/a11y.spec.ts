@@ -67,7 +67,7 @@ test('first run: PIN and naming', async ({ page }) => {
 
 test('Home, the level picker, the shop', async ({ page }) => {
   await openHome(page, {
-    assignments: [assignment('PC:1,RD:1', { seed: 3, title: 'Today' })],
+    assignments: [assignment('PC:1,FDP:1', { seed: 3, title: 'Today' })],
     rewards: [
       {
         profileId: 'default',
@@ -162,7 +162,7 @@ test('the parent area: gate, reset, and every page', async ({ page }) => {
   await openHome(page, {
     assignments: [
       assignment('EQ:3,PC:2@2', { seed: 1, title: 'Monday' }),
-      assignment('RD:4', { seed: 2, title: 'Tuesday', status: 'queued', position: 1 }),
+      assignment('FDP:4', { seed: 2, title: 'Tuesday', status: 'queued', position: 1 }),
     ],
     attempts: Array.from({ length: 6 }, (_, i) =>
       attemptRow({

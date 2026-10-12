@@ -62,7 +62,7 @@ describe('missed questions (R-PAR-4)', () => {
       done('EQ', new Date(2026, 8, 21, 10), { id: 'eq-clean' }),
       done('PC', new Date(2026, 8, 22, 10), { id: 'pc-2wrong', wrongTries: 2, clean: false }),
       done('PC', new Date(2026, 8, 22, 11), { id: 'pc-fixed', wrongTries: 3, clean: false, fixed: true }),
-      { ...done('RD', new Date(2026, 8, 22, 12), { id: 'rd-open', maxHint: 3 }), finishedAt: undefined },
+      { ...done('FDP', new Date(2026, 8, 22, 12), { id: 'rd-open', maxHint: 3 }), finishedAt: undefined },
     ]);
     const ids = async (f = {}) => (await loadMissed(f)).map((a) => a.id);
     expect(await ids()).toEqual(['pc-2wrong', 'eq-h3']);

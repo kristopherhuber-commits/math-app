@@ -1,5 +1,5 @@
 // Export, import and reset (R-PAR-6, R-DATA-1). An export holds every table and the schema version;
-// importing checks the version, migrates an older file forward (v1 → v2 → v3 → v4 → v5) and replaces
+// importing checks the version, migrates an older file forward (v1 → … → v6) and replaces
 // everything in one transaction, so a bad file changes nothing. Reset clears progress and assignments
 // but keeps the PIN, names, settings and the error list (parent decision, M5).
 import {
@@ -12,6 +12,11 @@ import {
   upgradeAttemptToV5,
   upgradeSettingsToV5,
   upgradeTopicStateToV5,
+  mergeTopicStatesToV6,
+  upgradeAssignmentToV6,
+  upgradeAttemptToV6,
+  upgradeRewardsToV6,
+  upgradeSettingsToV6,
   type Assignment,
   type Attempt,
   type ErrorEntry,
@@ -125,6 +130,14 @@ export function parseImport(text: string): ParsedImport {
     settings = settings.map((s) => upgradeSettingsToV5(s));
     assignments = assignments.map((a) => upgradeAssignmentToV5(a));
     attempts = attempts.map((a) => upgradeAttemptToV5(a));
+  }
+  // v5 → v6: Repeating decimals is part of Fractions, decimals and percents.
+  if (v < 6) {
+    topicStates = mergeTopicStatesToV6(topicStates);
+    settings = settings.map((s) => upgradeSettingsToV6(s));
+    assignments = assignments.map((a) => upgradeAssignmentToV6(a));
+    attempts = attempts.map((a) => upgradeAttemptToV6(a));
+    rewards = rewards.map((r) => upgradeRewardsToV6(r));
   }
   return {
     ok: true,

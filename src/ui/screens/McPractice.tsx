@@ -1,4 +1,4 @@
-// Multiple-choice question screen for RD, FDP and PC (design.md §3.2, §6.1, mockups 02, 03, 12).
+// Multiple-choice question screen for FDP (with its repeating decimals) and PC (design.md §3.2, §6.1, mockups 02, 03, 12).
 // Help is always bottom-left and Check bottom-right. Keyboard: 1–5 choose, Enter checks, H opens
 // help, Esc closes it (design.md §10).
 import { useEffect, useReducer, useRef } from 'react';
@@ -9,7 +9,7 @@ import { FeedbackToast, MathHero, McOptionCard } from '../components/Numbers';
 import { NumberWalkthrough } from '../components/NumberWalkthrough';
 import { Turtle } from '../mascots/Turtle';
 import { numStrings, numText, strings, topicStrings } from '../strings';
-import { MC_TOPICS, mcReducer, startMc } from '../practice/mcReducer';
+import { MC_SOURCES, mcReducer, startMc } from '../practice/mcReducer';
 import { CelebrationSlot, useReportAttempt, type QuestionProps } from '../practice/question';
 import { useSound } from '../sound';
 
@@ -120,7 +120,7 @@ export function McPractice({ topic, level, seed, currency, onSave, onSolved, onN
           {s.hintOpen && s.hintTier > 0 && !s.solved && (
             <HintPanel
               tier={s.hintTier as 1 | 2}
-              body={<Tex text={numText(MC_TOPICS[topic].hint(q, s.hintTier as 1 | 2))} />}
+              body={<Tex text={numText(MC_SOURCES[q.topic].hint(q, s.hintTier as 1 | 2))} />}
               walkOffered={s.walkOffered}
               onMore={() => dispatch({ type: 'moreHint' })}
               onClose={() => dispatch({ type: 'closeHint' })}

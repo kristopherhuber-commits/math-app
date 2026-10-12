@@ -102,8 +102,8 @@ describe('dashboard statistics (R-PAR-3)', () => {
     expect(s.avgTries).toBe((1 + 2 + 3 + 1) / 4);
     // 2 + 2 + 10 (an hour, capped) + 2 minutes.
     expect(s.minutes).toBe(16);
-    expect(topicStats(list, 'RD')).toEqual({
-      topic: 'RD',
+    expect(topicStats(list, 'FDP')).toEqual({
+      topic: 'FDP',
       attempts: 0,
       cleanRate: null,
       hints: { 1: 0, 2: 0, 3: 0 },

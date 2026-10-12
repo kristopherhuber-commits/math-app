@@ -41,7 +41,7 @@ async function answerNext(assignmentId: string, o: Partial<Attempt> = {}) {
   return { q, events: await finishAttempt(attempt, { adaptive: q.adaptive, rewarded: true }) };
 }
 
-/** An assignment from a spec like 'EQ:1,PC:1,RD:1@4' (`@n` locks the level), added to the queue. */
+/** An assignment from a spec like 'EQ:1,PC:1,FDP:1@4' (`@n` locks the level), added to the queue. */
 const add = (assign: string, extra: Partial<AssignmentDraft> = {}) =>
   createAssignment(draft(assign, extra), false);
 
@@ -76,7 +76,7 @@ describe('assignments (R-SES-1…3)', () => {
   });
 
   it('levels: EQ starts at 2, number topics at 1; a lock wins and is not adaptive (R-SES-3)', async () => {
-    const a = await add('EQ:1,PC:1,RD:1@4');
+    const a = await add('EQ:1,PC:1,FDP:1@4');
     expect(await nextAssignmentQuestion(a)).toMatchObject({
       topic: 'EQ',
       level: 2,
@@ -86,7 +86,7 @@ describe('assignments (R-SES-1…3)', () => {
     await answerNext(a.id);
     expect(await nextAssignmentQuestion(a)).toMatchObject({ topic: 'PC', level: 1, index: 1 });
     await answerNext(a.id);
-    expect(await nextAssignmentQuestion(a)).toMatchObject({ topic: 'RD', level: 4, adaptive: false });
+    expect(await nextAssignmentQuestion(a)).toMatchObject({ topic: 'FDP', level: 4, adaptive: false });
   });
 
   it('resume (R-SES-5): an unfinished attempt changes nothing; the same question comes back', async () => {
@@ -166,11 +166,11 @@ describe('finishAttempt', () => {
   });
 
   it('free practice stores no level of its own for stars (R-ADP-7, R-RWD-1)', async () => {
-    expect(await finishAttempt(finished('RD', 3), { adaptive: false, rewarded: true })).toMatchObject({
+    expect(await finishAttempt(finished('FDP', 3), { adaptive: false, rewarded: true })).toMatchObject({
       stars: 6,
     });
     expect(await db.topicStates.toArray()).toEqual([]);
-    expect(await topicLevel('RD')).toBe(1); // assignments keep their own level (R-ADP-7)
+    expect(await topicLevel('FDP')).toBe(1); // assignments keep their own level (R-ADP-7)
   });
 
   it('promotes after 4 of 5 clean and says so (R-ADP-2, R-ADP-6); the window resets', async () => {
@@ -221,7 +221,7 @@ describe('finishAttempt', () => {
 
 describe('assignment completion (R-SES-2, R-SES-7)', () => {
   it('finishing the last question completes it, activates the next, and reports it', async () => {
-    const a = await add('PC:1,RD:1', { title: 'Test' });
+    const a = await add('PC:1,FDP:1', { title: 'Test' });
     const b = await add('EQ:1');
     expect((await homeSnapshot()).freeOpen).toBe(true); // `always`, the default (R-SES-6, parent decision)
     await saveSettings({ freePractice: 'afterAssignment' });
@@ -242,7 +242,7 @@ describe('assignment completion (R-SES-2, R-SES-7)', () => {
       shells: 2,
       byTopic: [
         { topic: 'PC', stars: 0, questions: 1 },
-        { topic: 'RD', stars: 2, questions: 1 },
+        { topic: 'FDP', stars: 2, questions: 1 },
       ],
     });
     expect(s?.badges).toContain('first-solve');

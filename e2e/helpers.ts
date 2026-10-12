@@ -5,9 +5,22 @@ import { createHash, randomBytes } from 'node:crypto';
 import { expect, type Page } from '@playwright/test';
 import type { TopicId } from '../src/engine/config';
 import { answerQuality, starsFor } from '../src/engine/scoring';
+import { generateFdpTopic } from '../src/engine/topics/fdp/topic';
+import type { McQuestion } from '../src/engine/topics/mc';
 import { rewardStrings } from '../src/ui/strings';
 
 export const PIN = '2468';
+
+/**
+ * The first seed from `from` whose FDP question at this level is a repeating-decimal one (RD is part
+ * of FDP since 2026-10-11), optionally one that also passes `ok`. Its question is `generateRd(level, seed)`.
+ */
+export function rdSeed(level: number, from: number, ok: (q: McQuestion) => boolean = () => true): number {
+  for (let seed = from; ; seed++) {
+    const q = generateFdpTopic(level, seed);
+    if (q.topic === 'RD' && ok(q)) return seed;
+  }
+}
 
 /**
  * The celebration headline for an answer at this level (R-RWD-1: 2 × level, less 1 for H1, 2 more
@@ -49,7 +62,7 @@ export async function putRows(page: Page, rows: Record<string, object[]>): Promi
   );
 }
 
-/** `'PC:2,RD:1,EQ:1@3'` → assignment items (`@n` locks the level). */
+/** `'PC:2,FDP:1,EQ:1@3'` → assignment items (`@n` locks the level). */
 export function items(spec: string): { topic: TopicId; count: number; levelLock?: number }[] {
   return spec.split(',').map((part) => {
     const [, topic, count, lock] = /^(\w+):(\d+)(?:@(\d+))?$/.exec(part)!;

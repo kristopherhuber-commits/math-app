@@ -2,7 +2,7 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-10-11 · Current state: **v1 finished (M0–M6, 2026-09-25); M7 built 2026-09-27; M8 (four levels; stars by hints and mistakes; stars pop-up; mascot animations) built and deployed 2026-10-11. Open: merging Repeating decimals into Fractions, decimals and percents (waiting on the parent's answers, §10). Future work: `docs/roadmap.md`.**
+Last updated: 2026-10-11 · Current state: **v1 finished (M0–M6, 2026-09-25); M7 built 2026-09-27; M8 (four levels; stars by hints and mistakes; stars pop-up; mascot animations) built and deployed 2026-10-11. Repeating decimals merged into Fractions, decimals and percents 2026-10-11. Future work: `docs/roadmap.md`.**
 
 ---
 
@@ -114,7 +114,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-10-11 | M8: stars | **Stars = 2 × level** (2, 4, 6, 8). **H1 −1, H2 −2 more, each mistake −2, never below 0. At 0 the walkthrough is shown, as if H3 was asked** — confirmed even though one mistake at level 1 does that. **Hints cost once per question**, and **a mistake only makes Help pulse** (no hint opens by itself). **The below-level rule is dropped.** Stars = shells, unchanged. |
 | 2026-10-11 | M8: stars pop-up | A **"How stars work"** button left of the streak on Home opens a small pop-up with the rules; as simple as possible. |
 | 2026-10-11 | M8: mascot animations | "A little more advanced and interesting" turtle and penguin animation, subtle and tasteful, also in Dress up. Built: idle breathing and blinks, a different reaction on each tap, Dress up reactions; off with reduced motion (`components/MascotPlay.tsx`). |
-| 2026-10-11 | Open: one topic for Repeating decimals and FDP | Asked: make Repeating decimals part of "Fractions, decimals and percents". **Waiting on:** how the four levels combine (recommended: half from each at every level), how stored RD data and levels merge, the two "Top level" badges, the name. |
+| 2026-10-11 | One topic for Repeating decimals and FDP | **Repeating decimals is part of "Fractions, decimals and percents"** ("I thought I said to combine that"). Built with the recommended answers: every FDP level draws half its questions from the RD table of the same level and half from the FDP one; stored RD data moves to FDP at the higher of the two levels; one "Top level" badge for FDP (an earned RD one becomes it); the name "Fractions, decimals and percents"; four topic tiles. |
 | 2026-10-11 | M8: docs | Update `requirements.md` and `design.md` to match (approved). The 2026-09-23 level-6 final-answer rule goes with level 6. |
 
 ## 5. Assumptions in force (spec silent; reversible)
@@ -227,6 +227,13 @@ From M8, four levels and the new stars (details in `docs/milestones/M8-report.md
 89. RD level 4 F→D answers show both the "…" and the bar forms (bar notation starts at RD level 2). PC level 4 never uses two changes that cancel exactly (e.g. +25% then −20%).
 90. The "first two-step price change" badge also counts PC level 4.
 91. The Help button and hint panel don't show what a hint costs; the Home pop-up explains it.
+
+From the RD + FDP merge (2026-10-11):
+92. Each FDP question is an RD or an FDP one, half each, picked from the seed; each keeps its own generator id (`rd.v2` / `fdp.v2`), hints and walkthrough, so stored answers replay as before.
+93. Dexie v6: the FDP topic state takes the higher of the RD and FDP levels, with a new adaptive window; the FDP level range stays and the RD one goes; RD assignment items and answers become FDP; older export files are migrated the same way.
+94. "First delayed repeating decimal" now also counts RD Challenge delayed repeats with a whole part.
+95. Bar notation still starts at RD level 2 and FDP level 3, so at FDP level 2 only the repeating-decimal questions show it.
+96. `?topic=RD` links no longer open anything; use `?topic=FDP`.
 
 ## 6. Spec conflicts found and how they were resolved
 

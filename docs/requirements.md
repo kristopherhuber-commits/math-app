@@ -14,15 +14,14 @@ Requirement IDs (`R-…`) are stable. Reference them in commits, tests and PRs. 
 
 ## 1. Purpose
 
-A practice app that asks the learner questions on five topics, checks their answers, and when they are stuck walks them through the solution. The core teaching goal is **process, not answers**. The clearest case is algebra: the learner must show the steps of the "knowns on one side, unknowns on the other → simplify → solve" method, and each step is checked.
+A practice app that asks the learner questions on four topics, checks their answers, and when they are stuck walks them through the solution. The core teaching goal is **process, not answers**. The clearest case is algebra: the learner must show the steps of the "knowns on one side, unknowns on the other → simplify → solve" method, and each step is checked.
 
 ### 1.1 Topics
 
 | ID | Topic | Summary |
 |---|---|---|
 | NC | Number classification | Name the smallest set a number belongs to: natural, whole, integer, rational or irrational |
-| RD | Repeating decimals | Repeating decimal ↔ fraction (x-method), and fraction → repeating decimal |
-| FDP | Fraction ↔ decimal ↔ percent | Convert among the three forms |
+| FDP | Fractions, decimals and percents | Convert among the three forms, including repeating decimals ↔ fractions (x-method). *Since 2026-10-11 Repeating decimals (RD, §6.2) is part of this topic: at every level, half the questions come from §6.2 and half from §6.3.* |
 | PC | Percent change (prices) | New price after an increase or decrease, successive changes, recovering the original price |
 | EQ | Linear equations, one variable | Solve for the variable, showing the steps |
 
@@ -108,7 +107,7 @@ Each topic has four levels *(parent decision 2026-10-11)*: **1 Basic** (the conc
 
 ### 5.1 Answer formats
 
-- **R-ANS-1** NC, RD, FDP and PC questions use **multiple choice with 5 options** (NC's five options are the five number sets, §6.1).
+- **R-ANS-1** NC, FDP (with its repeating-decimal questions) and PC questions use **multiple choice with 5 options** (NC's five options are the five number sets, §6.1).
 - **R-ANS-2** Distractors MUST be generated from explicit **misconception models** (listed per topic). Random-number fillers are allowed only when the misconception models produce fewer than 4 distinct candidates.
 - **R-ANS-3** **No distractor may be numerically equal to the correct answer.** For example, 420/99 must never be offered as wrong when 140/33 is right. All 5 options MUST be distinct in value and in displayed text.
 - **R-ANS-4** Option order is shuffled with the question's seeded PRNG.
@@ -181,7 +180,9 @@ Examples: 7 → Natural; 0 → Whole; −3 → Integer; 3/4 → Rational; 0.1010
 - H2: number-specific, e.g. "12/4 simplifies. What is 12 ÷ 4?"
 - H3: a walkthrough over the **nested-sets diagram** (see design.md). It places the number in its innermost set, shows which enclosing sets also contain it, and ends with the smallest set as the answer. For 0.999… it first finds the value with the x-method (§6.2), as in RD.
 
-### 6.2 RD — Repeating decimals
+### 6.2 RD — Repeating decimals (part of FDP)
+
+*Since 2026-10-11 this is not a topic of its own: these are the repeating-decimal questions of the FDP topic (§6.3). At each FDP level a question is drawn from this table or from §6.3, half each, and keeps its own generator, hints and walkthrough. "RD level n" below means FDP level n.*
 
 Two question directions:
 
@@ -234,7 +235,9 @@ Inline mini-questions in the walkthrough (R-HELP-4): "How many digits are in the
 
 **F→D distractors:** truncated terminating version (0.83), wrong repeating block (0.8383…), repeat starting too early (0.666… for 1/6, correct 0.1666…), digits of numerator and denominator juxtaposed (0.56 for 5/6), reciprocal (1.2 for 5/6).
 
-### 6.3 FDP — Fraction ↔ decimal ↔ percent
+### 6.3 FDP — Fractions, decimals and percents
+
+*Each level also includes the repeating-decimal questions of the same level in §6.2, half each (parent decision 2026-10-11).*
 
 Six directions: F→D, F→P, D→F, D→P, P→F, P→D. The prompt names the target form, e.g. "Write 3/8 as a percent."
 
@@ -460,12 +463,12 @@ EQ uses no multiple choice. Every step is produced by the learner, either throug
 - **R-PAR-6** **Data:** export all data to a JSON file; import a JSON file (with a confirmation step and a schema-version check; older files are migrated, newer ones refused); reset all progress (with a confirmation step; it clears answers, levels, shells, streak, badges, cosmetics, shop requests and all assignments, and keeps the PIN, names, settings and the error list). The in-app error list (R-NF-5) is on this page.
 - **R-PAR-7** *(added M6)* **Rewards:** shop requests to **mark given** or **cancel and refund**; the history; shells to spend and lifetime shells; set the learner's **shells to spend** (the lifetime total and its cosmetics stay as earned); each item's **price**; and an optional **picture** per item, kept on the device only (never uploaded).
 
-### 9.1 Data model (Dexie; built as schema v5)
+### 9.1 Data model (Dexie; built as schema v6)
 
-The model below is the original v1. As built (see `src/data/db.ts`): v2 adds `Attempt.wrongTries / itemIndex / countedAt` and `Assignment.activatedAt / seed / order`; v3 adds the `errors` store and `Attempt.fixed`; v4 adds `Rewards.spent`, `Settings.shopItems` and the `redemptions` store; v5 renumbers stored levels, level ranges, level locks and attempts for the four levels (old 1–2 → 1, 3 → 2, 4 → 3, 5 and EQ 6 → 4), resets the adaptive windows and drops `TopicState.freeBest`. Optional fields added later without a schema bump: `ShopItem.note / image`, `Attempt.shellsEarned`, `TopicState.freeBest` (M7 to v4 only). Since M7 `Attempt.stars` is 0–10, and 0–8 since v5 (R-RWD-1), and `Settings.shellsPerStars` and `Settings.naturalIncludesZero` are no longer read.
+The model below is the original v1. As built (see `src/data/db.ts`): v2 adds `Attempt.wrongTries / itemIndex / countedAt` and `Assignment.activatedAt / seed / order`; v3 adds the `errors` store and `Attempt.fixed`; v4 adds `Rewards.spent`, `Settings.shopItems` and the `redemptions` store; v5 renumbers stored levels, level ranges, level locks and attempts for the four levels (old 1–2 → 1, 3 → 2, 4 → 3, 5 and EQ 6 → 4), resets the adaptive windows and drops `TopicState.freeBest`; v6 moves RD into FDP (the FDP topic state takes the higher of the two levels, RD assignment items and answers become FDP, the RD level range is dropped, and "Top level in repeating decimals" becomes the FDP badge). Optional fields added later without a schema bump: `ShopItem.note / image`, `Attempt.shellsEarned`, `TopicState.freeBest` (M7 to v4 only). Since M7 `Attempt.stars` is 0–10, and 0–8 since v5 (R-RWD-1), and `Settings.shellsPerStars` and `Settings.naturalIncludesZero` are no longer read.
 
 ```ts
-type TopicId = 'NC' | 'RD' | 'FDP' | 'PC' | 'EQ';
+type TopicId = 'NC' | 'FDP' | 'PC' | 'EQ';   // RD is part of FDP since 2026-10-11 (schema v6)
 
 interface Profile      { id: 'default'; name: string; createdAt: string; }         // single profile in v1, keyed for future multi-profile
 interface Settings     { profileId; pinHash: string; freePractice: 'always'|'afterAssignment'|'never';
@@ -575,3 +578,4 @@ Everything below is written into the requirements above; `progress.md` §4 has t
 | 2026-09-28 | R-RWD-1 | EQ level 6 no longer pays 10 ★: a review question pays the stars of the level it comes from (3–5 → 4, 6, 8). |
 | 2026-10-11 | §4.1, §6, §7.2, R-SES-8, R-ADP-7, R-ANS-5, R-EQ-CHK-3, R-DISP-3, R-FDP-3, R-PC-3 | Four levels in every topic: Basic, General, Advanced, Challenge (old 1–2 → 1, 3 → 2, 4 → 3, 5 → 4); no mixed levels, EQ level 6 removed with its any-line rule; new Challenge content in NC, RD, FDP and PC; start levels Equations 2, Adaptive 2. |
 | 2026-10-11 | R-RWD-1, R-HELP-2, R-HELP-6 | Stars = 2 × level, −1 for H1, −2 more for H2, −2 per wrong try, never below 0; at 0 the walkthrough is shown; no below-level rule; a wrong try only makes Help pulse; "How stars work" pop-up on Home. |
+| 2026-10-11 | §1.1, §6.2, §6.3, R-ANS-1, R-RWD-3, §9.1 | Repeating decimals is part of Fractions, decimals and percents: four topics; each FDP level draws half its questions from §6.2; one "Top level" badge for FDP. |

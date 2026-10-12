@@ -32,12 +32,12 @@ test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)
   hasTouch,
 }) => {
   const seed = 5;
-  await openHome(page, { assignments: [assignment('PC:2,RD:1,EQ:1@3', { seed, title: 'Test day' })] });
+  await openHome(page, { assignments: [assignment('PC:2,FDP:1,EQ:1@3', { seed, title: 'Test day' })] });
   await expect(page.getByRole('heading', { name: 'Test day' })).toBeVisible();
   const items = page.locator('.assignment-item');
   await expect(items).toHaveText([
     /Price changes\s*0 \/ 2/,
-    /Repeating decimals\s*0 \/ 1/,
+    /Fractions, decimals and percents\s*0 \/ 1/,
     /Equations\s*0 \/ 1/,
   ]);
   await expect(page.getByText('0 of 4 done')).toBeVisible();
@@ -59,7 +59,7 @@ test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)
   await answerMc(page, generatePc(1, questionSeed(seed, 1), '$'), hasTouch);
   await next(page, hasTouch);
 
-  await expect(page.getByText('Repeating decimals · Level 1')).toBeVisible();
+  await expect(page.getByText('Fractions, decimals and percents · Level 1')).toBeVisible();
   await expect(page.getByText('Question 1 of 1')).toBeVisible();
   await answerMc(page, generateRd(1, questionSeed(seed, 2)), hasTouch);
   await next(page, hasTouch);
@@ -81,7 +81,7 @@ test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)
   await expect(page.getByText('12 stars · +12 shells')).toBeVisible();
   await expect(page.locator('.summary-row')).toHaveText([
     /Price changes\s*★ 4 · 2 questions/,
-    /Repeating decimals\s*★ 2 · 1 question/,
+    /Fractions, decimals and percents\s*★ 2 · 1 question/,
     /Equations\s*★ 6 · 1 question/,
   ]);
   await expect(page.getByText('New badge: A perfect assignment')).toBeVisible();
@@ -138,7 +138,7 @@ test('four clean answers out of five level up, and Pip says so (R-ADP-2, R-ADP-6
 
 test('keyboard only: start, answer with 1–5 and Enter, next (design.md §10)', async ({ page }) => {
   const seed = 21;
-  await openHome(page, { assignments: [assignment('RD:2', { seed })] });
+  await openHome(page, { assignments: [assignment('FDP:2', { seed })] });
   await page.getByRole('button', { name: 'Start ›' }).focus();
   await page.keyboard.press('Enter');
   for (let i = 0; i < 2; i++) {

@@ -74,7 +74,7 @@ Dark mode follows `prefers-color-scheme` and a parent setting (`auto | light | d
 | `label` | Nunito | 15 / 20 | 800 | Chips, step labels, captions |
 | `overline` | Nunito | 14 / 18, +0.06em tracking, uppercase | 900 | "TODAY'S ASSIGNMENT", "STEPS" |
 | `button` | Nunito | 20 / 24 (18 small) | 800 | |
-| `math-hero` | KaTeX_Main | 64 px | 400 | The question's number (NC, RD, FDP) |
+| `math-hero` | KaTeX_Main | 64 px | 400 | The question's number (NC, FDP with its repeating decimals) |
 | `math-lg` | KaTeX_Main | 38–44 px | 400 | Options that are fractions; equation lines on the given line |
 | `math-md` | KaTeX_Main | 28–30 px | 400 | Step lines, tiles, keypad |
 | `money` | Nunito, `font-variant-numeric: tabular-nums` | 34 px | 800 | PC options (money reads better in the UI face than in a math serif) |
@@ -170,7 +170,7 @@ Names match the intended React components. "States" lists every visual state tha
 | Component | Spec | States |
 |---|---|---|
 | **TopBar** | 72 px high, `--surface`, bottom border `--line`. Left: `‹ Home` (outlined, 112×44). Title `title`/20. Centre: "Question n of N" label + 340×12 progress track. Right: star counter and shell counter pills (110×40, `--surface-sunken`) | — |
-| **TopicChip** | Pill, 30 px high, `label` text. EQ/NC/RD/FDP use `--primary-soft`/`--var-ink`; PC uses `--const-bg`/`--const-ink` | — |
+| **TopicChip** | Pill, 30 px high, `label` text. EQ/NC/FDP use `--primary-soft`/`--var-ink`; PC uses `--const-bg`/`--const-ink` | — |
 | **MathHero** | KaTeX, `math-hero`, centred, with an optional caption below (`label`, muted), e.g. "the block 24 repeats forever" | — |
 | **McOption** | 196×136 (desktop row of 5) or 2-column on portrait. Radius 18. Content centred: `math-lg` or `money` | `idle` (surface, 2 px `--line`) · `hover` (border `--primary` 2 px) · `selected` (`--primary-soft`, 4 px `--primary`, ✓ badge top-right) · `wrong` (sunken fill, 45% veil, ✕ in amber, **disabled**) · `correct` (`--success-soft`, 4 px `--success`) · `focus-visible` (3 px outline `--primary`, 3 px offset) |
 | **SetCard** (NC) | **Five** cards, no Real (parent decision 2026-09-25). **One answer: the smallest set** (M7, R-NC-2), so the cards behave like McOption (a radio group). 166×132 card: a 30 px round marker, the set name (`title`/21), and an example line (e.g. "0, 1, 2, …") | `idle` · `selected` (`--primary-soft`, 4 px `--primary`, ● in the marker) · `tried` (like McOption `wrong`: sunken fill, veil, ✕ in amber, disabled, R-NC-3) · `correct` |
@@ -389,6 +389,7 @@ The app follows this document, with the changes below. The mockups were not redr
 | Hints | mockup 03, §5 HintDrawer | A panel inside the question card, not a docked drawer (parent approved, M3). |
 | Number sets | mockup 04, §7.4 | Five set cards; Real is the outer frame of the sets map only. Since M7 one card is the answer (the smallest set), chosen like a multiple-choice option; tried cards are greyed out. |
 | Stars | mockups 08, 09, §5 Celebration | Since 2026-10-11 stars are 2 × the level (up to 8), less for hints and mistakes, and shells equal stars; the summary shows stars per topic as a total. Home has a "How stars work" pop-up (§5 StarsInfo). |
+| Topics | mockup 01, §5 TopicTile | Since 2026-10-11 four topic tiles: Repeating decimals is part of "Fractions, decimals and percents". |
 | Levels | mockups, §5 LevelPicker, §6.2–6.3 | Since 2026-10-11 every topic has four levels: Basic, General, Advanced, Challenge. Tiles at EQ level 1, typed steps at 2–4. |
 | Home | mockup 01, §7.1 | Free practice open by default; a level picker (Adaptive or a level) on each tile; Shop button; waiting-for-a-grown-up note; Dress up; badge shelf; shells on the sand = shells to spend. |
 | Rewards | §4.3, §7 "accessory shop" | Cosmetics unlock from lifetime shells (no shop for them). The shop sells real rewards for shells to spend, with original cartoon pictures and a line saying what each reward is; the parent gives or cancels them in Parent › Rewards. |
