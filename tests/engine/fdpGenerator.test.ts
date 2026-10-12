@@ -79,10 +79,11 @@ const POOLS: Record<number, Record<string, (x: Rational) => boolean>> = {
   1: {
     benchmark: (x) => [2n, 4n, 5n, 10n].includes(x.d) && below1(x),
     basic: (x) => [8n, 20n, 25n, 50n, 100n].includes(x.d) && below1(x),
+    // "< 1%" moved here from level 2 (parent decision 2026-10-11).
+    tiny: (x) => below1(x) && [1000n, 500n, 250n, 200n, 125n].includes(x.d) && cmp(x, rat(1, 100)) < 0,
   },
   2: {
     mixed: (x) => wholeOk(x) && [2n, 4n, 5n, 8n, 10n, 20n, 25n].includes(x.d),
-    tiny: (x) => below1(x) && [1000n, 500n, 250n, 200n, 125n].includes(x.d) && cmp(x, rat(1, 100)) < 0,
   },
   3: { repeating: (x) => REPEATING.includes(x.d) && below1(x) },
   4: { repeatingMixed: (x) => wholeOk(x) && REPEATING.includes(x.d) },

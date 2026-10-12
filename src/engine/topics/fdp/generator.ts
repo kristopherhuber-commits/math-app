@@ -27,7 +27,7 @@ function properFraction(rng: Rng, denominators: readonly number[]): Rational | n
   return gcd(BigInt(n), BigInt(d)) === 1n ? rat(n, d) : null;
 }
 
-/** Which pool a value came from (§6.3 table): one per level, two at L1 and L2. */
+/** Which pool a value came from (§6.3 table): one per level, three at L1. */
 export type FdpPool = 'benchmark' | 'basic' | 'mixed' | 'tiny' | 'repeating' | 'repeatingMixed';
 
 /** Whole part 1…mixedWholeMax plus a proper fraction over `dens`. */
@@ -41,14 +41,14 @@ export function fdpValue(rng: Rng, level: number): { x: Rational; pool: FdpPool 
   const d = config.fdp.denominators;
   const of = (x: Rational | null, pool: FdpPool) => x && { x, pool };
   switch (level) {
-    case 1:
-      return rng.bool()
-        ? of(properFraction(rng, d.benchmark), 'benchmark')
-        : of(properFraction(rng, d.basic), 'basic');
+    case 1: {
+      const pick = rng.int(0, 2);
+      if (pick === 0) return of(properFraction(rng, d.benchmark), 'benchmark');
+      if (pick === 1) return of(properFraction(rng, d.basic), 'basic');
+      return of(rat(rng.int(1, config.fdp.tinyMaxThousandths), 1000), 'tiny');
+    }
     case 2:
-      return rng.bool()
-        ? of(mixedNumber(rng, d.mixed), 'mixed')
-        : of(rat(rng.int(1, config.fdp.tinyMaxThousandths), 1000), 'tiny');
+      return of(mixedNumber(rng, d.mixed), 'mixed');
     case 3:
       return of(properFraction(rng, d.repeating), 'repeating');
     default:

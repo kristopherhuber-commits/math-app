@@ -119,7 +119,8 @@ describe.each(LEVELS)('RD level %i (R-TEST-2)', (level) => {
           const m = read.nonRep.length;
           if (level === 1) expect(read.whole === '0' && m === 0 && k >= 1 && k <= 3).toBe(true);
           if (level === 2) expect(Number(read.whole) >= 1 && m === 0 && k <= 3).toBe(true);
-          if (level === 3) expect(m >= 1 && m <= 2 && k >= 1 && k <= 2).toBe(true);
+          // L3: no whole part and a one-digit block; whole parts and longer blocks are L4 (2026-10-11).
+          if (level === 3) expect(read.whole === '0' && m >= 1 && m <= 2 && k === 1).toBe(true);
           if (level === 4) expect(Number(read.whole) >= 1 && m >= 1 && m <= 2 && k >= 2 && k <= 3).toBe(true);
           expect(p.block).toBe(block);
         } else {

@@ -53,10 +53,16 @@ export const config = {
   levels: { NC: 4, FDP: 4, PC: 4, EQ: 4 },
   /** RD questions (§6.2), part of the FDP topic since 2026-10-11. Ranges the spec leaves open are M3 assumptions. */
   rd: {
-    /** L2: whole part 1…wholeMax, block length 1…3. L3: whole part 0…wholeMax. L4: 1…wholeMax. */
+    /** L2: whole part 1…wholeMax, block length 1…3. L4: 1…wholeMax. (L3 has no whole part.) */
     wholeMax: 9,
     /** F→D denominators by level (four levels, 2026-10-11): 7 and 14 give a 6-digit block. */
     f2dDenominators: { 2: [3, 9, 11], 3: [6, 12, 15, 22], 4: [7, 14] } as Record<number, readonly number[]>,
+    /**
+     * L3 D→F (delayed repeat, no whole part): digits before the block, and a one-digit block, e.g.
+     * 0.41666… (parent decision 2026-10-11: whole parts and longer blocks are kept for L4).
+     */
+    advancedNonRep: { min: 1, max: 2 },
+    advancedBlock: { min: 1, max: 1 },
     /** L4 D→F (delayed repeat with a whole part): digits before the block, and the block's length. */
     challengeNonRep: { min: 1, max: 2 },
     challengeBlock: { min: 2, max: 3 },
@@ -65,8 +71,8 @@ export const config = {
   },
   /**
    * FDP (§6.3, four levels since 2026-10-11). Denominator pools; ranges the spec leaves open are M3
-   * assumptions. L1 Basic: `benchmark` or `basic`; L2 General: `mixed` (whole part 1…mixedWholeMax)
-   * or "< 1%"; L3 Advanced: `repeating` (below 1); L4 Challenge: a whole part 1…mixedWholeMax plus a
+   * assumptions. L1 Basic: `benchmark`, `basic` or "< 1%" (a third each; "< 1%" moved from L2 on
+   * 2026-10-11); L2 General: `mixed` (whole part 1…mixedWholeMax); L3 Advanced: `repeating` (below 1); L4 Challenge: a whole part 1…mixedWholeMax plus a
    * `repeating` fraction.
    */
   fdp: {
@@ -77,7 +83,7 @@ export const config = {
       repeating: [3, 6, 9, 11, 12],
     },
     mixedWholeMax: 5,
-    /** Level 2 "< 1%": p/1000 for p in 1…9 (0.1% … 0.9%). */
+    /** Level 1 "< 1%": p/1000 for p in 1…9 (0.1% … 0.9%). */
     tinyMaxThousandths: 9,
     barFromLevel: 3,
   },

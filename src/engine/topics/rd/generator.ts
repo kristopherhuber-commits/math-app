@@ -65,17 +65,20 @@ function d2fRep(rng: Rng, shape: RdShape): DecimalRep | null {
         block: digits(rng, rng.int(1, 3)),
       };
       break;
-    case 'delayed':
+    case 'delayed': {
+      // Advanced: no whole part and a one-digit block (e.g. 0.41666…); the Challenge has the rest.
+      const { advancedNonRep: m, advancedBlock: k } = config.rd;
       return keepShape(
         {
           negative: false,
-          whole: BigInt(rng.int(0, config.rd.wholeMax)),
-          nonRep: digits(rng, rng.int(1, 2)),
-          block: digits(rng, rng.int(1, 2)),
+          whole: 0n,
+          nonRep: digits(rng, rng.int(m.min, m.max)),
+          block: digits(rng, rng.int(k.min, k.max)),
         },
-        { min: 1, max: 2 },
-        { min: 1, max: 2 },
+        m,
+        k,
       );
+    }
     case 'delayedWhole': {
       // Challenge: a whole part, digits before the repeat, and a longer block (e.g. 3.12454545…).
       const { challengeNonRep: m, challengeBlock: k } = config.rd;

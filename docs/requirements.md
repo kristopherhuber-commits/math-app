@@ -193,7 +193,7 @@ Two question directions:
 |---|---|---|---|
 | 1 Basic | D→F | Pure repeat, block length 1–3, no whole part | 0.333… (1/3), 0.4545… (5/11), 0.546546… (182/333) |
 | 2 General | D→F + F→D | Pure repeat **with whole part**; bar notation introduced; F→D with denominators 3, 9, 11 | 4.2424… (140/33); 2/11 → 0.1818… |
-| 3 Advanced | D→F + F→D | **Delayed repeat** (non-repeating part length 1–2, block length 1–2); F→D with denominators 6, 12, 15, 22 | 0.1666… (1/6), 0.8333… (5/6), 0.41666… (5/12), 2.31818… (51/22) |
+| 3 Advanced | D→F + F→D | **Delayed repeat**, no whole part (non-repeating part length 1–2, a one-digit block); F→D with denominators 6, 12, 15, 22 | 0.1666… (1/6), 0.8333… (5/6), 0.41666… (5/12); 5/22 → 0.2272727… |
 | 4 Challenge | D→F + F→D | Delayed repeat **with whole part** 1–9 (non-repeating part 1–2, block 2–3); F→D for 7 and 14 (block length 6; 14ths are delayed) | 3.12454545… (3437/1100); 1/7 → 0.142857142857…; 1/14 → 0.0714285714285… |
 
 - **R-RD-1** The correct D→F answer is the fraction **in lowest terms**, improper if the value > 1 (140/33, not 4 8/33). The walkthrough always shows the unsimplified fraction first, then the simplification step.
@@ -243,8 +243,8 @@ Six directions: F→D, F→P, D→F, D→P, P→F, P→D. The prompt names the t
 
 | Level | Values | Examples |
 |---|---|---|
-| 1 Basic | Benchmarks (halves, quarters, fifths, tenths), or denominators 8, 20, 25, 50, 100 with decimals to 3 places, half each | 1/2 = 0.5 = 50%, 3/8 = 0.375 = 37.5%, 7/20 = 0.35 |
-| 2 General | **Mixed numbers and > 100%; < 1%** | 2¼ = 2.25 = 225%; 0.4% = 0.004 = 1/250 |
+| 1 Basic | Benchmarks (halves, quarters, fifths, tenths), denominators 8, 20, 25, 50, 100 with decimals to 3 places, or **< 1%**, a third each | 1/2 = 0.5 = 50%, 3/8 = 0.375 = 37.5%, 0.4% = 0.004 = 1/250 |
+| 2 General | **Mixed numbers and > 100%** | 2¼ = 2.25 = 225% |
 | 3 Advanced | **Repeating results**; bar notation introduced | 1/3 = 0.333… = 33.3…%; 5/6 = 0.8333… = 83.3…%; 1/9, 2/11, 5/12 |
 | 4 Challenge | **Repeating results above 1**: whole part 1–5 plus a fraction over 3, 6, 9, 11 or 12 | 2⅙ = 2.1666… = 216.666…% |
 
@@ -579,3 +579,4 @@ Everything below is written into the requirements above; `progress.md` §4 has t
 | 2026-10-11 | §4.1, §6, §7.2, R-SES-8, R-ADP-7, R-ANS-5, R-EQ-CHK-3, R-DISP-3, R-FDP-3, R-PC-3 | Four levels in every topic: Basic, General, Advanced, Challenge (old 1–2 → 1, 3 → 2, 4 → 3, 5 → 4); no mixed levels, EQ level 6 removed with its any-line rule; new Challenge content in NC, RD, FDP and PC; start levels Equations 2, Adaptive 2. |
 | 2026-10-11 | R-RWD-1, R-HELP-2, R-HELP-6 | Stars = 2 × level, −1 for H1, −2 more for H2, −2 per wrong try, never below 0; at 0 the walkthrough is shown; no below-level rule; a wrong try only makes Help pulse; "How stars work" pop-up on Home. |
 | 2026-10-11 | §1.1, §6.2, §6.3, R-ANS-1, R-RWD-3, §9.1 | Repeating decimals is part of Fractions, decimals and percents: four topics; each FDP level draws half its questions from §6.2; one "Top level" badge for FDP. |
+| 2026-10-11 | §6.2, §6.3 | Level 3 delayed repeats have no whole part and a one-digit block (whole parts and longer blocks are level 4); "< 1%" moved from level 2 to level 1. |
