@@ -1,4 +1,4 @@
-// R-TEST-5 / M2 done-when: complete the tile builder (EQ levels 1–2) by mouse, by touch emulation
+// R-TEST-5 / M2 done-when: complete the tile builder (EQ level 1) by mouse, by touch emulation
 // and by keyboard alone (R-EQ-TILE-6, R-PLAT-5). The moves are computed from the engine's model of
 // the same seeded question, so the test drives the UI exactly as a learner would.
 import { expect, test, type Page } from '@playwright/test';
@@ -83,11 +83,12 @@ async function readTries(page: Page) {
   );
 }
 
-for (const [level, seed] of [
-  [1, 7],
-  [2, 11],
+// Level 1 (Basic) has both kinds: ax + b = c (seed 7) and the variable on both sides (seed 11).
+for (const [level, seed, kind] of [
+  [1, 7, 'ax + b = c'],
+  [1, 11, 'variable on both sides'],
 ] as const) {
-  test(`solve a level ${level} tile question by ${'pointer'} (mouse, or touch on the tablet project)`, async ({
+  test(`solve a level ${level} tile question (${kind}) by pointer (mouse, or touch on the tablet project)`, async ({
     page,
   }, info) => {
     const touch = !!info.project.use.hasTouch;
@@ -114,8 +115,8 @@ for (const [level, seed] of [
 }
 
 test('solve a tile question with the keyboard alone (R-EQ-TILE-6)', async ({ page }) => {
-  const { q, moves } = planFor(2, 11);
-  await page.goto('./?level=2&seed=11');
+  const { q, moves } = planFor(1, 11);
+  await page.goto('./?level=1&seed=11');
   await expect(page.locator('.tile-board')).toBeVisible();
   for (const m of moves) {
     await page.locator(`[data-tile="${m.id}"]`).focus();
@@ -139,9 +140,9 @@ test('solve a tile question with the keyboard alone (R-EQ-TILE-6)', async ({ pag
 test('a wrong sign shows the balance explanation and is stored as EQ-D4; Esc cancels a pick-up', async ({
   page,
 }) => {
-  const { moves } = planFor(2, 11);
+  const { moves } = planFor(1, 11);
   const m = moves[0]!;
-  await page.goto('./?level=2&seed=11');
+  await page.goto('./?level=1&seed=11');
   const tile = page.locator(`[data-tile="${m.id}"]`);
   await tile.focus();
   await page.keyboard.press('Enter');
@@ -157,19 +158,24 @@ test('a wrong sign shows the balance explanation and is stored as EQ-D4; Esc can
   await expect(page.locator('.balance-explainer')).toBeVisible();
 });
 
-test('free practice at a picked EQ level 2 opens the tile builder (R-ANS-5)', async ({ page }) => {
+test('free practice at a picked EQ level 1 opens the tile builder; level 2 is typed (R-ANS-5)', async ({
+  page,
+}) => {
   await openHome(page);
   await page.getByRole('button', { name: 'Equations', exact: true }).click();
-  await page.getByRole('button', { name: /^Level 2/ }).click();
-  await expect(page.getByText('Equations · Level 2')).toBeVisible();
+  await page.getByRole('button', { name: /^Level 1 · Basic/ }).click();
+  await expect(page.getByText('Equations · Level 1 · Basic')).toBeVisible();
   await expect(page.locator('.tile-board')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Your next line' })).toHaveCount(0);
+  await page.goto('./?level=2&seed=3');
+  await expect(page.getByRole('textbox', { name: 'Your next line' })).toBeVisible();
+  await expect(page.locator('.tile-board')).toHaveCount(0);
 });
 
 test('reduced motion: the balance scale is two still frames (R-NF-3)', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const m = planFor(2, 11).moves[0]!;
-  await page.goto('./?level=2&seed=11');
+  const m = planFor(1, 11).moves[0]!;
+  await page.goto('./?level=1&seed=11');
   await mouseDrag(page, m.id, m.to);
   await page.getByRole('button', { name: m.sign > 0 ? 'plus' : 'minus', exact: true }).click();
   await expect(page.locator('.balance-explainer .balance-static .balance-frame')).toHaveCount(2);

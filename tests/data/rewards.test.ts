@@ -52,7 +52,7 @@ describe('schema v4 (R-DATA-1)', () => {
 
     const d = new MathDb('v3-db');
     await d.open();
-    expect(d.verno).toBe(4);
+    expect(d.verno).toBe(5);
     expect(await d.rewards.get('default')).toMatchObject({
       shells: 60,
       spent: 0,
@@ -160,11 +160,11 @@ const cleanAnswer = (level: number, o: Partial<Attempt> = {}) =>
 describe('cosmetics', () => {
   it('crossing 20 lifetime shells unlocks the turtle hat, worn at once, and says so once', async () => {
     await rewards(18, 10);
-    const e = await cleanAnswer(3); // 4 ★ = 4 shells
+    const e = await cleanAnswer(2); // level 2: 4 ★ = 4 shells
     expect(e.unlocked).toEqual(['turtle-hat']);
     expect(e.shells).toBe(12); // shells to spend: 22 − 10
     expect((await loadWardrobe()).worn).toEqual(['turtle-hat']);
-    expect((await cleanAnswer(3)).unlocked).toBeUndefined();
+    expect((await cleanAnswer(2)).unlocked).toBeUndefined();
   });
 
   it('spending shells never locks a cosmetic again', async () => {
@@ -224,16 +224,16 @@ describe('the parent sets shells (2026-09-25)', () => {
     for (const bad of [-1, 2.5, 1_000_001]) await expect(setBalance(bad)).rejects.toThrow();
     // Earning after a change adds on top of what the parent set.
     await setBalance(20);
-    await cleanAnswer(3);
+    await cleanAnswer(2);
     expect((await loadShop()).balance).toBe(24);
   });
 
-  it('shells equal stars (R-RWD-4, M7)', async () => {
+  it('shells equal stars (R-RWD-4, R-RWD-1)', async () => {
     await rewards(0);
-    expect((await cleanAnswer(5)).shellsEarned).toBe(8);
-    expect((await cleanAnswer(5, { clean: false, wrongTries: 1 })).shellsEarned).toBe(1);
-    expect((await cleanAnswer(5, { clean: false, maxHint: 3 })).shellsEarned).toBe(0);
-    expect((await loadShop()).lifetime).toBe(9);
+    expect((await cleanAnswer(4)).shellsEarned).toBe(8);
+    expect((await cleanAnswer(4, { clean: false, wrongTries: 1 })).shellsEarned).toBe(6);
+    expect((await cleanAnswer(4, { clean: false, maxHint: 3 })).shellsEarned).toBe(0);
+    expect((await loadShop()).lifetime).toBe(14);
   });
 
   it('the assignment summary counts the shells actually earned', async () => {
@@ -251,17 +251,17 @@ describe('the parent sets shells (2026-09-25)', () => {
     for (const wrongTries of [0, 1])
       await finishAttempt(
         {
-          ...newAttempt({ topic: 'PC', level: 3, generatorId: 'test', seed: 1, params: {} }),
+          ...newAttempt({ topic: 'PC', level: 2, generatorId: 'test', seed: 1, params: {} }),
           assignmentId: 'a',
           itemIndex: 0,
           finishedAt: new Date().toISOString(),
           clean: wrongTries === 0,
           wrongTries,
         },
-        { adaptive: false, rewarded: true, locked: true },
+        { adaptive: false, rewarded: true },
       );
-    // First try at level 3: 4; second try: 1.
-    expect(await assignmentSummary('a')).toMatchObject({ stars: 5, shells: 5 });
+    // Level 2 first try: 4; second try: 4 − 2 = 2.
+    expect(await assignmentSummary('a')).toMatchObject({ stars: 6, shells: 6 });
   });
 
   it('a device that stored the old default prices gets the new ones; prices the parent chose stay (M7)', async () => {

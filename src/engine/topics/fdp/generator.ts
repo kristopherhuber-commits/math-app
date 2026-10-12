@@ -1,4 +1,4 @@
-// FDP generators, levels 1–5 (requirements §6.3, R-FDP-1…3). A value is picked from the level's
+// FDP generators, levels 1–4 (requirements §6.3, R-FDP-1…3). A value is picked from the level's
 // pool, then a direction: F→D, F→P, D→F, D→P, P→F or P→D. Fractions are in lowest terms (R-FDP-1);
 // values > 1 ask for a mixed number or an improper fraction, 50/50 (R-FDP-2).
 import { config } from '../../config';
@@ -9,7 +9,8 @@ import { content } from '../content';
 import { buildOptions, CORRECT, withRetries, type McQuestion } from '../mc';
 import { fdpFillers, fdpModels, showAs, type FdpForm, type FdpSpec, type FractionForm } from './distractors';
 
-export const FDP_GENERATOR_ID = 'fdp.v1';
+/** v2: the four levels (2026-10-11). */
+export const FDP_GENERATOR_ID = 'fdp.v2';
 
 const DIRECTIONS: readonly [FdpForm, FdpForm][] = [
   ['F', 'D'],
@@ -26,19 +27,33 @@ function properFraction(rng: Rng, denominators: readonly number[]): Rational | n
   return gcd(BigInt(n), BigInt(d)) === 1n ? rat(n, d) : null;
 }
 
-/** A value from the pool of `level` (§6.3 table); level 5 reviews 1–4. */
-export function fdpValue(rng: Rng, level: number): { x: Rational; pool: number } | null {
-  const pool = level === 5 ? rng.int(1, 4) : level;
-  const dens = config.fdp.denominators[pool]!;
-  if (pool !== 3) {
-    const x = properFraction(rng, dens);
-    return x && { x, pool };
+/** Which pool a value came from (§6.3 table): one per level, two at L1 and L2. */
+export type FdpPool = 'benchmark' | 'basic' | 'mixed' | 'tiny' | 'repeating' | 'repeatingMixed';
+
+/** Whole part 1…mixedWholeMax plus a proper fraction over `dens`. */
+function mixedNumber(rng: Rng, dens: readonly number[]): Rational | null {
+  const part = properFraction(rng, dens);
+  return part && add(rat(rng.int(1, config.fdp.mixedWholeMax)), part);
+}
+
+/** A value from the pool of `level` (§6.3 table). No level mixes in easier ones. */
+export function fdpValue(rng: Rng, level: number): { x: Rational; pool: FdpPool } | null {
+  const d = config.fdp.denominators;
+  const of = (x: Rational | null, pool: FdpPool) => x && { x, pool };
+  switch (level) {
+    case 1:
+      return rng.bool()
+        ? of(properFraction(rng, d.benchmark), 'benchmark')
+        : of(properFraction(rng, d.basic), 'basic');
+    case 2:
+      return rng.bool()
+        ? of(mixedNumber(rng, d.mixed), 'mixed')
+        : of(rat(rng.int(1, config.fdp.tinyMaxThousandths), 1000), 'tiny');
+    case 3:
+      return of(properFraction(rng, d.repeating), 'repeating');
+    default:
+      return of(mixedNumber(rng, d.repeating), 'repeatingMixed');
   }
-  if (rng.bool()) {
-    const part = properFraction(rng, dens);
-    return part && { x: add(rat(rng.int(1, config.fdp.mixedWholeMax)), part), pool };
-  }
-  return { x: rat(rng.int(1, config.fdp.tinyMaxThousandths), 1000), pool };
 }
 
 const TARGET_ID: Record<FdpForm, string> = { F: 'fraction', D: 'decimal', P: 'percent' };
@@ -80,7 +95,7 @@ function build(rng: Rng, level: number, seed: number): McQuestion | null {
       target,
       form,
       notation,
-      pool: `${pool}`,
+      pool,
       x: `${x.n}/${x.d}`,
       answer: answer.shown.text,
     },

@@ -37,23 +37,34 @@ function verify(q: McQuestion) {
     expect(apply(mid!, Number(p.pct2), p.dir2 === 'up')).toBe(answer);
   }
   if (p.kind === 'reverse') expect(apply(answer, pct, up)).toBe(price);
+  if (p.kind === 'reverseSuccessive') {
+    // Forwards from the answer: both changes exact to the cent, ending at the price shown (R-PC-1).
+    const mid = apply(answer, pct, up);
+    expect(mid).not.toBeNull();
+    expect(apply(mid!, Number(p.pct2), p.dir2 === 'up')).toBe(price);
+    expect(answer % 100n).toBe(0n); // the original is whole dollars
+    expect(answer).not.toBe(price); // the two changes never cancel exactly
+  }
   return { price, pct, answer };
 }
 
-describe.each([1, 2, 3, 4, 5])('PC level %i (R-TEST-2)', (level) => {
+const KINDS = ['single', 'successive', 'reverse', 'reverseSuccessive'];
+
+describe.each([1, 2, 3, 4])('PC level %i (R-TEST-2)', (level) => {
   it('answer verified in integer cents; level shape; options (R-PC-1, R-ANS-1…4)', () => {
     fc.assert(
       fc.property(seedArb, (seed) => {
         const q = generatePc(level, seed);
         const { price, pct } = verify(q);
-        const sub = Number(q.params.sub);
-        if (level < 5) expect(sub).toBe(level);
-        expect(q.params.kind).toBe(sub <= 2 ? 'single' : sub === 3 ? 'successive' : 'reverse');
-        if (sub === 1) {
+        expect(q.params.kind).toBe(KINDS[level - 1]);
+        if (level === 1 && q.params.variant === 'nice') {
           expect(price % 100n).toBe(0n); // whole-dollar prices
           expect([10, 20, 25, 50]).toContain(pct);
         }
-        if (sub === 2) expect(pct >= 1 && pct <= 90).toBe(true);
+        if (level === 1) {
+          expect(['nice', 'any']).toContain(q.params.variant);
+          expect(pct >= 1 && pct <= 90).toBe(true);
+        }
         // Options
         expect(q.options).toHaveLength(OPTION_COUNT);
         expect(new Set(q.options.map((o) => o.shown.text)).size).toBe(OPTION_COUNT);
@@ -101,10 +112,26 @@ describe.each([1, 2, 3, 4, 5])('PC level %i (R-TEST-2)', (level) => {
           if (q.params.dir !== q.params.dir2 && q.params.pct === q.params.pct2)
             expect(ids).toContain('pc.walk.notBack');
         }
+        if (q.params.kind === 'reverseSuccessive')
+          expect(ids).toEqual([
+            'pc.walk.reverse2.setup',
+            'pc.walk.reverse2.undoSecond',
+            'pc.walk.reverse2.undoFirst',
+            'pc.walk.reverse2.combined',
+            'pc.walk.reverse2.check',
+          ]);
         const tex = answer.replace('$', '\\$');
         const lastMath = steps.at(-1)!.math!.join(' ');
         if (q.params.kind === 'reverse') expect(steps[1]!.math![0]).toContain(`\\text{${tex}}`);
-        else expect(lastMath).toContain(`= \\text{${tex}}`);
+        else if (q.params.kind === 'reverseSuccessive') {
+          // Both methods reach the answer: one step at a time, and with the combined multiplier.
+          expect(steps[2]!.math![0]).toMatch(
+            new RegExp(`= \\\\text\\{${tex.replace(/[\\$.]/g, '\\$&')}\\}$`),
+          );
+          expect(steps[3]!.math![1]).toMatch(
+            new RegExp(`= \\\\text\\{${tex.replace(/[\\$.]/g, '\\$&')}\\}$`),
+          );
+        } else expect(lastMath).toContain(`= \\text{${tex}}`);
         for (const s of steps)
           if (s.mini) {
             expect(new Set(s.mini.options.map((o) => o.text)).size).toBe(3);
@@ -183,6 +210,61 @@ describe('PC worked examples (§6.4)', () => {
     expect(codes(x)['$59.40']).toBe('PC-M7');
   });
   it('an inexact price is refused (R-PC-1)', () => {
-    expect(pcQuestion({ kind: 'single', price: 3651n, steps: [{ pct: 12, up: true }] }, 2, 1)).toBeNull();
+    expect(pcQuestion({ kind: 'single', price: 3651n, steps: [{ pct: 12, up: true }] }, 1, 1)).toBeNull();
+  });
+  it('$54 after up 20% then down 10% → $50.00; both methods; M5 $49.09 is inexact so not offered', () => {
+    const x = pcQuestion(
+      {
+        kind: 'reverseSuccessive',
+        price: 5400n,
+        steps: [
+          { pct: 20, up: true },
+          { pct: 10, up: false },
+        ],
+      },
+      4,
+      1,
+    )!;
+    expect(x.params.answer).toBe('$50.00');
+    // Applying the changes forward again: $54 × 1.20 × 0.90 = $58.32.
+    expect(codes(x)['$58.32']).toBe('PC-M3');
+    const steps = pcWalkthrough(x);
+    expect(steps[1]!.math![0]).toBe('\\text{\\$54.00} \\div 0.90 = \\text{\\$60.00}');
+    expect(steps[2]!.math![0]).toBe('\\text{\\$60.00} \\div 1.20 = \\text{\\$50.00}');
+    expect(steps[3]!.math).toEqual([
+      '1.20 \\times 0.90 = 1.08',
+      '\\text{\\$54.00} \\div 1.08 = \\text{\\$50.00}',
+    ]);
+    expect(pcHint(x, 2).params).toMatchObject({ m1: '1.20', m2: '0.90', both: '1.08' });
+  });
+  it('$48 after up 20% then down 20% → $50.00; PC-M4 offers $48.00 (the changes cancel)', () => {
+    const x = pcQuestion(
+      {
+        kind: 'reverseSuccessive',
+        price: 4800n,
+        steps: [
+          { pct: 20, up: true },
+          { pct: 20, up: false },
+        ],
+      },
+      4,
+      1,
+    )!;
+    expect(x.params.answer).toBe('$50.00');
+    expect(codes(x)['$48.00']).toBe('PC-M4');
+  });
+  it('a reverse after two changes whose original is not exact to the cent is refused (R-PC-1)', () => {
+    const spec: PcSpec = {
+      kind: 'reverseSuccessive',
+      price: 1000n,
+      steps: [
+        { pct: 5, up: true },
+        { pct: 15, up: false },
+      ],
+    };
+    expect(pcQuestion(spec, 4, 1)).toBeNull();
+  });
+  it('level 5 no longer exists', () => {
+    expect(() => generatePc(5, 1)).toThrow(RangeError);
   });
 });

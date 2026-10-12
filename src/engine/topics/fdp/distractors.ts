@@ -30,7 +30,7 @@ export interface FdpSpec {
   target: FdpForm;
   notation: Notation;
   form: FractionForm;
-  /** At levels 1–3 no option may be a repeating decimal (no ellipsis-only display, R-DISP-3). */
+  /** Before bar notation (L3) no option may be a repeating decimal (no ellipsis-only display, R-DISP-3). */
   allowRepeating: boolean;
 }
 

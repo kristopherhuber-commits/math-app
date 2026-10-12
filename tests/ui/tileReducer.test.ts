@@ -43,25 +43,27 @@ function finish(s: TileState): TileState {
   return s;
 }
 
-/** A §7.5 example as a level-2 tile question. */
-const example = (text: string, variable: string, solution: number): TileState =>
+/**
+ * A §7.5 example as a tile question. Tiles are level 1 (2 ★); tests that make several mistakes on
+ * purpose use level 4 (8 ★) so the stars don't run out and start the walkthrough mid-test.
+ */
+const example = (text: string, variable: string, solution: number, level = 1): TileState =>
   tilesFor({
     generatorId: EQ_GENERATOR_ID,
     seed: 0,
-    level: 2,
+    level,
     variable,
     text,
     solution: rat(solution),
     form: 'test',
-    starsLevel: 2,
   });
 const P = '3a + 3 = a + 23';
 
 describe('tileReducer', () => {
-  it('solves every L1–L2 question end to end with clean records (property)', () => {
+  it('solves every level-1 (tile) question end to end with clean records (property)', () => {
     fc.assert(
-      fc.property(fc.integer({ min: 0, max: 0xffffffff }), fc.constantFrom(1, 2), (seed, level) => {
-        const s = finish(moveAll(startTiles(level, seed)));
+      fc.property(fc.integer({ min: 0, max: 0xffffffff }), (seed) => {
+        const s = finish(moveAll(startTiles(1, seed)));
         expect(s.solved).toBe(true);
         expect(s.attempt.clean).toBe(true);
         expect(s.attempt.finishedAt).toBeDefined();
@@ -85,16 +87,17 @@ describe('tileReducer', () => {
   });
 
   it('a wrong sign shows the balance explanation, is stored as EQ-D4, and two are a wrong try', () => {
-    let s = example(P, 'a', 10);
+    let s = example(P, 'a', 10, 4);
     const a = s.board.tiles[2]!;
     s = act(s, { type: 'drop', id: a.id, to: 'L' }, { type: 'sign', sign: 1 });
     expect(s.feedback).toMatchObject({ kind: 'sign', term: 'a', view: { op: `${M} a` } });
     expect(s.attempt.tries.at(-1)).toMatchObject({ stepType: 'SIGN', diagnostic: 'EQ-D4' });
     expect(s.hintOpen).toBe(false);
     s = tileReducer(s, { type: 'sign', sign: 1 });
-    expect([s.wrongTries, s.hintOpen, s.hintTier, s.helpPulse]).toEqual([1, true, 1, true]);
+    // A wrong try pulses Help; no hint opens or is charged (R-HELP-2, R-RWD-1).
+    expect([s.wrongTries, s.hintOpen, s.hintTier, s.helpPulse]).toEqual([1, false, 0, true]);
     // The balance explanation is feedback, not a hint tier of its own.
-    expect(s.attempt.maxHint).toBe(1);
+    expect(s.attempt.maxHint).toBe(0);
     s = tileReducer(s, { type: 'sign', sign: -1 });
     expect(s.feedback).toBeNull();
     expect(s.balance?.view.after).toEqual({ L: `3a + 3 ${M} a`, R: '23' });
@@ -120,8 +123,24 @@ describe('tileReducer', () => {
     expect(s.attempt.tries.filter((t) => t.stepType === 'SWAP')).toHaveLength(2);
   });
 
+  it('level 1: two wrong signs are a wrong try, 2 − 2 = 0 ★, so the walkthrough starts (R-RWD-1)', () => {
+    let s = example(P, 'a', 10);
+    const a = s.board.tiles[2]!;
+    s = act(s, { type: 'drop', id: a.id, to: 'L' }, { type: 'sign', sign: 1 });
+    expect(s.walk).toBeNull();
+    s = tileReducer(s, { type: 'sign', sign: 1 });
+    expect(s.wrongTries).toBe(1);
+    expect(s.walk).not.toBeNull();
+    expect(s.attempt.maxHint).toBe(3);
+    expect(s.feedback).toBeNull();
+    // Tiles and the pad do nothing while it runs; to its end, it finishes the question.
+    expect(tileReducer(s, { type: 'sign', sign: -1 })).toBe(s);
+    for (let i = 0; i < s.walk!.steps.length; i++) s = tileReducer(s, { type: 'walkNext' });
+    expect(s.solved).toBe(true);
+  });
+
   it('wrong numbers: EQ-D7 in Simplify, a divisor note, EQ-D8 in Solve', () => {
-    let s = moveAll(example(P, 'a', 10));
+    let s = moveAll(example(P, 'a', 10, 4));
     expect(s.phase).toBe('SIMPLIFY_VAR');
     s = enter(s, '4');
     expect(s.feedback).toMatchObject({

@@ -68,9 +68,11 @@ const FORMS: Record<number, string[]> = {
   1: ['posInt', 'zero', 'fraction', 'decimal'],
   2: ['negInt', 'negFraction', 'negDecimal', 'repeating'],
   3: ['intFraction', 'zeroFraction', 'pointZero'],
+  // Challenge: an irrational pattern, or a look-alike that isn't (no easier forms mixed in).
+  4: ['irrational', 'nines', 'repeatingWhole'],
 };
 
-describe.each([1, 2, 3, 4, 5])('NC level %i (R-TEST-2)', (level) => {
+describe.each([1, 2, 3, 4])('NC level %i (R-TEST-2)', (level) => {
   it('membership verified independently; level forms; captions (R-NC-1, R-DISP-1/3/4)', () => {
     fc.assert(
       fc.property(seedArb, (seed) => {
@@ -93,7 +95,7 @@ describe.each([1, 2, 3, 4, 5])('NC level %i (R-TEST-2)', (level) => {
         if (FORMS[level]) expect(FORMS[level]).toContain(q.form);
         if (level === 3) expect(read !== 'irrational' && read.d === 1n).toBe(true); // disguised integers
         if (level < 4) expect(q.form).not.toBe('irrational');
-        if (level < 5) expect(q.form).not.toBe('nines');
+        if (level < 4) expect(q.form).not.toBe('nines');
         if (q.form === 'irrational' && q.value.kind === 'irrational')
           expect(q.shown.text.replace('−', '')).toBe(`${patternDigits(q.value.pattern)}…`);
       }),
@@ -139,6 +141,14 @@ describe.each([1, 2, 3, 4, 5])('NC level %i (R-TEST-2)', (level) => {
       }),
       { numRuns: RUNS },
     );
+  });
+});
+
+describe('NC levels (four levels, 2026-10-11)', () => {
+  it('there is no level 5; the Challenge has every one of its forms', () => {
+    expect(() => generateNc(5, 1)).toThrow(RangeError);
+    const forms = new Set(Array.from({ length: 300 }, (_, seed) => generateNc(4, seed).form));
+    expect([...forms].sort()).toEqual(['irrational', 'nines', 'repeatingWhole']);
   });
 });
 

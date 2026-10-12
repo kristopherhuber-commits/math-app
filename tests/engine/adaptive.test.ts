@@ -111,18 +111,18 @@ describe('summarize (R-ADP-1, R-ADP-3)', () => {
 });
 
 describe('initialState', () => {
-  it('EQ starts at level 3, the number topics at 1; bounds apply', () => {
-    expect(initialState('EQ')).toEqual({ level: 3, window: [] });
+  it('EQ starts at level 2 (the first typed level), the number topics at 1; bounds apply', () => {
+    expect(initialState('EQ')).toEqual({ level: 2, window: [] });
     expect(initialState('PC')).toEqual({ level: 1, window: [] });
-    expect(initialState('EQ', { min: 1, max: 2 }).level).toBe(2);
-    expect(initialState('NC', { min: 2, max: 5 }).level).toBe(2);
+    expect(initialState('EQ', { min: 1, max: 1 }).level).toBe(1);
+    expect(initialState('NC', { min: 2, max: 4 }).level).toBe(2);
   });
 });
 
-// Free practice, Adaptive (parent decision 2026-09-25): start at 3, up after 3 right in a row,
+// Free practice, Adaptive (parent decision 2026-09-25): start at 2 (General), up after 3 right in a row,
 // down when 2 of the last 3 had a mistake or help.
 describe('free-practice adaptive', () => {
-  const B: LevelBounds = { min: 1, max: 5 };
+  const B: LevelBounds = { min: 1, max: 4 };
   /** Run a sequence of right (R) / not right (x) answers from a state. */
   const run = (seq: string, from: FreeState = freeStart(B), bounds = B) => {
     const levels: number[] = [];
@@ -134,31 +134,32 @@ describe('free-practice adaptive', () => {
     return { s, levels };
   };
 
-  it('starts at level 3, within the bounds', () => {
-    expect(freeStart(B)).toEqual({ level: 3, recent: [] });
-    expect(freeStart({ min: 1, max: 2 }).level).toBe(2);
-    expect(freeStart({ min: 4, max: 6 }).level).toBe(4);
+  it('starts at level 2, within the bounds', () => {
+    expect(freeStart(B)).toEqual({ level: 2, recent: [] });
+    expect(freeStart({ min: 1, max: 1 }).level).toBe(1);
+    expect(freeStart({ min: 3, max: 4 }).level).toBe(3);
   });
 
   it.each([
-    ['RRR', [3, 3, 4]],
-    ['RRRRRR', [3, 3, 4, 4, 4, 5]],
-    ['xx', [3, 2]],
-    ['xRx', [3, 3, 2]],
-    ['RxR', [3, 3, 3]],
-    ['RxRR', [3, 3, 3, 3]],
-    ['RxRRR', [3, 3, 3, 3, 4]],
-    ['xRRx', [3, 3, 3, 3]],
-    ['RRxRR', [3, 3, 3, 3, 3]],
-    ['xxxx', [3, 2, 2, 1]],
-    ['RRRRRRRRRR', [3, 3, 4, 4, 4, 5, 5, 5, 5, 5]],
+    ['RRR', [2, 2, 3]],
+    ['RRRRRR', [2, 2, 3, 3, 3, 4]],
+    ['xx', [2, 1]],
+    ['xRx', [2, 2, 1]],
+    ['RxR', [2, 2, 2]],
+    ['RxRR', [2, 2, 2, 2]],
+    ['RxRRR', [2, 2, 2, 2, 3]],
+    ['xRRx', [2, 2, 2, 2]],
+    ['RRxRR', [2, 2, 2, 2, 2]],
+    ['xxxx', [2, 1, 1, 1]], // never below 1
+    ['RRRRRRRRRR', [2, 2, 3, 3, 3, 4, 4, 4, 4, 4]], // never above the Challenge level
   ])('%s → levels %o', (seq, levels) => {
     expect(run(seq).levels).toEqual(levels);
   });
 
   it('a change starts a new window: one miss right after a promotion does not demote', () => {
-    expect(run('RRRx').levels).toEqual([3, 3, 4, 4]);
-    expect(run('xxRx').levels).toEqual([3, 2, 2, 2]);
+    expect(run('RRRx').levels).toEqual([2, 2, 3, 3]);
+    expect(run('xRRxx').levels).toEqual([2, 2, 2, 2, 1]);
+    expect(run('RRRxRx').levels).toEqual([2, 2, 3, 3, 3, 2]);
   });
 
   it('right means first try with no hint at all (H1 counts as help)', () => {

@@ -33,14 +33,14 @@ describe('dashboard (R-PAR-3)', () => {
       done('EQ', new Date(2026, 8, 23, 9, 30), { fixed: true }),
       done('PC', new Date(2026, 6, 1, 9, 0)),
     ]);
-    await db.topicStates.put({ profileId: 'default', topic: 'EQ', level: 4, window: [] });
+    await db.topicStates.put({ profileId: 'default', topic: 'EQ', level: 3, window: [] });
     const d = await loadDashboard(now);
     expect(d.days).toHaveLength(30);
     expect(d.days.at(-1)).toBe('2026-09-23');
     expect(d.daily.at(-1)).toEqual({ day: '2026-09-23', minutes: 3 });
     expect(d.daily.at(-2)).toEqual({ day: '2026-09-22', minutes: 3 });
     const eq = d.topics.find((t) => t.topic === 'EQ')!;
-    expect(eq).toMatchObject({ level: 4, levels: 6, attempts: 2, cleanRate: 0.5 });
+    expect(eq).toMatchObject({ level: 3, levels: 4, attempts: 2, cleanRate: 0.5 });
     expect(eq.hints[3]).toBe(1);
     // All-time totals, but the old PC answer isn't in the 30-day strip.
     expect(d.topics.find((t) => t.topic === 'PC')!.attempts).toBe(1);

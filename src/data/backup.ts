@@ -1,5 +1,5 @@
 // Export, import and reset (R-PAR-6, R-DATA-1). An export holds every table and the schema version;
-// importing checks the version, migrates an older file forward (v1 → v2 → v3 → v4) and replaces
+// importing checks the version, migrates an older file forward (v1 → v2 → v3 → v4 → v5) and replaces
 // everything in one transaction, so a bad file changes nothing. Reset clears progress and assignments
 // but keeps the PIN, names, settings and the error list (parent decision, M5).
 import {
@@ -8,6 +8,10 @@ import {
   defaultShopItems,
   upgradeAssignmentToV2,
   upgradeRewardsToV4,
+  upgradeAssignmentToV5,
+  upgradeAttemptToV5,
+  upgradeSettingsToV5,
+  upgradeTopicStateToV5,
   type Assignment,
   type Attempt,
   type ErrorEntry,
@@ -113,6 +117,15 @@ export function parseImport(text: string): ParsedImport {
     rewards = rewards.map((r) => upgradeRewardsToV4(r));
     settings = settings.map((s) => ({ ...s, shopItems: s.shopItems ?? defaultShopItems() }));
   }
+  // v4 → v5: four levels per topic; stored levels, level ranges, level locks and attempts renumbered.
+  let topicStates = t('topicStates') as TopicState[];
+  let attempts = t('attempts') as Attempt[];
+  if (v < 5) {
+    topicStates = topicStates.map((ts) => upgradeTopicStateToV5(ts));
+    settings = settings.map((s) => upgradeSettingsToV5(s));
+    assignments = assignments.map((a) => upgradeAssignmentToV5(a));
+    attempts = attempts.map((a) => upgradeAttemptToV5(a));
+  }
   return {
     ok: true,
     fromVersion: v,
@@ -122,9 +135,9 @@ export function parseImport(text: string): ParsedImport {
       exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : '',
       profiles: t('profiles') as Profile[],
       settings,
-      topicStates: t('topicStates') as TopicState[],
+      topicStates,
       assignments,
-      attempts: t('attempts') as Attempt[],
+      attempts,
       rewards,
       errors: (v < 3 ? [] : t('errors')) as ErrorEntry[],
       redemptions: (v < 4 ? [] : t('redemptions')) as Redemption[],

@@ -1,9 +1,9 @@
 // Free practice with a picked level or Adaptive (parent decision, 2026-09-25): Adaptive starts at
-// level 3, goes up after 3 right in a row and down when 2 of the last 3 had a mistake or help.
+// level 2 (General), goes up after 3 right in a row and down when 2 of the last 3 had a mistake or help.
 // Free-practice seeds are random, so each question's seed is read from its stored attempt.
 import { expect, test, type Page } from '@playwright/test';
 import { generatePc } from '../src/engine/topics/pc/generator';
-import { current, fullStarsText, openHome } from './helpers';
+import { current, starsText, openHome } from './helpers';
 
 async function answer(page: Page, right: boolean) {
   const { level, seed } = await current(page);
@@ -19,16 +19,16 @@ async function answer(page: Page, right: boolean) {
   }
   await page.locator('.mc-option').nth(correct).click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByText(right ? fullStarsText(level) : '1 star. Nice work!')).toBeVisible();
+  await expect(page.getByText(starsText(level, right ? 0 : 1))).toBeVisible();
 }
 
 const next = (page: Page) => page.getByRole('button', { name: 'Next question' }).click();
 
-test('Adaptive: level 3, up after 3 right, down after 2 of 3 with a mistake', async ({ page }) => {
+test('Adaptive: level 2, up after 3 right, down after 2 of 3 with a mistake', async ({ page }) => {
   await openHome(page);
   await page.getByRole('button', { name: 'Price changes', exact: true }).click();
   await page.getByRole('button', { name: /^Adaptive/ }).click();
-  await expect(page.getByText('Price changes · Level 3')).toBeVisible();
+  await expect(page.getByText('Price changes · Level 2 · General')).toBeVisible();
 
   for (let i = 0; i < 3; i++) {
     await answer(page, true);
@@ -39,30 +39,30 @@ test('Adaptive: level 3, up after 3 right, down after 2 of 3 with a mistake', as
   }
   await expect(page.getByText('Level up!')).toBeVisible();
   await next(page);
-  await expect(page.getByText('Price changes · Level 4')).toBeVisible();
+  await expect(page.getByText('Price changes · Level 3 · Advanced')).toBeVisible();
 
   // One mistake: stays. A second in the last three: down one, silently (R-ADP-6).
   await answer(page, false);
   await next(page);
-  await expect(page.getByText('Price changes · Level 4')).toBeVisible();
+  await expect(page.getByText('Price changes · Level 3 · Advanced')).toBeVisible();
   await answer(page, true);
   await next(page);
   await answer(page, false);
   await next(page);
-  await expect(page.getByText('Price changes · Level 3')).toBeVisible();
+  await expect(page.getByText('Price changes · Level 2 · General')).toBeVisible();
 });
 
-test('Adaptive starts at level 3 again the next time; a picked level stays put', async ({ page }) => {
+test('Adaptive starts at level 2 again the next time; a picked level stays put', async ({ page }) => {
   await openHome(page);
   await page.getByRole('button', { name: 'Price changes', exact: true }).click();
-  await page.getByRole('button', { name: /^Level 2/ }).click();
+  await page.getByRole('button', { name: /^Level 3 · Advanced/ }).click();
   for (let i = 0; i < 3; i++) {
     await answer(page, true);
     await next(page);
   }
-  await expect(page.getByText('Price changes · Level 2')).toBeVisible();
+  await expect(page.getByText('Price changes · Level 3 · Advanced')).toBeVisible();
   await page.getByRole('button', { name: '‹ Home' }).click();
   await page.getByRole('button', { name: 'Price changes', exact: true }).click();
   await page.getByRole('button', { name: /^Adaptive/ }).click();
-  await expect(page.getByText('Price changes · Level 3')).toBeVisible();
+  await expect(page.getByText('Price changes · Level 2 · General')).toBeVisible();
 });

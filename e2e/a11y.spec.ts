@@ -4,7 +4,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { generatePc } from '../src/engine/topics/pc/generator';
 import { questionSeed } from '../src/engine/session';
-import { assignment, attemptRow, current, openHome, PIN } from './helpers';
+import { assignment, attemptRow, current, fullStarsText, openHome, PIN } from './helpers';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
@@ -80,6 +80,10 @@ test('Home, the level picker, the shop', async ({ page }) => {
     ],
   });
   await check(page, 'Home');
+  await page.getByRole('button', { name: 'How stars work' }).click();
+  await expect(page.getByRole('dialog', { name: 'How stars work' })).toBeVisible();
+  await check(page, 'stars pop-up');
+  await page.getByRole('button', { name: 'Got it' }).click();
   await page.getByRole('button', { name: 'Equations', exact: true }).click();
   await check(page, 'level picker');
   await page.keyboard.press('Escape');
@@ -91,8 +95,9 @@ test('Home, the level picker, the shop', async ({ page }) => {
 test('questions: multiple choice, not quite and the hint, the walkthrough, the celebration', async ({
   page,
 }) => {
-  await page.goto('./?topic=PC&level=1&seed=4');
-  const q = generatePc(1, 4, '$');
+  // Level 3 (6 ★): two wrong tries leave 2 ★, so the walkthrough doesn't start by itself.
+  await page.goto('./?topic=PC&level=3&seed=4');
+  const q = generatePc(3, 4, '$');
   const correct = q.options.findIndex((o) => o.code === 'correct');
   await expect(page.locator('.mc-option')).toHaveCount(5);
   await check(page, 'multiple choice');
@@ -103,15 +108,21 @@ test('questions: multiple choice, not quite and the hint, the walkthrough, the c
       .click();
     await page.getByRole('button', { name: 'Check' }).click();
   }
+  await expect(page.locator('.btn-help.pulsing')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Help' }).click();
   await expect(page.getByLabel('Hint 1 of 3')).toBeVisible();
   await check(page, 'not quite + hint');
   await page.getByRole('button', { name: 'Show me step by step' }).click();
   await check(page, 'walkthrough');
 
   await page.goto('./?topic=PC&level=1&seed=4');
-  await page.locator('.mc-option').nth(correct).click();
+  const q1 = generatePc(1, 4, '$');
+  await page
+    .locator('.mc-option')
+    .nth(q1.options.findIndex((o) => o.code === 'correct'))
+    .click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByText('1 star! Brilliant!')).toBeVisible();
+  await expect(page.getByText(fullStarsText(1))).toBeVisible();
   await check(page, 'celebration');
 });
 
@@ -126,7 +137,7 @@ test('questions: number sets, typed equation with feedback, tile builder', async
   await input.press('Enter');
   await check(page, 'typed equation with feedback');
 
-  await page.goto('./?level=2&seed=11');
+  await page.goto('./?level=1&seed=11');
   await expect(page.locator('.tile-board')).toBeVisible();
   await check(page, 'tile builder');
 });
@@ -157,7 +168,7 @@ test('the parent area: gate, reset, and every page', async ({ page }) => {
       attemptRow({
         topic: 'EQ',
         level: 3,
-        generatorId: 'eq.v1',
+        generatorId: 'eq.v2',
         seed: i + 1,
         finishedAt: new Date(now - i * 3_600_000).toISOString(),
         maxHint: i % 2 ? 3 : 0,

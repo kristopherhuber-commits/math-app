@@ -1,4 +1,4 @@
-// NC generators, levels 1–5 (requirements §6.1, R-NC-1…5, R-DISP-1/3/4). Each question shows one
+// NC generators, levels 1–4 (requirements §6.1, R-NC-1…5, R-DISP-1/3/4). Each question shows one
 // number, in the written form the level calls for; the checker decides from its exact value.
 import { config } from '../../config';
 import { gcd, rat, type Rational } from '../../rational';
@@ -16,10 +16,11 @@ import { content, type Params } from '../content';
 import { withRetries } from '../mc';
 import type { IrrationalPattern, NcValue } from './checker';
 
-export const NC_GENERATOR_ID = 'nc.v1';
+/** v2: the four levels (2026-10-11). */
+export const NC_GENERATOR_ID = 'nc.v2';
 
 /** Written forms. L1: posInt zero fraction decimal · L2: negInt negFraction negDecimal repeating ·
- *  L3: intFraction zeroFraction pointZero · L4: irrational + all above · L5: nines repeatingWhole + all. */
+ *  L3: intFraction zeroFraction pointZero · L4: irrational, or a look-alike (nines repeatingWhole). */
 export type NcForm =
   | 'posInt'
   | 'zero'
@@ -107,12 +108,10 @@ function build(rng: Rng, level: number, seed: number): NcQuestion | null {
     case 3:
       forms = L3;
       break;
-    case 4:
-      // Irrational patterns half the time, mixed with all of the above.
-      forms = rng.bool() ? ['irrational'] : [...L1, ...L2, ...L3];
-      break;
     default:
-      forms = rng.bool() ? ['nines', 'repeatingWhole', 'pointZero'] : [...L1, ...L2, ...L3, 'irrational'];
+      // Challenge: irrational patterns half the time, else a number that looks like one but isn't
+      // (0.999… = 1, a long repeating decimal with a whole part). No easier forms mixed in.
+      forms = rng.bool() ? ['irrational'] : ['nines', 'repeatingWhole'];
   }
   const form = rng.pick(forms);
   let value: NcValue;
@@ -201,7 +200,7 @@ function build(rng: Rng, level: number, seed: number): NcQuestion | null {
       break;
     }
     case 'nines': {
-      // 0.999… = 1 (the level 5 challenge): shown as written, valued exactly (R-RD-2 formula).
+      // 0.999… = 1 (the level 4 challenge): shown as written, valued exactly (R-RD-2 formula).
       const whole = rng.int(0, 5);
       const neg = rng.bool();
       const rep = { negative: neg, whole: BigInt(whole), nonRep: '', block: '9' };

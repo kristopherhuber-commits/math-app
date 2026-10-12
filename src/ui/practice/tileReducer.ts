@@ -40,6 +40,7 @@ import {
   onWalkBack,
   onWalkNext,
   onWalkStart,
+  walkDue,
   type HelpFields,
 } from './help';
 import type { Line, Rejection } from './practiceReducer';
@@ -264,7 +265,15 @@ function padKey(entry: string, key: string): string {
   return entry;
 }
 
+/**
+ * One action, then the walkthrough starts by itself if the stars left reached 0 (R-RWD-1).
+ */
 export function tileReducer(s: TileState, action: TileAction): TileState {
+  const next = step(s, action);
+  return walkDue(next) ? step(next, { type: 'walkStart' }) : next;
+}
+
+function step(s: TileState, action: TileAction): TileState {
   const v = s.question.variable;
   const busy = s.solved || s.walk !== null;
   switch (action.type) {

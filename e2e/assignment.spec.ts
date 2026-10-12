@@ -50,8 +50,8 @@ test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
   await expect(page.getByText('Price changes · Level 1')).toBeVisible();
   await answerMc(page, generatePc(1, questionSeed(seed, 0), '$'), hasTouch);
-  await expect(page.getByText('+1 shell')).toBeVisible();
-  await expect(page.getByRole('status', { name: '1 star', exact: true })).toBeVisible();
+  await expect(page.getByText('+2 shells')).toBeVisible();
+  await expect(page.getByRole('status', { name: '2 stars', exact: true })).toBeVisible();
   await expect(page.getByText('New badge: First question solved')).toBeVisible();
   await next(page, hasTouch);
 
@@ -74,15 +74,15 @@ test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)
   await expect(page.getByText(fullStarsText(3))).toBeVisible();
   await next(page, hasTouch);
 
-  // The summary: stars by topic, as totals (R-SES-7), and the badges earned on the way. Levels 1 pay 1 ★,
-  // the locked equation at level 3 pays 4 (R-RWD-1).
+  // The summary: stars by topic, as totals (R-SES-7), and the badges earned on the way. Level 1 pays 2 ★,
+  // the locked equation at level 3 pays 6 (R-RWD-1: 2 × level).
   await expect(page.getByRole('heading', { name: 'Assignment done!' })).toBeVisible();
   await expect(page.getByText('Test day · 4 questions')).toBeVisible();
-  await expect(page.getByText('7 stars · +7 shells')).toBeVisible();
+  await expect(page.getByText('12 stars · +12 shells')).toBeVisible();
   await expect(page.locator('.summary-row')).toHaveText([
-    /Price changes\s*★ 2 · 2 questions/,
-    /Repeating decimals\s*★ 1 · 1 question/,
-    /Equations\s*★ 4 · 1 question/,
+    /Price changes\s*★ 4 · 2 questions/,
+    /Repeating decimals\s*★ 2 · 1 question/,
+    /Equations\s*★ 6 · 1 question/,
   ]);
   await expect(page.getByText('New badge: A perfect assignment')).toBeVisible();
   await expect(page.getByText('%')).toHaveCount(0);
@@ -91,7 +91,7 @@ test('an assignment, through every question, to its summary (R-SES-1/5/7, R-RWD)
   await press(page.getByRole('button', { name: 'Free practice ›' }), hasTouch);
   await expect(page.getByRole('button', { name: 'Number sets', exact: true })).toBeFocused();
   await expect(page.getByText('No assignment right now.')).toBeVisible();
-  await expect(page.locator('.home-counter')).toHaveText([/1 day\s*streak/, /7\s*shells/]);
+  await expect(page.locator('.home-counter')).toHaveText([/How stars work/, /1 day\s*streak/, /12\s*shells/]);
 });
 
 test('leave mid-assignment, reload, and Keep going resumes at the same question (R-SES-5)', async ({
@@ -114,7 +114,7 @@ test('leave mid-assignment, reload, and Keep going resumes at the same question 
   await page.reload();
   await page.getByRole('button', { name: 'Keep going ›' }).click();
   await expect(page.getByText('Question 2 of 3')).toBeVisible();
-  await expect(page.getByRole('status', { name: '1 star', exact: true })).toBeVisible();
+  await expect(page.getByRole('status', { name: '2 stars', exact: true })).toBeVisible();
   await answerMc(page, second, false);
 });
 

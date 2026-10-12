@@ -57,7 +57,7 @@ export function Celebration({
   }, []);
   const s = rewardStrings.celebrate;
   // R-RWD-5: full stars get the bigger celebration; up to 8 stars, smaller when there are many.
-  const big = events.quality === 'full' && !events.capped && events.stars > 0;
+  const big = events.quality === 'full' && events.stars > 0;
   const pose = events.levelUp ? 'hop' : big ? 'cheer' : 'clap';
   const still = reduced || skipped;
   const starSize = events.stars > 5 ? 30 : big ? 44 : 34;
@@ -80,9 +80,7 @@ export function Celebration({
         <Penguin pose={pose} size={big ? 132 : 104} />
       </div>
       <div className="celebration-text">
-        <p className="celebration-title">
-          {s.headline(events.stars, events.quality, events.capped ?? false)}
-        </p>
+        <p className="celebration-title">{s.headline(events.stars, events.quality)}</p>
         {showShells && events.stars > 0 && (
           <p className="celebration-shells">{s.shells(events.shellsEarned ?? events.stars)}</p>
         )}

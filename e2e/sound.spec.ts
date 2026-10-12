@@ -2,13 +2,14 @@
 // The page records what it plays in `window.__soundLog` (a test hook in src/ui/sound.ts).
 import { expect, test, type Page } from '@playwright/test';
 import { generatePc } from '../src/engine/topics/pc/generator';
-import { current, openHome } from './helpers';
+import { current, openHome, starsText } from './helpers';
 
 const log = (page: Page) => page.evaluate(() => window.__soundLog ?? []);
 
 async function answerWrongThenRight(page: Page) {
   await page.getByRole('button', { name: 'Price changes', exact: true }).click();
-  await page.getByRole('button', { name: /^Level 1/ }).click();
+  // Level 2 (4 ★): one wrong try still leaves 2 ★; at level 1 it would reach 0 and show the walkthrough.
+  await page.getByRole('button', { name: /^Level 2/ }).click();
   const { level, seed } = await current(page);
   const correct = generatePc(level, seed, '$').options.findIndex((o) => o.code === 'correct');
   await page
@@ -19,7 +20,7 @@ async function answerWrongThenRight(page: Page) {
   await expect(page.getByText('Not quite.')).toBeVisible();
   await page.locator('.mc-option').nth(correct).click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByText('1 star. Nice work!')).toBeVisible();
+  await expect(page.getByText(starsText(level, 1))).toBeVisible();
 }
 
 test.beforeEach(async ({ page }) => {

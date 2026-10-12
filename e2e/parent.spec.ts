@@ -155,7 +155,7 @@ test('R-TEST-5: the parent builds an assignment and the learner starts it (R-PAR
     page.getByRole('group', { name: 'Price changes: level' }).getByRole('button', { name: /^Level 2/ }),
     hasTouch,
   );
-  await expect(pcItem).toContainText('Level 2 (locked)');
+  await expect(pcItem).toContainText('Level 2 · General (locked)');
   await expect(page.locator('.item-name', { hasText: 'Equations' })).toContainText('Adaptive');
   await page.getByLabel('Due (optional)').fill('2026-10-02');
   await press(page.getByRole('button', { name: 'Save & make active' }), hasTouch);
@@ -169,7 +169,7 @@ test('R-TEST-5: the parent builds an assignment and the learner starts it (R-PAR
   await expect(page.getByRole('heading', { name: 'Tuesday practice' })).toBeVisible();
   await expect(page.locator('.assignment-item')).toHaveText([/Equations\s*0 \/ 2/, /Price changes\s*0 \/ 1/]);
   await press(page.getByRole('button', { name: 'Start ›' }), hasTouch);
-  await expect(page.getByText('Equations · Level 3')).toBeVisible();
+  await expect(page.getByText('Equations · Level 2 · General')).toBeVisible();
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Your next line' })).toBeVisible();
 });
@@ -359,7 +359,7 @@ test('the dashboard: level, clean solves, hints, minutes, and what is worth a lo
   await unlock(page, hasTouch);
   await press(page.getByRole('navigation').getByRole('button', { name: 'Progress' }), hasTouch);
   const eq = page.getByRole('region', { name: 'Equations' });
-  await expect(eq).toContainText('Level 4 of 6');
+  await expect(eq).toContainText('Level 4 of 4 (Challenge)');
   await expect(eq).toContainText('50%');
   await expect(eq).toContainText('6 questions · 1.5 tries on average · 18 min');
   await expect(eq).toContainText('H1 0 · H2 0 · H3 3');
@@ -406,7 +406,7 @@ test('missed questions: from Worth a look to the replay of every line, rejected 
   rows.push(
     attemptRow({
       topic: 'PC',
-      generatorId: 'pc.v1',
+      generatorId: 'pc.v2',
       seed: 3,
       finishedAt: new Date(now - 3_600_000).toISOString(),
       wrongTries: 2,
@@ -433,7 +433,7 @@ test('missed questions: from Worth a look to the replay of every line, rejected 
 
   await press(page.locator('.missed-row').first(), hasTouch);
   const replay = page.getByRole('region', { name: 'The question' });
-  await expect(replay).toContainText('eq.v1 · level 3 · seed 7');
+  await expect(replay).toContainText(`${q.generatorId} · level 3 · seed 7`);
   await expect(replay.locator('.try')).toHaveCount(2 + steps.length);
   await expect(replay.locator('.try.stepRejected').first()).toContainText('EQ-D4');
   await expect(replay.locator('.try.stepRejected').first()).toContainText('rejected');
@@ -475,7 +475,7 @@ test('data: export, reset, import restores; a bad file changes nothing; the erro
   const saved = info.outputPath('export.json');
   await download.saveAs(saved);
   const exported = JSON.parse(readFileSync(saved, 'utf8'));
-  expect(exported).toMatchObject({ app: 'turtle-penguin-math', schemaVersion: 4 });
+  expect(exported).toMatchObject({ app: 'turtle-penguin-math', schemaVersion: 5 });
   expect(exported.attempts).toHaveLength(1);
 
   // Reset (asked first).
@@ -508,7 +508,7 @@ test('data: export, reset, import restores; a bad file changes nothing; the erro
   // Import the export (asked first).
   await input.setInputFiles(saved);
   await expect(page.getByRole('alertdialog')).toContainText(
-    'This file has 1 answer and 1 assignment (format v4)',
+    'This file has 1 answer and 1 assignment (format v5)',
   );
   await press(page.getByRole('button', { name: 'Replace my data' }), hasTouch);
   await expect(page.getByText('Imported.')).toBeVisible();

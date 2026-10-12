@@ -10,21 +10,26 @@ export const config = {
     demoteThreshold: 3,
     /** R-ADP-3: "a second wrong answer" = this many wrong tries. */
     demoteWrongTries: 2,
-    /** Starting level per topic (parent decision, M4): EQ starts at typed steps. */
-    startLevel: { NC: 1, RD: 1, FDP: 1, PC: 1, EQ: 3 },
+    /** Starting level per topic (parent decision, M4): EQ starts at typed steps (level 2 of 4). */
+    startLevel: { NC: 1, RD: 1, FDP: 1, PC: 1, EQ: 2 },
   },
   /**
    * Adaptive free practice (parent decision, 2026-09-25; assignments keep R-ADP-2/3): start at
-   * level 3; up after 3 right in a row (first try, no hint); down when 2 of the last 3 had a
-   * mistake or needed help.
+   * level 2 (General, the old level 3); up after 3 right in a row (first try, no hint); down when 2
+   * of the last 3 had a mistake or needed help.
    */
-  freeAdaptive: { startLevel: 3, window: 3, promoteRight: 3, demoteStruggled: 2 },
+  freeAdaptive: { startLevel: 2, window: 3, promoteRight: 3, demoteStruggled: 2 },
   eq: {
-    levels: 6,
+    levels: 4,
     /** R-EQ-CHK-3 */
     allowSkippingDefault: false,
-    /** Approved rule (2026-09-23): at these levels a correct final answer is accepted from any line. */
-    finalAnswerAnyTimeLevels: [6] as readonly number[],
+    /** R-EQ-CHK-3: with `allowSkipping` on, Simplify and Solve may be merged from this level. */
+    skipFromLevel: 4,
+    /**
+     * Approved rule (2026-09-23): at these levels a correct final answer is accepted from any line.
+     * It was for the mixed level 6, removed with the four levels (2026-10-11), so none now.
+     */
+    finalAnswerAnyTimeLevels: [] as readonly number[],
     /** R-EQ-PED-2 */
     shortBalanceAfterCorrectSigns: 10,
     /** R-EQ-PED-2: the parent can re-enable the full animation; off means "shorten after 10". */
@@ -32,39 +37,49 @@ export const config = {
     /** design.md §6.3: two rejections on the same step count as one wrong try. */
     rejectionsPerWrongTry: 2,
     /** R-EQ-GEN-2 */
-    maxAbsValueLow: 30, // levels 1–3
-    maxAbsValueHigh: 50, // levels 4–6
+    maxAbsValueLow: 30, // levels 1–2
+    maxAbsValueHigh: 50, // levels 3–4
     maxAbsSolution: 20,
     maxSolutionDenominator: 9,
     /** Levels that use the tile builder (R-ANS-5). */
-    tileLevels: [1, 2] as readonly number[],
+    tileLevels: [1] as readonly number[],
   },
-  /** Multiple choice and select-all (R-HELP-1/2): the wrong try that first offers a hint. */
+  /** Multiple choice and select-all (R-HELP-1/2): the wrong try that first makes Help pulse. */
   mc: { wrongTriesBeforeHint: 2 },
-  /** Levels per topic (requirements §6–7). */
-  levels: { NC: 5, RD: 5, FDP: 5, PC: 5, EQ: 6 },
+  /**
+   * Levels per topic (requirements §6–7, parent decision 2026-10-11): 1 Basic, 2 General,
+   * 3 Advanced, 4 Challenge. No mixed-review levels.
+   */
+  levels: { NC: 4, RD: 4, FDP: 4, PC: 4, EQ: 4 },
   /** RD (§6.2). Ranges the spec leaves open are M3 assumptions. */
   rd: {
-    /** L3: whole part 1…wholeMax, block length 1…3. L4: whole part 0…wholeMax. */
+    /** L2: whole part 1…wholeMax, block length 1…3. L3: whole part 0…wholeMax. L4: 1…wholeMax. */
     wholeMax: 9,
-    /** F→D denominators by level; level 5 uses all of them. */
-    f2dDenominators: { 3: [3, 9, 11], 4: [6, 12, 15, 22], 5: [7] } as Record<number, readonly number[]>,
+    /** F→D denominators by level (four levels, 2026-10-11): 7 and 14 give a 6-digit block. */
+    f2dDenominators: { 2: [3, 9, 11], 3: [6, 12, 15, 22], 4: [7, 14] } as Record<number, readonly number[]>,
+    /** L4 D→F (delayed repeat with a whole part): digits before the block, and the block's length. */
+    challengeNonRep: { min: 1, max: 2 },
+    challengeBlock: { min: 2, max: 3 },
     /** Levels (and above) where bar notation is shown beside the ellipsis (R-DISP-3). */
-    barFromLevel: 3,
+    barFromLevel: 2,
   },
-  /** FDP (§6.3). Denominator pools per level; ranges the spec leaves open are M3 assumptions. */
+  /**
+   * FDP (§6.3, four levels since 2026-10-11). Denominator pools; ranges the spec leaves open are M3
+   * assumptions. L1 Basic: `benchmark` or `basic`; L2 General: `mixed` (whole part 1…mixedWholeMax)
+   * or "< 1%"; L3 Advanced: `repeating` (below 1); L4 Challenge: a whole part 1…mixedWholeMax plus a
+   * `repeating` fraction.
+   */
   fdp: {
     denominators: {
-      1: [2, 4, 5, 10],
-      2: [8, 20, 25, 50, 100],
-      /** Level 3 mixed numbers: whole part 1…mixedWholeMax over these denominators. */
-      3: [2, 4, 5, 8, 10, 20, 25],
-      4: [3, 6, 9, 11, 12],
-    } as Record<number, readonly number[]>,
+      benchmark: [2, 4, 5, 10],
+      basic: [8, 20, 25, 50, 100],
+      mixed: [2, 4, 5, 8, 10, 20, 25],
+      repeating: [3, 6, 9, 11, 12],
+    },
     mixedWholeMax: 5,
-    /** Level 3 "< 1%": p/1000 for p in 1…9 (0.1% … 0.9%). */
+    /** Level 2 "< 1%": p/1000 for p in 1…9 (0.1% … 0.9%). */
     tinyMaxThousandths: 9,
-    barFromLevel: 4,
+    barFromLevel: 3,
   },
   /** NC (§6.1). Ranges the spec leaves open are M3 assumptions. */
   nc: {
@@ -185,8 +200,12 @@ export const config = {
     kind: 'hat' | 'scarf' | 'sunglasses' | 'bowtie';
     at: number;
   }[],
-  /** R-RWD-1 (M7): full stars by level, index = level − 1. Shells equal stars (R-RWD-4). */
-  stars: { fullByLevel: [1, 2, 4, 6, 8] as readonly number[] },
+  /**
+   * R-RWD-1 (parent decision 2026-10-11): full stars = perLevel × level. Hint 1 costs `hint1`, hint 2
+   * `hint2` more (each once per question), each wrong try `wrongTry`; never below 0, and 0 shows the
+   * walkthrough. Shells equal stars (R-RWD-4).
+   */
+  stars: { perLevel: 2, hint1: 1, hint2: 2, wrongTry: 2 },
   /** The most shells to spend the parent can set (R-PAR-7). */
   shells: { maxBalance: 1_000_000 },
   /** Home beach: at most this many shells drawn on the sand (design.md §7.1). */

@@ -50,19 +50,6 @@ export async function topicLevel(topic: TopicId): Promise<number> {
   return ts ? clampLevel(ts.level, bounds) : initialState(topic, bounds).level;
 }
 
-/**
- * The level that pays full stars (R-RWD-1, M7): the higher of the stored level and the highest level
- * adaptive free practice promoted to, within the parent's bounds.
- */
-export function starsLevel(
-  topic: TopicId,
-  ts: TopicState | undefined,
-  bounds: { min: number; max: number },
-): number {
-  const stored = ts ? clampLevel(ts.level, bounds) : initialState(topic, bounds).level;
-  return Math.max(stored, Math.min(ts?.freeBest ?? 0, bounds.max));
-}
-
 // ---------------------------------------------------------------------------------------------
 // Assignments
 
@@ -147,19 +134,13 @@ export interface FinishContext {
   adaptive: boolean;
   /** Count stars, shells, streak and badges (not for fixed-level links). */
   rewarded: boolean;
-  /** A parent's level lock (R-SES-3): pays normally, without the below-level rule (R-RWD-1). */
-  locked?: boolean;
-  /** Adaptive free practice promoted to this level after this attempt (kept as `freeBest`, R-RWD-1). */
-  freePromotedTo?: number;
 }
 
 export interface FinishEvents {
-  /** R-RWD-1 (M7): 0–10. */
+  /** R-RWD-1: 0–8. */
   stars: number;
   /** How the question was answered; sizes the celebration. */
   quality: Quality;
-  /** R-RWD-1: a level below the learner's current level paid less than the answer would have earned. */
-  capped?: boolean;
   /** Shells to spend after this attempt. */
   shells: number;
   /** Shells this attempt earned (= its stars, R-RWD-4). */
@@ -189,14 +170,7 @@ const intervals = (all: Assignment[]): ActiveInterval[] =>
  * which activates the next queued assignment (R-SES-2).
  */
 export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promise<FinishEvents> {
-  const paysAs = (attempt.params as { starsLevel?: unknown } | null)?.starsLevel;
-  const how = {
-    level: attempt.level,
-    wrongTries: attempt.wrongTries ?? 0,
-    maxHint: attempt.maxHint,
-    // R-RWD-1: an EQ L6 review question pays the level it comes from.
-    ...(typeof paysAs === 'number' ? { paysAs } : {}),
-  };
+  const how = { level: attempt.level, wrongTries: attempt.wrongTries ?? 0, maxHint: attempt.maxHint };
   const quality = answerQuality(how);
   const bounds = (await practiceSettings()).levelBounds[attempt.topic];
   return db.transaction('rw', [db.attempts, db.topicStates, db.rewards, db.assignments], async () => {
@@ -207,10 +181,7 @@ export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promi
     const now = new Date().toISOString();
     const key = { profileId: PROFILE_ID, topic: attempt.topic };
     const ts = await topicState(attempt.topic);
-    // R-RWD-1: fixed-level links skip the below-level rule; level locks pay normally.
-    const stars = ctx.rewarded
-      ? starsFor({ ...how, currentLevel: starsLevel(attempt.topic, ts, bounds), locked: ctx.locked ?? false })
-      : starsFor(how);
+    const stars = starsFor(how);
     const earned = ctx.rewarded ? stars : 0;
     await db.attempts.put({
       ...attempt,
@@ -221,7 +192,6 @@ export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promi
     if (!ctx.rewarded) return { stars, quality, shells: spendable(rewards), badges: [] };
 
     const events: FinishEvents = { stars, quality, shells: 0, shellsEarned: earned, badges: [] };
-    if (stars < starsFor(how)) events.capped = true;
 
     // Adaptive level (R-ADP-2…5). Attempts at another level (after a walkthrough) don't count.
     const state = ts ?? { ...key, ...initialState(attempt.topic, bounds) };
@@ -235,9 +205,6 @@ export async function finishAttempt(attempt: Attempt, ctx: FinishContext): Promi
       next = { ...state, level: r.level, window: r.window };
       if (r.change === 'promote') events.levelUp = r.level;
     }
-    // Adaptive free practice promotions raise the level that pays full stars (R-RWD-1).
-    if (ctx.freePromotedTo !== undefined && ctx.freePromotedTo > (next.freeBest ?? 0))
-      next = { ...next, freeBest: ctx.freePromotedTo };
     if (next !== state) await db.topicStates.put(next);
 
     // Lifetime shells (never go down) unlock cosmetics, which are worn at once (R-RWD-4, M6).

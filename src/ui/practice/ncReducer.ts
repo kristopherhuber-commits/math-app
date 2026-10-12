@@ -16,6 +16,7 @@ import {
   onWalkNext,
   onWrongTry,
   startWalk,
+  walkDue,
   type HelpFields,
 } from './help';
 
@@ -59,7 +60,15 @@ export function startNc(level: number, seed: number): NcState {
   };
 }
 
+/**
+ * One action, then the walkthrough starts by itself if the stars left reached 0 (R-RWD-1).
+ */
 export function ncReducer(s: NcState, action: NcAction): NcState {
+  const next = step(s, action);
+  return walkDue(next) ? step(next, { type: 'walkStart' }) : next;
+}
+
+function step(s: NcState, action: NcAction): NcState {
   switch (action.type) {
     case 'select':
       if (s.solved || s.walk || s.tried.includes(action.set)) return s;

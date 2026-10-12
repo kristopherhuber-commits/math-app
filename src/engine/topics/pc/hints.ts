@@ -36,6 +36,17 @@ export function pcHint(q: McQuestion, tier: 1 | 2): HintContent {
         : content('pc.successive.h2', { m1, m2: multText(multiplier(spec.steps[1]!)) });
     case 'reverse':
       return content(`pc.reverse.h${tier}`, { price: p.price!, pct: p.pct!, dir: p.dir!, mult: m1 });
+    case 'reverseSuccessive': {
+      const m2 = multText(multiplier(spec.steps[1]!));
+      return tier === 1
+        ? content('pc.reverseSuccessive.h1', { price: p.price!, pct2: p.pct2! })
+        : content('pc.reverseSuccessive.h2', {
+            price: p.price!,
+            m1,
+            m2,
+            both: multText(mul(multiplier(spec.steps[0]!), multiplier(spec.steps[1]!))),
+          });
+    }
   }
 }
 
@@ -158,6 +169,69 @@ export function pcWalkthrough(q: McQuestion): NumWalkStep[] {
           math: [
             `${s.pct}\\%\\text{ of }${tex(original)} = ${tex(pc)}`,
             `${tex(original)} ${s.up ? '+' : '-'} ${tex(pc)} = ${tex(after)}\\ \\checkmark`,
+          ],
+        },
+      ];
+    }
+    case 'reverseSuccessive': {
+      // Work backwards: undo the second change, then the first (one division each); or divide once
+      // by the two multipliers multiplied together. Then check forwards (R-PC-2).
+      const [s1, s2] = spec.steps as [PcStep, PcStep];
+      const [original, mid, after] = prices as [bigint, bigint, bigint];
+      const m1 = multText(multiplier(s1));
+      const m2 = multText(multiplier(s2));
+      const both = multText(mul(multiplier(s1), multiplier(s2)));
+      /** Wrong choices for "price ÷ m": × m instead, the other change's way, a dollar or two off. */
+      const divideChoices = (from: bigint, to: bigint, s: PcStep) =>
+        [
+          mul(rat(from), multiplier(s)),
+          mul(rat(from), multiplier({ pct: s.pct, up: !s.up })),
+          rat(to + 100n),
+          rat(to + 200n),
+        ]
+          .filter((c) => c.d === 1n && c.n > 0n)
+          .map((c) => moneyChoice(c.n));
+      return [
+        {
+          explain: content('pc.walk.reverse2.setup', {
+            pct: `${s1.pct}`,
+            dir: s1.up ? 'up' : 'down',
+            pct2: `${s2.pct}`,
+            dir2: s2.up ? 'up' : 'down',
+            m1,
+            m2,
+          }),
+          math: [`\\text{original} \\times ${m1} \\times ${m2} = ${tex(after)}`],
+        },
+        {
+          explain: content('pc.walk.reverse2.undoSecond', { mult: m2 }),
+          mini: miniQuestion(
+            rng,
+            content('pc.walk.mini.divide', { price: money(after).text, mult: m2 }),
+            moneyChoice(mid),
+            divideChoices(after, mid, s2),
+          ),
+          math: [`${tex(after)} \\div ${m2} = ${tex(mid)}`],
+        },
+        {
+          explain: content('pc.walk.reverse2.undoFirst', { mult: m1 }),
+          mini: miniQuestion(
+            rng,
+            content('pc.walk.mini.divide', { price: money(mid).text, mult: m1 }),
+            moneyChoice(original),
+            divideChoices(mid, original, s1),
+          ),
+          math: [`${tex(mid)} \\div ${m1} = ${tex(original)}`],
+        },
+        {
+          explain: content('pc.walk.reverse2.combined', { m1, m2, both }),
+          math: [`${m1} \\times ${m2} = ${both}`, `${tex(after)} \\div ${both} = ${tex(original)}`],
+        },
+        {
+          explain: content('pc.walk.reverse2.check', { price: money(original).text }),
+          math: [
+            `${tex(original)} \\times ${m1} = ${tex(mid)}`,
+            `${tex(mid)} \\times ${m2} = ${tex(after)}\\ \\checkmark`,
           ],
         },
       ];

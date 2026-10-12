@@ -21,7 +21,7 @@
 1. **Calm by default, playful on success.** Screens are quiet: a warm sand background, white cards, one teal action colour. Colour and motion burst only when the learner gets something right (the penguin) or needs help (the turtle).
 2. **The math is the hero.** The number or equation is the largest thing on the screen, set in a math face and centred. Chrome stays small.
 3. **Show the process.** Every solved equation leaves a visible trail of steps. Hints refer to *the learner's* numbers.
-4. **Never punish.** No red, no buzzers, no timers, no taking anything away. "Not quite" is amber and gentle. Every answered question gets a celebration, even when it earns no stars (since M7 stars reward first-try work at the learner's level, R-RWD-1).
+4. **Never punish.** No red, no buzzers, no timers, no taking anything away. "Not quite" is amber and gentle. Every answered question gets a celebration, even when it earns no stars (stars are 2 × the level, less for hints and mistakes, R-RWD-1).
 5. **Two characters, two jobs.** The turtle (**Shelly**) means *help*: she is patient and green, and always appears in the help colour. The penguin (**Pip**) means *celebration*: bouncy, with gold stars. They never swap roles. (The names are placeholders. See §4.3: the learner names them on first run.)
 6. **Touch first, keyboard complete.** Targets ≥ 48 px. Everything works with a finger, a mouse, or a keyboard.
 
@@ -175,10 +175,10 @@ Names match the intended React components. "States" lists every visual state tha
 | **McOption** | 196×136 (desktop row of 5) or 2-column on portrait. Radius 18. Content centred: `math-lg` or `money` | `idle` (surface, 2 px `--line`) · `hover` (border `--primary` 2 px) · `selected` (`--primary-soft`, 4 px `--primary`, ✓ badge top-right) · `wrong` (sunken fill, 45% veil, ✕ in amber, **disabled**) · `correct` (`--success-soft`, 4 px `--success`) · `focus-visible` (3 px outline `--primary`, 3 px offset) |
 | **SetCard** (NC) | **Five** cards, no Real (parent decision 2026-09-25). **One answer: the smallest set** (M7, R-NC-2), so the cards behave like McOption (a radio group). 166×132 card: a 30 px round marker, the set name (`title`/21), and an example line (e.g. "0, 1, 2, …") | `idle` · `selected` (`--primary-soft`, 4 px `--primary`, ● in the marker) · `tried` (like McOption `wrong`: sunken fill, veil, ✕ in amber, disabled, R-NC-3) · `correct` |
 | **SetsMap** | Nested rounded rectangles: Real ⊃ (Rational ⊃ Integer ⊃ Whole ⊃ Natural) and Irrational beside Rational. The rational chain uses progressively deeper teal tints; Irrational uses the constant tint. Full-size version in a modal; in H3 the current number animates into its innermost box and each enclosing box lights up in turn | `static` · `highlight(set)` |
-| **HelpButton** | 200×56, `--help-bg`, 2 px `--turtle`, turtle icon + "Help" | `idle` · `pressed` · `pulsing` (a gentle 2 s glow after the 2nd wrong try, R-HELP-2) |
+| **HelpButton** | 200×56, `--help-bg`, 2 px `--turtle`, turtle icon + "Help" | `idle` · `pressed` · `pulsing` (a gentle 2 s glow after the 2nd wrong try, R-HELP-2; since 2026-10-11 a hint opens only when the learner asks, because hints cost stars) |
 | **CheckButton** | 176×56 primary | `disabled` (nothing selected yet; `--surface-sunken` fill, `--ink-muted` label, 5.5:1) · `enabled` · `busy` (≤ 100 ms, no spinner needed) |
 | **FeedbackToast** | Inline under the answer area (not floating). `--amber-soft` bg, `--amber` text, `body`/17 800. Shows "Not quite." plus an optional **misconception-specific line** (see §9) | `enter` (slide up 8 px + fade, `--dur-base`) · `exit` |
-| **HintDrawer** | *As built: a panel inside the question card, not a docked drawer (parent approved, M3).* `--help-bg`, 2 px `--turtle`, radius 28. Header: turtle (pose by tier), name, "Hint n of 3", 3 ladder dots. Body: white card with the hint text. Footer: "Show me step by step" (goes to H3), a note "Walkthrough = 1 star, and that's OK!", and Close | `H1` · `H2` · `closed`. Slides in from the right (`--dur-slow`); a bottom sheet on portrait |
+| **HintDrawer** | *As built: a panel inside the question card, not a docked drawer (parent approved, M3).* `--help-bg`, 2 px `--turtle`, radius 28. Header: turtle (pose by tier), name, "Hint n of 3", 3 ladder dots. Body: white card with the hint text. Footer: "Show me step by step" (goes to H3), a note "Walkthrough: no stars this time, and that's OK!", and Close | `H1` · `H2` · `closed`. Slides in from the right (`--dur-slow`); a bottom sheet on portrait |
 | **Walkthrough** | Takes over the question card area, `--help-bg`. Header: turtle + "Let's do it together" + "step k of n" + a segmented progress bar. Body: numbered step lines accumulate (done steps muted, the current step in `--primary`). Supports **inline mini-questions** (3 choice chips) that gate **Next** (R-HELP-4). Supports aligned column arithmetic (e.g. the x-method subtraction) with a highlight band. The final step of EQ walkthroughs is the substitution check | `step(k)` · `awaitingMini` · `done` |
 | **StepRail** (EQ) | Vertical list: Move / Simplify / Solve (plus Expand and Clear fractions when relevant, inserted at the top). 188×84 items | `todo` · `active` · `done` (✓, `--success`) |
 | **TermTile** | **Variable terms are pill-shaped; constants have 10 px corners.** Shape plus colour, so the meaning survives colour blindness. `math-md`, min 76×64 | `resting` · `dragging` (scale 1.06, `--shadow-lift`) · `ghost` (the dashed outline left where it came from) · `awaitingSign` (shows `?` in place of the sign) · `locked` |
@@ -189,11 +189,12 @@ Names match the intended React components. "States" lists every visual state tha
 | **ErrorMark** | Amber wavy underline under the offending term(s), from the diagnostic's term span | — |
 | **StepFeedback** | Under the current line: `--help-bg` box with a small turtle and the diagnostic message (R-EQ, §7.4 table). Title line 19/900, detail 17/700, balance reminder 15 | `hidden` · `shown` |
 | **MathKeypad** | 4 columns × 5 rows of 80×64 keys, radius 14, 8 px gap. Digits on `--bg`; operators on `--surface-sunken`; the variable key on `--var-bg`, showing **only this problem's letter**. Row 5: `( ) = ⌫`. Below: `Clear line` + `Check step` | key `idle` · `pressed` (translateY 2 px, lip shrinks) · `disabled` |
-| **Celebration** | *As built (M7, R-RWD-1):* full stars → Pip `cheer`, the stars popping in sequence (`--ease-pop`, 80 ms stagger; up to 8, smaller when more than 5) + confetti; text "Full stars! Brilliant!" + "+n shells". 1 ★ → Pip `clap`, one star, "1 star. Nice work!". 0 ★ → Pip `clap`, no stars, "Done! Try it on the first go next time." | `full` · `one` · `none` · `levelUp` · `streak` (full screen) |
+| **Celebration** | *As built (R-RWD-1, 2026-10-11):* full stars → Pip `cheer`, the stars popping in sequence (`--ease-pop`, 80 ms stagger; up to 8, smaller when more than 5) + confetti; text "n stars! Brilliant!" + "+n shells". Some stars → Pip `clap`, those stars, "n stars. Nice work!". 0 ★ → Pip `clap`, no stars, "You finished it! Fewer hints and mistakes earn more stars." | `full` · `some` · `none` · `levelUp` · `streak` (full screen) |
 | **StarCounter / ShellCounter** | Pills. When they increment, the number rolls up and the icon pulses | — |
+| **StarsInfo** (Home) *(added 2026-10-11)* | A counter-style button, star icon + "How stars work", left of the streak. It opens a small card under it with the rules of R-RWD-1 in five short lines and a **Got it** button; Esc also closes it and focus returns to the button | `closed` · `open` |
 | **AssignmentCard** (Home) | Overline, title, one row per item (name, n / N, progress bar, ✓ when done), a primary **Keep going ›** button and "x of N done" | `notStarted` ("Start ›") · `inProgress` · `done` |
 | **TopicTile** (Home free practice) | 216×136, glyph (math face) + name. Tapping it opens the LevelPicker | `locked` (55% veil + padlock) · `open` · `hover` |
-| **LevelPicker** *(as built)* | Card under the tiles: "Equations: how hard?", **Adaptive** first (focused; "Starts at level 3 and changes as you go"), then Level 1…N with an example each, only within the parent's range; Close / Esc | — |
+| **LevelPicker** *(as built)* | Card under the tiles: "Equations: how hard?", **Adaptive** first (focused; "Starts at level 2 (General) and changes as you go"), then Level 1 · Basic, 2 · General, 3 · Advanced, 4 · Challenge with an example each, only within the parent's range; Close / Esc | — |
 | **Shop card** *(as built)* | Picture (an original cartoon, or the parent's own picture), name, a line saying what the real reward is, price in shells, then **Buy** (asks "Buy … for n shells?") or "n more shells to go" | `can buy` · `short` · `confirming` |
 | **Dress up, Badge shelf, Beach shells** *(as built)* | Home: pill toggles for unlocked cosmetics plus "Next to unlock: …"; a grid of the 12 badges (earned highlighted, the rest greyed); up to 12 shells drawn on the sand = shells to spend | — |
 | **PinPad** *(as built)* | 4 dots and a 3×4 pad (1–9, 0, ⌫) reusing the keypad keys; physical digits and Backspace work | `entering` · `not it` |
@@ -214,22 +215,22 @@ stateDiagram-v2
   Selected --> Wrong1: Check ✗ (1st)
   Wrong1 --> Selected: choose again
   Selected --> Wrong2: Check ✗ (2nd)
-  Wrong2 --> HintOffered: turtle slides in, Help pulses
+  Wrong2 --> HintOffered: Help pulses
   HintOffered --> Selected: dismiss / keep trying
   Presented --> Hint: Help (any time)
   Selected --> Hint: Help
   Hint --> Selected: close hint
   Hint --> Walkthrough: "Show me step by step" / from H2
-  Walkthrough --> Correct: finished (1 ★)
+  Walkthrough --> Correct: finished (0 ★)
   Correct --> Celebrate --> NextQuestion
   NextQuestion --> [*]
 ```
 
 - A wrong option is disabled after it is checked, so it can't be chosen twice.
-- Each later wrong try after the 2nd advances the hint drawer by one tier (R-HELP-2).
+- A wrong try never opens a hint; the learner asks for one (R-HELP-2). Each hint tier and each wrong try costs stars, and when none are left the walkthrough starts by itself (R-RWD-1).
 - Stars are computed at the end (R-RWD-1). The celebration size follows the stars.
 
-### 6.2 Tile builder (EQ levels 1–2)
+### 6.2 Tile builder (EQ level 1)
 
 1. **Move.** The learner drags a tile across the `=` → the tile lands showing `?` → the SignPicker opens → they tap `+` or `−`.
    - Correct: the tile locks and the BalanceScale plays (full or short).
@@ -240,7 +241,7 @@ stateDiagram-v2
 
 Drag mechanics: use pointer events, a 6 px movement threshold, and snap to the nearest zone. Keyboard: Tab to the tile, Enter to pick up, ←/→ to choose the side, Enter to drop (R-EQ-TILE-6). A drag that doesn't cross the `=` just returns the tile (no sign prompt).
 
-### 6.3 Typed steps (EQ levels 3–6)
+### 6.3 Typed steps (EQ levels 2–4)
 
 - The current line is editable. **Check step** (or Enter) runs the step checker.
 - Accepted: the line slides up into the history (`--dur-slow`), its label appears with a check, the StepRail advances, and a new empty current line appears.
@@ -263,7 +264,7 @@ Each mockup is at `docs/design/mockups/NN-name.svg` with a PNG render beside it.
 
 ### 7.2 Multiple-choice question: `02-question-multiple-choice.svg`
 ![MC](design/mockups/02-question-multiple-choice.png)
-1. **MathHero** at level 3: ellipsis form, then `=` and bar notation, plus the "repeats forever" caption (R-DISP-3).
+1. **MathHero** at RD level 3 of the mockups (level 2 since 2026-10-11): ellipsis form, then `=` and bar notation, plus the "repeats forever" caption (R-DISP-3).
 2. **Five options** in one row; the selected one is shown. Options are built from misconceptions (424/99 = RD-M2, 106/25 = RD-M4, 8/33 = RD-M1, 140/3 = RD-M3). None equals 140/33 (R-ANS-3).
 3. **Help** is always bottom-left.
 4. **Check** is enabled once an option is selected.
@@ -387,7 +388,8 @@ The app follows this document, with the changes below. The mockups were not redr
 |---|---|---|
 | Hints | mockup 03, §5 HintDrawer | A panel inside the question card, not a docked drawer (parent approved, M3). |
 | Number sets | mockup 04, §7.4 | Five set cards; Real is the outer frame of the sets map only. Since M7 one card is the answer (the smallest set), chosen like a multiple-choice option; tried cards are greyed out. |
-| Stars | mockups 08, 09, §5 Celebration | Since M7 stars depend on the level (up to 8) and shells equal stars; the summary shows stars per topic as a total. |
+| Stars | mockups 08, 09, §5 Celebration | Since 2026-10-11 stars are 2 × the level (up to 8), less for hints and mistakes, and shells equal stars; the summary shows stars per topic as a total. Home has a "How stars work" pop-up (§5 StarsInfo). |
+| Levels | mockups, §5 LevelPicker, §6.2–6.3 | Since 2026-10-11 every topic has four levels: Basic, General, Advanced, Challenge. Tiles at EQ level 1, typed steps at 2–4. |
 | Home | mockup 01, §7.1 | Free practice open by default; a level picker (Adaptive or a level) on each tile; Shop button; waiting-for-a-grown-up note; Dress up; badge shelf; shells on the sand = shells to spend. |
 | Rewards | §4.3, §7 "accessory shop" | Cosmetics unlock from lifetime shells (no shop for them). The shop sells real rewards for shells to spend, with original cartoon pictures and a line saying what each reward is; the parent gives or cancels them in Parent › Rewards. |
 | Parent area | mockups 10, 11 | Adds a Rewards page and "Edit assignment" from a queue card; Missed questions, Settings and Data as described in §7. |

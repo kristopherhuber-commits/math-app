@@ -63,14 +63,32 @@ function checkOptions(q: McQuestion) {
   expect(q.options.filter((o) => o.code === FILLER)).toHaveLength(Math.max(0, 4 - q.modelCount));
 }
 
-const POOL: Record<number, (x: Rational) => boolean> = {
-  1: (x) => [2n, 4n, 5n, 10n].includes(x.d) && cmp(x, ONE) < 0,
-  2: (x) => [8n, 20n, 25n, 50n, 100n].includes(x.d) && cmp(x, ONE) < 0,
-  3: (x) => cmp(x, ONE) > 0 || x.d === 1000n || x.d === 500n || x.d === 250n || x.d === 200n || x.d === 125n,
-  4: (x) => [3n, 6n, 9n, 11n, 12n].includes(x.d) && cmp(x, ONE) < 0,
+const REPEATING = [3n, 6n, 9n, 11n, 12n];
+/** The decimal repeats: the denominator has a prime factor other than 2 and 5. */
+function repeats(x: Rational): boolean {
+  let d = x.d;
+  while (d % 2n === 0n) d /= 2n;
+  while (d % 5n === 0n) d /= 5n;
+  return d !== 1n;
+}
+const below1 = (x: Rational) => cmp(x, ONE) < 0;
+const wholeOk = (x: Rational) => cmp(x, ONE) > 0 && x.n / x.d >= 1n && x.n / x.d <= 5n && x.d !== 1n;
+
+/** The pools of each level (§6.3 table, four levels since 2026-10-11): value checks per pool. */
+const POOLS: Record<number, Record<string, (x: Rational) => boolean>> = {
+  1: {
+    benchmark: (x) => [2n, 4n, 5n, 10n].includes(x.d) && below1(x),
+    basic: (x) => [8n, 20n, 25n, 50n, 100n].includes(x.d) && below1(x),
+  },
+  2: {
+    mixed: (x) => wholeOk(x) && [2n, 4n, 5n, 8n, 10n, 20n, 25n].includes(x.d),
+    tiny: (x) => below1(x) && [1000n, 500n, 250n, 200n, 125n].includes(x.d) && cmp(x, rat(1, 100)) < 0,
+  },
+  3: { repeating: (x) => REPEATING.includes(x.d) && below1(x) },
+  4: { repeatingMixed: (x) => wholeOk(x) && REPEATING.includes(x.d) },
 };
 
-describe.each([1, 2, 3, 4, 5])('FDP level %i (R-TEST-2)', (level) => {
+describe.each([1, 2, 3, 4])('FDP level %i (R-TEST-2)', (level) => {
   it('answer verified independently; level pool; forms; options (R-ANS-1…4, R-FDP-1/2)', () => {
     fc.assert(
       fc.property(seedArb, (seed) => {
@@ -95,12 +113,14 @@ describe.each([1, 2, 3, 4, 5])('FDP level %i (R-TEST-2)', (level) => {
           expect(ans.form === 'P').toBe(target === 'P');
         }
         expect(source).not.toBe(target);
-        // Level pool (§6.3 table).
-        const pool = Number(q.params.pool);
-        if (level < 5) expect(pool).toBe(level);
-        expect(POOL[pool]!(q.answer)).toBe(true);
-        // No repeating option before bar notation is introduced (L4).
-        if (level < 4) for (const o of q.options) expect(o.shown.text).not.toContain('…');
+        // Level pool (§6.3 table): no level mixes in easier values.
+        const check = POOLS[level]![q.params.pool!];
+        expect(check).toBeDefined();
+        expect(check!(q.answer)).toBe(true);
+        // No repeating option before bar notation is introduced (L3).
+        if (level < 3) for (const o of q.options) expect(o.shown.text).not.toContain('…');
+        // From L3 the answer itself repeats; before, it terminates.
+        expect(repeats(q.answer)).toBe(level >= 3);
       }),
       { numRuns: RUNS },
     );
@@ -142,6 +162,16 @@ describe.each([1, 2, 3, 4, 5])('FDP level %i (R-TEST-2)', (level) => {
       }),
       { numRuns: RUNS },
     );
+  });
+});
+
+describe('FDP levels (four since 2026-10-11)', () => {
+  it('every pool of a level appears, and there is no level 5', () => {
+    for (const level of [1, 2, 3, 4]) {
+      const seen = new Set(Array.from({ length: 200 }, (_, s) => generateFdp(level, s).params.pool));
+      expect([...seen].sort()).toEqual(Object.keys(POOLS[level]!).sort());
+    }
+    expect(() => generateFdp(5, 1)).toThrow(RangeError);
   });
 });
 
@@ -197,5 +227,16 @@ describe('FDP worked examples (§6.3)', () => {
     expect(fdpWalkthrough(fake('9/4', 'D', 'F', 'mixed')).at(-1)!.math![0]).toBe(
       '\\frac{9}{4} = 2\\frac{1}{4}',
     );
+  });
+  it('L4 Challenge: 2⅙ = 2.1666… = 216.666…%, and back to a mixed number after the x-method', () => {
+    const fake = (x: string, source: string, target: string, form = 'improper'): McQuestion =>
+      ({ seed: 3, params: { x, source, target, form, notation: 'both' } }) as unknown as McQuestion;
+    expect(fdpWalkthrough(fake('13/6', 'F', 'P')).at(-1)!.math![0]).toBe(
+      '2.1666\\text{…} \\times 100 = 216.666\\text{…}\\%',
+    );
+    for (const source of ['D', 'P'])
+      expect(fdpWalkthrough(fake('13/6', source, 'F', 'mixed')).at(-1)!.math![0]).toBe(
+        '\\frac{13}{6} = 2\\frac{1}{6}',
+      );
   });
 });

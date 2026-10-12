@@ -6,7 +6,7 @@ import { generatePc } from '../src/engine/topics/pc/generator';
 import { generateNc } from '../src/engine/topics/nc/generator';
 import { innermostSet, NC_SETS, ncMembership } from '../src/engine/topics/nc/checker';
 import type { McQuestion } from '../src/engine/topics/mc';
-import { fullStarsText, openHome } from './helpers';
+import { fullStarsText, openHome, starsText } from './helpers';
 
 // M3 (R-TEST-5): one question per number topic by mouse (or touch on the tablet project) and by
 // keyboard; wrong answers, the hint ladder, the RD walkthrough with its mini-questions; NC's single
@@ -81,7 +81,7 @@ test('NC: keyboard only, 1–5 then Enter', async ({ page }) => {
   await expect(page.getByText(fullStarsText(1))).toBeVisible();
 });
 
-test('wrong answers: "Not quite" with the misconception line, then the hint (R-HELP-1/1a/2)', async ({
+test('wrong answers: "Not quite" with the misconception line, then Help pulses; a hint opens only when asked (R-HELP-1/1a/2)', async ({
   page,
 }) => {
   const q = generateRd(3, 7);
@@ -94,8 +94,40 @@ test('wrong answers: "Not quite" with the misconception line, then the hint (R-H
   await expect(page.getByLabel(/Hint 1 of 3/)).toHaveCount(0);
   await page.locator('.mc-option').nth(wrong[1]![1]).click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByLabel('Hint 1 of 3')).toBeVisible();
+  await expect(page.locator('.mc-option.tried')).toHaveCount(2);
   await expect(page.locator('.btn-help.pulsing')).toHaveCount(1);
+  // Hints cost stars (R-RWD-1), so a mistake never opens one by itself.
+  await expect(page.getByLabel(/Hint 1 of 3/)).toHaveCount(0);
+  await page.getByRole('button', { name: 'Help' }).click();
+  await expect(page.getByLabel('Hint 1 of 3')).toBeVisible();
+  // Level 3 = 6 ★, two wrong tries −4, hint 1 −1: 1 star left.
+  const correct = q.options.findIndex((o) => o.code === 'correct');
+  await page.locator('.mc-option').nth(correct).click();
+  await page.getByRole('button', { name: 'Check' }).click();
+  await expect(page.getByText(starsText(3, 2, 1))).toBeVisible();
+  await expect(page.getByText('1 star. Nice work!')).toBeVisible();
+});
+
+test('hints cost stars: hint 1 −1, hint 2 −2 more (R-RWD-1)', async ({ page }) => {
+  const q = generateRd(4, 7);
+  await page.goto('./?topic=RD&level=4&seed=7');
+  await page.getByRole('button', { name: 'Help' }).click();
+  await page.getByRole('button', { name: 'Another hint' }).click();
+  await expect(page.getByText('Hint 2 of 3')).toBeVisible();
+  await page.locator('.mc-option').nth(correctIndex(q)).click();
+  await page.getByRole('button', { name: 'Check' }).click();
+  // Challenge = 8 ★, less 3 for the two hints.
+  await expect(page.getByText('5 stars. Nice work!')).toBeVisible();
+});
+
+test('at 0 stars the walkthrough starts by itself (R-RWD-1): one mistake at level 1', async ({ page }) => {
+  const q = generateNc(1, 4);
+  const wrongSet = NC_SETS.find((s) => s !== innermostSet(q.value))!;
+  await page.goto('./?topic=NC&level=1&seed=4');
+  await setCard(page, wrongSet).click();
+  await page.getByRole('button', { name: 'Check' }).click();
+  await expect(page.getByText("Let's do it together")).toBeVisible();
+  await expect(page.getByText(/step 1 of \d+/)).toBeVisible();
 });
 
 test('RD walkthrough: mini-questions gate Next, and it ends the question (R-HELP-4/6)', async ({
@@ -140,7 +172,8 @@ test('NC: a card that is not quite is greyed out, with a line that doesn’t giv
     'It is in that set, but there’s a smaller one.',
   );
   await expect(page.locator('.set-card.tried')).toHaveCount(2);
-  await expect(page.getByLabel('Hint 1 of 3')).toBeVisible();
+  await expect(page.locator('.btn-help.pulsing')).toHaveCount(1);
+  await expect(page.getByLabel(/Hint 1 of 3/)).toHaveCount(0);
 });
 
 test('Home: a topic tile offers Adaptive and each level; the pick opens free practice (R-SES-6)', async ({
@@ -152,25 +185,24 @@ test('Home: a topic tile offers Adaptive and each level; the pick opens free pra
   const picker = page.getByRole('group', { name: 'Price changes: how hard?' });
   await expect(picker.getByRole('button')).toHaveText([
     /^Adaptive/,
-    /^Level 1/,
-    /^Level 2/,
-    /^Level 3/,
-    /^Level 4/,
-    /^Level 5/,
+    /^Level 1 · Basic/,
+    /^Level 2 · General/,
+    /^Level 3 · Advanced/,
+    /^Level 4 · Challenge/,
     'Close',
   ]);
   await expect(picker.getByRole('button', { name: /^Adaptive/ })).toBeFocused();
   await picker.getByRole('button', { name: /^Level 1/ }).click();
-  await expect(page.getByText('Price changes · Level 1')).toBeVisible();
+  await expect(page.getByText('Price changes · Level 1 · Basic')).toBeVisible();
   await expect(page.getByText('Question 1', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '‹ Home' }).click();
   await page.getByRole('button', { name: 'Equations', exact: true }).click();
   await expect(
     page.getByRole('group', { name: 'Equations: how hard?' }).getByRole('button', { name: /^Level/ }),
-  ).toHaveCount(6);
+  ).toHaveCount(4);
   await page.keyboard.press('Escape');
   await expect(page.getByRole('group', { name: /how hard/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Number sets', exact: true }).click();
   await page.getByRole('button', { name: /^Adaptive/ }).click();
-  await expect(page.getByText('Number sets · Level 3')).toBeVisible();
+  await expect(page.getByText('Number sets · Level 2 · General')).toBeVisible();
 });

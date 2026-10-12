@@ -12,7 +12,7 @@ import { OPTION_COUNT, FILLER, CORRECT } from '../../src/engine/topics/mc';
 
 const RUNS = 1000;
 const seedArb = fc.integer({ min: 0, max: 0xffffffff });
-const LEVELS = [1, 2, 3, 4, 5];
+const LEVELS = [1, 2, 3, 4];
 const CODES = new Set([
   'RD-M1',
   'RD-M2',
@@ -117,31 +117,53 @@ describe.each(LEVELS)('RD level %i (R-TEST-2)', (level) => {
           // Level shape (§6.2 table).
           const k = block.length;
           const m = read.nonRep.length;
-          if (level === 1) expect([read.whole, m, k]).toEqual(['0', 0, 1]);
-          if (level === 2) expect(read.whole === '0' && m === 0 && k >= 2 && k <= 3).toBe(true);
-          if (level === 3) expect(Number(read.whole) >= 1 && m === 0 && k <= 3).toBe(true);
-          if (level === 4) expect(m >= 1 && m <= 2 && k >= 1 && k <= 2).toBe(true);
+          if (level === 1) expect(read.whole === '0' && m === 0 && k >= 1 && k <= 3).toBe(true);
+          if (level === 2) expect(Number(read.whole) >= 1 && m === 0 && k <= 3).toBe(true);
+          if (level === 3) expect(m >= 1 && m <= 2 && k >= 1 && k <= 2).toBe(true);
+          if (level === 4) expect(Number(read.whole) >= 1 && m >= 1 && m <= 2 && k >= 2 && k <= 3).toBe(true);
           expect(p.block).toBe(block);
         } else {
-          expect(level).toBeGreaterThanOrEqual(3);
+          expect(level).toBeGreaterThanOrEqual(2);
           const x = readFraction(q.hero!.text);
           expect(eq(x, q.answer)).toBe(true);
           const d = Number(x.d);
-          if (level === 3) expect([3, 9, 11]).toContain(d);
-          if (level === 4) expect([6, 12, 15, 22]).toContain(d);
-          if (level === 5) expect([3, 9, 11, 6, 12, 15, 22, 7]).toContain(d);
+          if (level === 2) expect([3, 9, 11]).toContain(d);
+          if (level === 3) expect([6, 12, 15, 22]).toContain(d);
+          if (level === 4) {
+            expect([7, 14]).toContain(d);
+            // A 6-digit block, by test-local long division: the remainder first repeats after 6 digits.
+            const seen: bigint[] = [];
+            let r = x.n % x.d;
+            while (!seen.includes(r)) {
+              seen.push(r);
+              r = (r * 10n) % x.d;
+            }
+            expect(seen.length - seen.indexOf(r)).toBe(6);
+          }
           expect(x.n > 0n && x.n < x.d).toBe(true);
           const shown = q.options.find((o) => o.code === CORRECT)!.shown;
           expect(eq(readBar(shown.text.split(' = ')[1]!), x)).toBe(true);
         }
-        // R-DISP-3: ellipsis-only heroes at L1–2 carry the caption; both forms from L3.
+        // R-DISP-3: ellipsis-only heroes at L1 carry the caption; both forms from L2.
         if (q.kind === 'D2F') {
           expect(q.hero!.caption).toBeDefined();
-          expect(q.hero!.latex2 !== undefined).toBe(level >= 3);
+          expect(q.hero!.latex2 !== undefined).toBe(level >= 2);
         }
       }),
       { numRuns: RUNS },
     );
+  });
+
+  it('every shape of the level appears (no mixed review, §6.2)', () => {
+    const shapes = new Set<string>();
+    for (let seed = 0; seed < 400; seed++) shapes.add(generateRd(level, seed).params.shape!);
+    const expected: Record<number, string[]> = {
+      1: ['pure1', 'pure23'],
+      2: ['whole', 'f2dA'],
+      3: ['delayed', 'f2dB'],
+      4: ['delayedWhole', 'f2d7'],
+    };
+    expect([...shapes].sort()).toEqual(expected[level]!.sort());
   });
 
   it('the same seed gives an identical question (R-ARCH-3)', () => {
@@ -260,6 +282,28 @@ describe('RD worked examples', () => {
     expect(steps[4]!.math).toEqual(['x = \\frac{375}{900}']);
     expect(steps[5]!.explain.params.g).toBe('75');
     expect(steps[5]!.math![0]).toContain('\\frac{5}{12}');
+  });
+
+  it('walkthrough for 3.12454545… (challenge): 100x, 10000x, 9900x = 30933, ends at 30933/9900', () => {
+    const steps = rdWalkthrough(fake(3, '12', '45'));
+    expect(steps[1]!.math).toEqual(['100x = 312.454545\\text{…}']);
+    expect(steps[2]!.math).toEqual(['10000x = 31245.454545\\text{…}']);
+    expect(steps[3]!.math).toEqual(['9900x = 30933']);
+    // Independently, by the series: 3 + 12/100 + 45/9900 = 30933/9900 (= 3437/1100).
+    expect(eq(rat(30933n, 9900n), add(add(rat(3), rat(12, 100)), rat(45, 9900)))).toBe(true);
+    expect(steps.at(-1)!.math![0]).toContain('\\frac{3437}{1100}');
+  });
+
+  it('1/14 → 0.0714285714285…: F→D walkthrough finds the remainder that comes back', () => {
+    const steps = rdWalkthrough({
+      kind: 'F2D',
+      seed: 3,
+      params: { n: '1', d: '14' },
+    } as unknown as McQuestion);
+    const step = steps.find((s) => s.mini)!;
+    // 10 ÷ 14: remainders 1, 10, 2, 6, 4, 12, 8, 10 → 10 comes back.
+    expect(step.mini!.options[step.mini!.correct]!.text).toBe('10');
+    expect(steps.at(-1)!.math![0]).toContain('0.0\\overline{714285}');
   });
 
   it('walkthrough for 2.31818… ends at 51/22', () => {

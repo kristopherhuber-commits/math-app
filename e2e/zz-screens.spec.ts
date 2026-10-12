@@ -49,11 +49,11 @@ test('number topic screens', async ({ page }, info) => {
     await page.goto(`./?topic=${topic}&level=${level}&seed=${seed}`);
     await shot(`${topic}${level}`);
   }
-  // The longest option text: RD level 5, F→D over 7 (block of 6, shown 3 times).
+  // The longest option text: RD level 4, F→D over 7 (block of 6, shown 3 times).
   let s7 = 0;
-  while (generateRd(5, s7).params.shape !== 'f2d7') s7++;
-  await page.goto(`./?topic=RD&level=5&seed=${s7}`);
-  await shot('RD5-sevenths');
+  while (generateRd(4, s7).params.shape !== 'f2d7') s7++;
+  await page.goto(`./?topic=RD&level=4&seed=${s7}`);
+  await shot('RD4-sevenths');
   // Wrong answers, the hint and the walkthrough with a mini-question (RD level 3, seed 7).
   const q = generateRd(3, 7);
   const wrong = q.options.findIndex((o) => o.code !== 'correct');
@@ -64,6 +64,8 @@ test('number topic screens', async ({ page }, info) => {
   const wrong2 = q.options.findIndex((o, i) => o.code !== 'correct' && i !== wrong);
   await page.keyboard.press(`${wrong2 + 1}`);
   await page.getByRole('button', { name: 'Check' }).click();
+  // A mistake only makes Help pulse (hints cost stars, R-RWD-1); open the hint for the shot.
+  await page.getByRole('button', { name: 'Help' }).click();
   await shot('rd-hint');
   await page.getByRole('button', { name: 'Show me step by step' }).click();
   for (let i = 0; i < 3; i++) {

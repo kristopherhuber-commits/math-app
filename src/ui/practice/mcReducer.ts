@@ -21,6 +21,7 @@ import {
   onWalkNext,
   onWrongTry,
   startWalk,
+  walkDue,
   type HelpFields,
 } from './help';
 
@@ -87,7 +88,15 @@ export function startMc(
 
 const optionText = (q: McQuestion, id: string) => q.options.find((o) => o.id === id)?.shown.text ?? id;
 
+/**
+ * One action, then the walkthrough starts by itself if the stars left reached 0 (R-RWD-1).
+ */
 export function mcReducer(s: McState, action: McAction): McState {
+  const next = step(s, action);
+  return walkDue(next) ? step(next, { type: 'walkStart' }) : next;
+}
+
+function step(s: McState, action: McAction): McState {
   switch (action.type) {
     case 'select':
       if (s.solved || s.walk || s.tried.includes(action.id)) return s;

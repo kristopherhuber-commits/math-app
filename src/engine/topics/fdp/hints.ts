@@ -112,6 +112,8 @@ export function fdpWalkthrough(q: McQuestion): NumWalkStep[] {
   const dir = `${f.source}2${f.target}`;
   const lead = big && f.source === 'F' ? [mixedStep(x, false)] : [];
   const x100 = mul(x, rat(100));
+  // The x-method ends at the improper fraction; a mixed-number target (L4) adds one more step.
+  const tail = big && form === 'mixed' ? [mixedStep(x, true)] : [];
   switch (dir) {
     case 'F2D':
       return [...lead, ...divisionSteps(x.n, x.d, q.seed)];
@@ -143,7 +145,7 @@ export function fdpWalkthrough(q: McQuestion): NumWalkStep[] {
         { explain: content('fdp.walk.decimal'), math: [`${pct(x, notation)} = ${dec(x, notation)}`] },
       ];
     case 'D2F': {
-      if (f.repeating) return xMethodSteps(fromRational(x), q.seed);
+      if (f.repeating) return [...xMethodSteps(fromRational(x), q.seed), ...tail];
       const r = overPowerOfTen(x);
       return [
         {
@@ -162,6 +164,7 @@ export function fdpWalkthrough(q: McQuestion): NumWalkStep[] {
             math: [`${pct(x, notation)} = ${dec(x, notation)}`],
           },
           ...xMethodSteps(fromRational(x), q.seed),
+          ...tail,
         ];
       const y = overPowerOfTen(x100); // the percent as digits over a power of ten
       const steps: NumWalkStep[] = [

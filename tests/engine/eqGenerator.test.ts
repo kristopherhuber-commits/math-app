@@ -50,7 +50,7 @@ const hasConst = (e: Expr) => !eq(evaluate(e, rat(0)), rat(0));
 
 function assertInvariants(q: EqQuestion): void {
   const { left, right } = sides(q);
-  const bound = q.level <= 3 ? config.eq.maxAbsValueLow : config.eq.maxAbsValueHigh;
+  const bound = q.level <= 2 ? config.eq.maxAbsValueLow : config.eq.maxAbsValueHigh;
 
   // Independent answer check: substitute the solution (R-TEST-2).
   expect(eq(evaluate(left, q.solution), evaluate(right, q.solution))).toBe(true);
@@ -65,7 +65,7 @@ function assertInvariants(q: EqQuestion): void {
   expect(q.text).not.toMatch(/(^|[^\d.])0(?![\d.])/);
   // 4: parentheses and fractions by level
   if (q.level <= 2) expect(q.text).not.toContain('(');
-  if (q.level <= 4) expect(q.text).not.toContain('/');
+  if (q.level <= 3) expect(q.text).not.toContain('/');
   // 5: a side never has the same kind of term twice
   for (const side of q.text.split(' = ')) {
     const kinds = chunks(side).map((c) => (c.includes('(') ? 'group' : /[a-z]/.test(c) ? 'var' : 'const'));
@@ -85,15 +85,19 @@ function assertInvariants(q: EqQuestion): void {
   expect(q.text).not.toContain('-');
 }
 
-describe.each([1, 2, 3, 4, 5, 6])('EQ level %i generator', (level) => {
+describe.each([1, 2, 3, 4])('EQ level %i generator', (level) => {
   it(`satisfies R-EQ-GEN and substitution for ${RUNS} seeds`, () => {
     fc.assert(
       fc.property(seedArb, (seed) => {
         const q = generateEq(level, seed);
         assertInvariants(q);
-        if (level === 1) expect(q.solution.n > 0n && isInteger(q.solution)).toBe(true);
-        if (level <= 4) expect(isInteger(q.solution)).toBe(true);
-        if (level === 5) expect(!isInteger(q.solution) || q.text.includes('/')).toBe(true);
+        if (level <= 3) expect(isInteger(q.solution)).toBe(true);
+        // Basic, first kind: ax + b = c with a positive answer.
+        if (q.form === 'ax+b=c') expect(q.solution.n > 0n).toBe(true);
+        if (level === 2) expect(q.text).not.toContain('(');
+        if (level === 3) expect(q.text).toContain('(');
+        // Challenge: always a fraction answer or fraction coefficients.
+        if (level === 4) expect(!isInteger(q.solution) || q.text.includes('/')).toBe(true);
       }),
       { numRuns: RUNS },
     );
@@ -188,34 +192,32 @@ function linOf(text: string, v: string) {
   return linearize(r.eq);
 }
 
-describe('level coverage', () => {
-  it('R-RWD-1: levels 1–5 pay their own stars; level 6 pays the level it reviews (3, 4 and 5 all occur)', () => {
-    for (let level = 1; level <= 5; level++)
-      for (let seed = 0; seed < 50; seed++) expect(generateEq(level, seed).starsLevel).toBe(level);
-    const seen = new Set<number>();
-    for (let seed = 0; seed < 300; seed++) seen.add(generateEq(6, seed).starsLevel);
-    expect([...seen].sort()).toEqual([3, 4, 5]);
+describe('level coverage (four levels, 2026-10-11)', () => {
+  const qs = (level: number, n = 300) => Array.from({ length: n }, (_, seed) => generateEq(level, seed));
+
+  it('there is no level 0 or 5', () => {
+    expect(() => generateEq(0, 1)).toThrow(RangeError);
+    expect(() => generateEq(5, 1)).toThrow(RangeError);
   });
-  it('R-RWD-1: an L6 question pays level 5 exactly when it has fraction coefficients or a level-5 form', () => {
-    const l5Forms = new Set<string>();
-    for (let seed = 0; seed < 300; seed++) l5Forms.add(generateEq(5, seed).form);
-    for (let seed = 0; seed < 300; seed++) {
-      const q = generateEq(6, seed);
-      expect(l5Forms.has(q.form)).toBe(q.starsLevel === 5);
-    }
+  it('Basic has both kinds: ax + b = c, and negatives or the letter on both sides', () => {
+    const forms = new Set(qs(1).map((q) => q.form));
+    expect(forms.has('ax+b=c')).toBe(true);
+    expect(forms.has('b+av=c') || forms.has('av+b=cv+d')).toBe(true);
+    expect(qs(1).some((q) => q.text.includes('−') || q.solution.n < 0n)).toBe(true);
   });
-  it('level 6 includes negative fraction solutions', () => {
-    let found = false;
-    for (let seed = 0; seed < 2000 && !found; seed++) {
-      const q = generateEq(6, seed);
-      found = !isInteger(q.solution) && q.solution.n < 0n;
-    }
-    expect(found).toBe(true);
+  it('General has the letter on both sides with negatives, any term order', () => {
+    expect(qs(2).every((q) => q.text.split(' = ').every((side) => /[a-z]/.test(side)))).toBe(true);
+    expect(qs(2).some((t) => /^d/.test(t.text) || t.text.startsWith('−'))).toBe(true);
   });
-  it('levels 4–6 include parentheses and level 5 includes fraction coefficients', () => {
-    const texts = (level: number) => Array.from({ length: 300 }, (_, s) => generateEq(level, s).text);
-    expect(texts(4).some((t) => t.includes('('))).toBe(true);
-    expect(texts(5).some((t) => t.includes('/'))).toBe(true);
-    expect(texts(3).some((t) => /^\d/.test(t) || t.startsWith('−'))).toBe(true);
+  it('Challenge has fraction coefficients, fraction answers, negative fraction answers, and parentheses with a fraction answer', () => {
+    const c = qs(4, 2000);
+    expect(c.some((q) => q.text.includes('/'))).toBe(true);
+    expect(c.some((q) => !isInteger(q.solution))).toBe(true);
+    expect(c.some((q) => !isInteger(q.solution) && q.solution.n < 0n)).toBe(true);
+    expect(c.some((q) => q.text.includes('(') && !isInteger(q.solution))).toBe(true);
+  });
+  it('only level 1 is on tiles (R-ANS-5)', () => {
+    expect(config.eq.tileLevels).toEqual([1]);
+    expect(config.levels.EQ).toBe(4);
   });
 });

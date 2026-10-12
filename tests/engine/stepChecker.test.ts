@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { checkStep, stageOf, type StepResult } from '../../src/engine/eq/stepChecker';
 import { linearize } from '../../src/engine/eq/linear';
 import { parseEquation } from '../../src/engine/eq/parse';
+import { config } from '../../src/engine/config';
 
 const M = '−';
 /** Tests are written with ASCII '-'; convert to the true minus the keypad produces. */
@@ -266,37 +267,26 @@ describe('additional rules', () => {
     const r = check(A, '2a = 20', { allowSkipping: true });
     expect(r.accepted && r.label).toBe('movedSimplified');
   });
-  it('R-EQ-CHK-3: Solve can never be skipped at levels 3–4', () => {
-    expect(outcome(check(A, 'a = 10', { allowSkipping: true, level: 4 }))).toBe('R-EQ-CHK-3');
-    expect(outcome(check('3a - a = 23 - 3', 'a = 10', { allowSkipping: true, level: 4 }))).toBe(
-      'R-EQ-CHK-3-SIMPLIFY',
-    );
+  it('R-EQ-CHK-3: Solve can never be skipped at levels 1–3', () => {
+    for (const level of [1, 2, 3]) {
+      expect(outcome(check(A, 'a = 10', { allowSkipping: true, level }))).toBe('R-EQ-CHK-3');
+      expect(outcome(check('3a - a = 23 - 3', 'a = 10', { allowSkipping: true, level }))).toBe(
+        'R-EQ-CHK-3-SIMPLIFY',
+      );
+    }
   });
-  it('R-EQ-CHK-3: at levels 5–6 with allowSkipping, c·v = d → v = q merges with Simplify', () => {
-    expect(outcome(check('3a - a = 23 - 3', 'a = 10', { allowSkipping: true, level: 5 }))).toBe(
+  it('R-EQ-CHK-3: at level 4 (Challenge) with allowSkipping, c·v = d → v = q merges with Simplify', () => {
+    expect(config.eq.skipFromLevel).toBe(4);
+    expect(outcome(check('3a - a = 23 - 3', 'a = 10', { allowSkipping: true, level: 4 }))).toBe(
       'SIMPLIFY+solved',
     );
   });
-  it('approved rule: at level 6 a correct final answer is accepted from any line', () => {
-    expect(outcome(check('4(w + 1) = 7w + 9', 'w = -5/3', { level: 6 }))).toBe('SOLVE+solved');
-    expect(outcome(check('4w + 4 = 7w + 9', '-5/3 = w', { level: 6 }))).toBe('SOLVE+solved');
-    expect(outcome(check('3a - a = 23 - 3', 'a = 10', { level: 6 }))).toBe('SOLVE+solved');
-    const r = check('3a + 3 = a + 23', 'a = 10', { level: 6 });
-    expect(r.accepted && r.label).toBe('solvedDirect');
-  });
-  it('approved rule: how the answer is written is still checked at level 6', () => {
-    expect(outcome(check('4(w + 1) = 7w + 9', 'w = -10/6', { level: 6 }))).toBe('R-EQ-CHK-5');
-    expect(outcome(check('3x + 1 = 8', 'x = 2.33', { level: 6 }))).toBe('R-EQ-CHK-6');
-  });
-  it('approved rule: a wrong answer or a partial step is checked as usual at level 6', () => {
-    expect(outcome(check('3a + 3 = a + 23', 'a = 11', { level: 6 }))).not.toMatch(/SOLVE/);
-    expect(outcome(check('3a + 3 = a + 23', '3a + a = 23 - 3', { level: 6 }))).toBe('EQ-D4');
-    expect(outcome(check('3a + 3 = a + 23', '2a = 20', { level: 6 }))).toBe('R-EQ-CHK-3');
-  });
-  it('approved rule: levels 1–5 still need every step', () => {
-    for (const level of [1, 2, 3, 4, 5]) {
+  it('the old level-6 any-line rule is gone: every level needs every step', () => {
+    expect(config.eq.finalAnswerAnyTimeLevels).toEqual([]);
+    for (const level of [1, 2, 3, 4]) {
       expect(outcome(check('3a + 3 = a + 23', 'a = 10', { level }))).toBe('R-EQ-CHK-3');
       expect(outcome(check('3a - a = 23 - 3', 'a = 10', { level }))).toBe('R-EQ-CHK-3-SIMPLIFY');
+      expect(check('4(w + 1) = 7w + 9', 'w = -5/3', { level }).accepted).toBe(false);
     }
   });
 

@@ -39,5 +39,15 @@ describe('regenerate (R-ARCH-3, R-PAR-4)', () => {
     expect(regenerate({ topic: 'EQ', generatorId: 'eq.v0', level: 3, seed: 1 }, '$')).toBeNull();
     expect(regenerate({ topic: 'EQ', generatorId: 'test', level: 3, seed: 1 }, '$')).toBeNull();
     expect(regenerate({ topic: 'PC', generatorId: 'pc.v1', level: 9, seed: 1 }, '$')).toBeNull();
+    expect(regenerate({ topic: 'EQ', generatorId: 'eq.v2', level: 5, seed: 1 }, '$')).toBeNull();
+  });
+
+  it('attempts from before the four levels (v1 generators) give null; current ids are v2', () => {
+    for (const topic of TOPICS) {
+      const v = topic.toLowerCase();
+      expect(original[topic](1, 1).generatorId).toBe(`${v}.v2`);
+      for (let level = 1; level <= 4; level++)
+        expect(regenerate({ topic, generatorId: `${v}.v1`, level, seed: 1 }, '$')).toBeNull();
+    }
   });
 });

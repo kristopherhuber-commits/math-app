@@ -1,4 +1,4 @@
-// EQ generators, levels 1–6 (requirements §7.2, R-EQ-GEN invariants). Every question comes from
+// EQ generators, levels 1–4 (requirements §7.2, R-EQ-GEN invariants). Every question comes from
 // a seed (R-ARCH-3); the same seed and level always give the same question.
 import { config } from '../../config';
 import { absR, add, div, eq, isInteger, lcm, mul, rat, sub, ZERO, type Rational } from '../../rational';
@@ -7,7 +7,8 @@ import { MINUS, sideText, termMagnitude } from '../../eq/format';
 import { isSeparated, linearize, solution as linSolution, type LinearEquation } from '../../eq/linear';
 import { parseEquation, type Expr } from '../../eq/parse';
 
-export const EQ_GENERATOR_ID = 'eq.v1';
+/** v2: the four levels (2026-10-11). v1 attempts (six levels) can no longer be regenerated. */
+export const EQ_GENERATOR_ID = 'eq.v2';
 
 export interface EqQuestion {
   generatorId: typeof EQ_GENERATOR_ID;
@@ -19,8 +20,6 @@ export interface EqQuestion {
   solution: Rational;
   /** Which template produced it (for the parent dashboard and bug reports). */
   form: string;
-  /** The level whose full stars it pays (R-RWD-1): its own, or for L6 the level (3–5) it reviews. */
-  starsLevel: number;
 }
 
 type Simple = { coef: Rational; isVar: boolean };
@@ -64,8 +63,6 @@ interface Candidate {
   right: Piece[];
   solution: Rational;
   form: string;
-  /** L6 only: the level this review question comes from. */
-  reviews?: number;
 }
 
 // ---------- invariants (R-EQ-GEN) used for rejection sampling ----------
@@ -91,7 +88,7 @@ function summandKinds(pieces: Piece[]): string[] {
 }
 
 function valid(c: Candidate, level: number, text: string, lin: LinearEquation): boolean {
-  const bound = level <= 3 ? config.eq.maxAbsValueLow : config.eq.maxAbsValueHigh;
+  const bound = level <= 2 ? config.eq.maxAbsValueLow : config.eq.maxAbsValueHigh;
   const r = parseEquation(text);
   if (!r.ok) return false;
   // 1: unique solution
@@ -110,7 +107,9 @@ function valid(c: Candidate, level: number, text: string, lin: LinearEquation): 
   }
   // 4: parentheses and fractions by level
   if (level <= 2 && text.includes('(')) return false;
-  if (level <= 4 && text.includes('/')) return false;
+  if (level <= 3 && text.includes('/')) return false;
+  // Challenge: always a fraction answer or fraction coefficients (else it is an Advanced question).
+  if (level === 4 && isInteger(c.solution) && !text.includes('/')) return false;
   // 5: a side never has the same kind of term twice
   for (const side of [c.left, c.right]) {
     const kinds = summandKinds(side);
@@ -132,22 +131,22 @@ function order(r: Rng, pieces: Piece[]): Piece[] {
   return r.bool() ? pieces : [...pieces].reverse();
 }
 
-/** L1: ax + b = c, a > 1, positive integers, positive integer solution. */
-function level1(r: Rng): Candidate {
+/** Basic, first kind: ax + b = c, a > 1, positive integers, positive integer solution. */
+function basicPositive(r: Rng): Candidate {
   const a = pos(r, 2, 9);
   const s = pos(r, 1, 12);
   const b = pos(r, 1, 20);
   return { left: [V(a), C(b)], right: [C(a * s + b)], solution: rat(s), form: 'ax+b=c' };
 }
 
-/** L2: negatives; variable on both sides; integer solutions. */
-function level2(r: Rng): Candidate {
+/** Basic, second kind: negatives; variable on both sides; integer solutions. */
+function basicNegative(r: Rng): Candidate {
   const s = nz(r, 12);
   if (r.bool()) {
     // b ± a·v = c, e.g. 7 − 3z = 13
     const a = nz(r, 9);
     const b = nz(r, 20);
-    if (Math.abs(a) === 1) return level2(r);
+    if (Math.abs(a) === 1) return basicNegative(r);
     return { left: order(r, [C(b), V(a)]), right: [C(a * s + b)], solution: rat(s), form: 'b+av=c' };
   }
   // a·v + b = c·v + d with positive variable coefficients, e.g. 3a + 3 = a + 23
@@ -159,21 +158,12 @@ function level2(r: Rng): Candidate {
   return { left: [V(a), C(b)], right: [V(c), C(d)], solution: rat(s), form: 'av+b=cv+d' };
 }
 
-/** L3: variable on both sides with negatives; integer solutions; any term order. */
-function level3(r: Rng, fractionSolution = false): Candidate {
+/** L2 General: variable on both sides with negatives; integer solutions; any term order. */
+function general(r: Rng): Candidate {
   const a = nz(r, 9);
   let c = nz(r, 9);
   if (c === a) c = -a;
   const b = nz(r, 20);
-  if (fractionSolution) {
-    const d = nz(r, 30);
-    return {
-      left: order(r, [V(a), C(b)]),
-      right: order(r, [V(c), C(d)]),
-      solution: div(rat(d - b), rat(a - c)),
-      form: 'av+b=cv+d',
-    };
-  }
   const s = nz(r, 15);
   const d = (a - c) * s + b;
   return {
@@ -184,8 +174,8 @@ function level3(r: Rng, fractionSolution = false): Candidate {
   };
 }
 
-/** L4: parentheses, one side then both. */
-function level4(r: Rng, fractionSolution = false): Candidate {
+/** L3 Advanced: parentheses, one side then both. L4 also uses it with a fraction answer. */
+function parentheses(r: Rng, fractionSolution = false): Candidate {
   const k = r.pick([2, 3, 4, 5, 6, -2, -3]);
   const p = r.pick([1, 1, 1, 2, 3]);
   const m = nz(r, 9);
@@ -194,7 +184,7 @@ function level4(r: Rng, fractionSolution = false): Candidate {
   const s = fractionSolution ? null : nz(r, 12);
   if (form === 0) {
     // k(pv + m) = c
-    if (s === null) return level4(r, fractionSolution);
+    if (s === null) return parentheses(r, fractionSolution);
     return { left: [G(k, inner)], right: [C(k * (p * s + m))], solution: rat(s), form: 'k(pv+m)=c' };
   }
   if (form === 1) {
@@ -217,7 +207,7 @@ function level4(r: Rng, fractionSolution = false): Candidate {
   const k2 = r.pick([2, 3, 4, -1, -2]);
   const p2 = 1;
   const coefDiff = k * p - k2 * p2;
-  if (coefDiff === 0) return level4(r, fractionSolution);
+  if (coefDiff === 0) return parentheses(r, fractionSolution);
   if (s === null) {
     const m2 = nz(r, 12);
     return {
@@ -229,7 +219,7 @@ function level4(r: Rng, fractionSolution = false): Candidate {
   }
   // k2·m2 = coefDiff·s + k·m must divide evenly
   const rhs = coefDiff * s + k * m;
-  if (rhs % k2 !== 0) return level4(r, fractionSolution);
+  if (rhs % k2 !== 0) return parentheses(r, fractionSolution);
   return {
     left: [G(k, inner)],
     right: [G(k2, [iv(p2), ic(rhs / k2)])],
@@ -238,8 +228,8 @@ function level4(r: Rng, fractionSolution = false): Candidate {
   };
 }
 
-/** L5: fraction answers and fraction coefficients. */
-function level5(r: Rng): Candidate {
+/** L4 Challenge: fraction answers and fraction coefficients. */
+function fractions(r: Rng): Candidate {
   const form = r.int(0, 2);
   if (form === 0) {
     // a·v + b = c with a fraction answer, e.g. 3x + 1 = 8
@@ -247,7 +237,7 @@ function level5(r: Rng): Candidate {
     const b = nz(r, 20);
     const c = nz(r, 30);
     const s = div(rat(c - b), rat(a));
-    if (isInteger(s)) return level5(r);
+    if (isInteger(s)) return fractions(r);
     return { left: order(r, [V(a), C(b)]), right: [C(c)], solution: s, form: 'av+b=c (fraction answer)' };
   }
   if (form === 1) {
@@ -255,7 +245,7 @@ function level5(r: Rng): Candidate {
     const q = pos(r, 2, 9);
     const p = r.pick([1, 1, 2, 3, 5]);
     const coef = rat(p, q);
-    if (isInteger(coef)) return level5(r);
+    if (isInteger(coef)) return fractions(r);
     const t = nz(r, Math.floor(config.eq.maxAbsSolution / Number(coef.d)));
     const s = mul(rat(t), rat(Number(coef.d)));
     const b = nz(r, 12);
@@ -267,33 +257,24 @@ function level5(r: Rng): Candidate {
   const q2 = pos(r, 2, 6);
   const c1 = rat(r.pick([1, 2, 3]), q1);
   const c2 = rat(r.pick([1, 1, 2]) * (r.bool() ? 1 : -1), q2);
-  if (eq(c1, c2) || isInteger(c1) || isInteger(c2)) return level5(r);
+  if (eq(c1, c2) || isInteger(c1) || isInteger(c2)) return fractions(r);
   const step = Number(lcm(c1.d, c2.d));
   const maxT = Math.floor(config.eq.maxAbsSolution / step);
-  if (maxT < 1) return level5(r);
+  if (maxT < 1) return fractions(r);
   const s = rat(r.nonZero(-maxT, maxT) * step);
   const b = nz(r, 12);
   const d = add(mul(sub(c1, c2), s), rat(b));
-  if (!isInteger(d) || eq(d, ZERO)) return level5(r);
+  if (!isInteger(d) || eq(d, ZERO)) return fractions(r);
   return { left: [V(c1), C(b)], right: order(r, [V(c2), C(d)]), solution: s, form: '(p/q)v+b=(p/q)v+d' };
 }
 
-/** L6: mixed review of 3–5, including negative fraction solutions. */
-function level6(r: Rng): Candidate {
-  const pick = r.int(0, 4);
-  if (pick === 0) return { ...level3(r, true), reviews: 3 };
-  if (pick === 1) return { ...level4(r, true), reviews: 4 };
-  if (pick === 2) return { ...level4(r, false), reviews: 4 };
-  return { ...level5(r), reviews: 5 };
-}
-
 const TEMPLATES: Record<number, (r: Rng) => Candidate> = {
-  1: level1,
-  2: level2,
-  3: (r) => level3(r),
-  4: (r) => level4(r),
-  5: level5,
-  6: level6,
+  /** Basic: the first two kinds of the old six levels, half each (both on tiles). */
+  1: (r) => (r.bool() ? basicPositive(r) : basicNegative(r)),
+  2: general,
+  3: (r) => parentheses(r),
+  /** Challenge: fractions; one in four is parentheses with a fraction answer (often negative). */
+  4: (r) => (r.int(0, 3) === 0 ? parentheses(r, true) : fractions(r)),
 };
 
 export function generateEq(level: number, seed: number): EqQuestion {
@@ -316,7 +297,6 @@ export function generateEq(level: number, seed: number): EqQuestion {
       text,
       solution: c.solution,
       form: c.form,
-      starsLevel: c.reviews ?? level,
     };
   }
   throw new Error(`EQ generator failed for level ${level}, seed ${seed}`);

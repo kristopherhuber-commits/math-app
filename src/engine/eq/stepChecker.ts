@@ -347,7 +347,7 @@ function classify(
     return reject('EQ-D10');
   };
 
-  // Approved rule (parent, 2026-09-23): at the levels in config.eq.finalAnswerAnyTimeLevels (level 6)
+  // Approved rule (parent, 2026-09-23): at the levels in config.eq.finalAnswerAnyTimeLevels (none since the four levels)
   // a correct final answer v = q ends the question from any line, since the steps may be done in the
   // head. How q is written is still checked (R-EQ-CHK-5/6). Every other line is checked as usual.
   const target = solution(p);
@@ -394,7 +394,8 @@ function classify(
   if (!pSeparated && nSimplified && k !== null) {
     if (nIsVEqualsQ && !unit) {
       // Moved, simplified and solved in one line.
-      if (opts.allowSkipping && opts.level >= 5) return acceptFinal('SOLVE', 'movedSimplified');
+      if (opts.allowSkipping && opts.level >= config.eq.skipFromLevel)
+        return acceptFinal('SOLVE', 'movedSimplified');
       return refuse('R-EQ-CHK-3', { variable: v });
     }
     if (!unit) return reject('EQ-D6'); // e.g. 4a = 40: scaled as well as moved
@@ -417,8 +418,9 @@ function classify(
       return accept('SIMPLIFY', 'simplified', false);
     }
     if (nIsVEqualsQ && k !== null) {
-      // c·v = d → v = q merged with Simplify: only at levels 5–6 with allowSkipping (R-EQ-CHK-3).
-      if (opts.allowSkipping && opts.level >= 5) return acceptFinal('SIMPLIFY', 'simplifiedSolved');
+      // c·v = d → v = q merged with Simplify: only from config.eq.skipFromLevel with allowSkipping (R-EQ-CHK-3).
+      if (opts.allowSkipping && opts.level >= config.eq.skipFromLevel)
+        return acceptFinal('SIMPLIFY', 'simplifiedSolved');
       return refuse('R-EQ-CHK-3-SIMPLIFY', { variable: v });
     }
     if (nSeparated && unit && termCount(n) < termCount(p))

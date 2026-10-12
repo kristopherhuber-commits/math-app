@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { generatePc } from '../src/engine/topics/pc/generator';
-import { current, openHome } from './helpers';
+import { current, fullStarsText, openHome } from './helpers';
 
 // M0 done-when: the built app loads again with the network off (R-PLAT-3); M6: and a question can be
 // completed offline (R-TEST-7).
@@ -31,7 +31,7 @@ test('reloads offline after the first load, and a question can be completed offl
     .nth(q.options.findIndex((o) => o.code === 'correct'))
     .click();
   await page.getByRole('button', { name: 'Check' }).click();
-  await expect(page.getByText('1 star! Brilliant!')).toBeVisible();
+  await expect(page.getByText(fullStarsText(level))).toBeVisible();
   await page.getByRole('button', { name: 'Next question' }).click();
   await expect(page.getByText('Question 2', { exact: true })).toBeVisible();
   await context.setOffline(false);

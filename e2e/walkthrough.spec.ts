@@ -50,9 +50,9 @@ test('typed: H1 → H2 → walkthrough from the last accepted line', async ({ pa
 });
 
 test('tiles: walkthrough from the given equation, Back steps back', async ({ page }) => {
-  const q = generateEq(2, 11);
+  const q = generateEq(1, 11);
   const steps = eqWalkthrough(q.text, q.variable);
-  await page.goto('./?level=2&seed=11');
+  await page.goto('./?level=1&seed=11');
   await page.getByRole('button', { name: 'Help' }).click();
   await page.getByRole('button', { name: 'Show me step by step' }).click();
   await page.getByRole('button', { name: 'Next ›' }).click();

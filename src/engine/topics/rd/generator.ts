@@ -1,4 +1,4 @@
-// RD generators, levels 1–5 (requirements §6.2, R-RD-1…3). D→F questions are built from
+// RD generators, levels 1–4 (requirements §6.2, R-RD-1…3). D→F questions are built from
 // (whole, nonRep, block) and canonicalised by exact long division, so periodic blocks and
 // absorbable tails never appear (R-RD-2). F→D digits come from exact long division (R-RD-3).
 import { config } from '../../config';
@@ -10,24 +10,40 @@ import { content } from '../content';
 import { buildOptions, CORRECT, withRetries, type McQuestion } from '../mc';
 import { d2fModels, decimalFillers, f2dModels, fractionFillers } from './distractors';
 
-export const RD_GENERATOR_ID = 'rd.v1';
+/** v2: the four levels (2026-10-11). */
+export const RD_GENERATOR_ID = 'rd.v2';
 
-/** Question shapes: the level table rows of §6.2. Level 5 mixes all of them. */
-export type RdShape = 'pure1' | 'pure23' | 'whole' | 'delayed' | 'f2dA' | 'f2dB' | 'f2d7';
+/** Question shapes: the level table rows of §6.2 (1 Basic … 4 Challenge). No mixed levels. */
+export type RdShape = 'pure1' | 'pure23' | 'whole' | 'delayed' | 'delayedWhole' | 'f2dA' | 'f2dB' | 'f2d7';
 
 const SHAPES: Record<number, readonly RdShape[]> = {
-  1: ['pure1'],
-  2: ['pure23'],
-  3: ['whole', 'f2dA'],
-  4: ['delayed', 'f2dB'],
-  5: ['pure1', 'pure23', 'whole', 'delayed', 'f2dA', 'f2dB', 'f2d7'],
+  1: ['pure1', 'pure23'],
+  2: ['whole', 'f2dA'],
+  3: ['delayed', 'f2dB'],
+  4: ['delayedWhole', 'f2d7'],
 };
 
 const DENOMINATORS: Record<string, readonly number[]> = {
-  f2dA: config.rd.f2dDenominators[3]!,
-  f2dB: config.rd.f2dDenominators[4]!,
-  f2d7: config.rd.f2dDenominators[5]!,
+  f2dA: config.rd.f2dDenominators[2]!,
+  f2dB: config.rd.f2dDenominators[3]!,
+  f2d7: config.rd.f2dDenominators[4]!,
 };
+
+/** Normalise (R-RD-2), then keep only results whose digits before and in the block fit the ranges. */
+function keepShape(
+  raw: DecimalRep,
+  nonRep: { min: number; max: number },
+  block: { min: number; max: number },
+): DecimalRep | null {
+  const c = fromRational(toRational(raw));
+  const ok =
+    c.block !== '' &&
+    c.nonRep.length >= nonRep.min &&
+    c.nonRep.length <= nonRep.max &&
+    c.block.length >= block.min &&
+    c.block.length <= block.max;
+  return ok ? c : null;
+}
 
 const digits = (rng: Rng, k: number): string => Array.from({ length: k }, () => rng.int(0, 9)).join('');
 
@@ -49,22 +65,30 @@ function d2fRep(rng: Rng, shape: RdShape): DecimalRep | null {
         block: digits(rng, rng.int(1, 3)),
       };
       break;
-    case 'delayed': {
-      raw = {
-        negative: false,
-        whole: BigInt(rng.int(0, config.rd.wholeMax)),
-        nonRep: digits(rng, rng.int(1, 2)),
-        block: digits(rng, rng.int(1, 2)),
-      };
-      // Normalise (R-RD-2), then keep only results that still have the delayed shape.
-      const c = fromRational(toRational(raw));
-      const ok =
-        c.block !== '' &&
-        c.nonRep.length >= 1 &&
-        c.nonRep.length <= 2 &&
-        c.block.length >= 1 &&
-        c.block.length <= 2;
-      return ok ? c : null;
+    case 'delayed':
+      return keepShape(
+        {
+          negative: false,
+          whole: BigInt(rng.int(0, config.rd.wholeMax)),
+          nonRep: digits(rng, rng.int(1, 2)),
+          block: digits(rng, rng.int(1, 2)),
+        },
+        { min: 1, max: 2 },
+        { min: 1, max: 2 },
+      );
+    case 'delayedWhole': {
+      // Challenge: a whole part, digits before the repeat, and a longer block (e.g. 3.12454545…).
+      const { challengeNonRep: m, challengeBlock: k } = config.rd;
+      return keepShape(
+        {
+          negative: false,
+          whole: BigInt(rng.int(1, config.rd.wholeMax)),
+          nonRep: digits(rng, rng.int(m.min, m.max)),
+          block: digits(rng, rng.int(k.min, k.max)),
+        },
+        m,
+        k,
+      );
     }
     default:
       return null;

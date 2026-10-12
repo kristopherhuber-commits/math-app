@@ -1,8 +1,8 @@
-// R-DATA-1: schema upgrades v1 → v2 → v3 (fake IndexedDB).
+// R-DATA-1: schema upgrades v1 → v2 → v3 → v4 → v5 (fake IndexedDB).
 import 'fake-indexeddb/auto';
 import Dexie from 'dexie';
 import { describe, expect, it } from 'vitest';
-import { MathDb, SCHEMA_VERSION, upgradeAssignmentToV2, type Assignment } from '../../src/data/db';
+import { levelToV5, MathDb, SCHEMA_VERSION, upgradeAssignmentToV2, type Assignment } from '../../src/data/db';
 
 const v1Stores = {
   profiles: 'id',
@@ -27,8 +27,8 @@ describe('schema upgrades (R-DATA-1)', () => {
   it('a new database starts at the current version', async () => {
     const db = new MathDb('fresh-db');
     await db.open();
-    expect(SCHEMA_VERSION).toBe(4);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 4 });
+    expect(SCHEMA_VERSION).toBe(5);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 5 });
     expect(await db.errors.count()).toBe(0);
     db.close();
   });
@@ -45,8 +45,8 @@ describe('schema upgrades (R-DATA-1)', () => {
 
     const db = new MathDb(name);
     await db.open();
-    expect(db.verno).toBe(4);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 4 });
+    expect(db.verno).toBe(5);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 5 });
     const [a1, a2] = [await db.assignments.get('a1'), await db.assignments.get('a2')];
     expect(a1?.activatedAt).toBe('2026-09-20T10:00:00.000Z');
     expect(a2?.activatedAt).toBeUndefined();
@@ -70,11 +70,74 @@ describe('schema upgrades (R-DATA-1)', () => {
 
     const db = new MathDb(name);
     await db.open();
-    expect(db.verno).toBe(4);
-    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 4 });
+    expect(db.verno).toBe(5);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 5 });
     expect(await db.assignments.get('a1')).toEqual(a);
     expect(await db.settings.get('default')).toMatchObject({ pinHash: 'h', freePractice: 'never' });
     expect(await db.errors.count()).toBe(0);
+    db.close();
+  });
+
+  it('levelToV5: old 1–2 → 1, 3 → 2, 4 → 3, 5 and 6 → 4', () => {
+    expect([1, 2, 3, 4, 5, 6].map(levelToV5)).toEqual([1, 1, 2, 3, 4, 4]);
+  });
+
+  it('upgrades a v4 database to v5: levels, ranges, locks and attempts renumbered; window reset', async () => {
+    const name = 'v4-db';
+    const old = new Dexie(name);
+    const v4Stores = { ...v1Stores, errors: '++id, at', redemptions: 'id, status, requestedAt' };
+    old.version(4).stores(v4Stores);
+    await old.open();
+    await old.table('meta').put({ key: 'schemaVersion', value: 4 });
+    await old.table('topicStates').bulkPut([
+      {
+        profileId: 'default',
+        topic: 'EQ',
+        level: 6,
+        window: [{ attemptId: 'x', clean: true, needsDemote: false }],
+        freeBest: 6,
+      },
+      { profileId: 'default', topic: 'NC', level: 3, window: [] },
+    ]);
+    await old.table('settings').put({
+      profileId: 'default',
+      pinHash: 'h',
+      levelBounds: { EQ: { min: 3, max: 6 }, NC: { min: 1, max: 5 }, RD: { min: 2, max: 4 } },
+    });
+    await old.table('assignments').put({
+      ...assignment('a1', 'active', 0),
+      items: [
+        { topic: 'EQ', count: 2, levelLock: 5 },
+        { topic: 'NC', count: 2, levelLock: 2 },
+        { topic: 'PC', count: 2 },
+      ],
+    });
+    await old.table('attempts').bulkPut([
+      { id: 't1', profileId: 'default', topic: 'EQ', level: 6, tries: [], maxHint: 0, stars: 8 },
+      { id: 't2', profileId: 'default', topic: 'RD', level: 3, tries: [], maxHint: 1, stars: 4 },
+    ]);
+    old.close();
+
+    const db = new MathDb(name);
+    await db.open();
+    expect(db.verno).toBe(5);
+    expect(await db.meta.get('schemaVersion')).toEqual({ key: 'schemaVersion', value: 5 });
+    const eq = await db.topicStates.get(['default', 'EQ'] as unknown as string);
+    expect(eq).toEqual({ profileId: 'default', topic: 'EQ', level: 4, window: [] });
+    expect(await db.topicStates.get(['default', 'NC'] as unknown as string)).toMatchObject({ level: 2 });
+    expect((await db.settings.get('default'))?.levelBounds).toEqual({
+      EQ: { min: 2, max: 4 },
+      NC: { min: 1, max: 4 },
+      RD: { min: 1, max: 3 },
+    });
+    expect((await db.assignments.get('a1'))?.items).toEqual([
+      { topic: 'EQ', count: 2, levelLock: 4 },
+      { topic: 'NC', count: 2, levelLock: 1 },
+      { topic: 'PC', count: 2 },
+    ]);
+    // Old attempts keep their stars; only the level is renumbered.
+    expect(await db.attempts.get('t1')).toMatchObject({ level: 4, stars: 8 });
+    expect(await db.attempts.get('t2')).toMatchObject({ level: 2, stars: 4 });
     db.close();
   });
 

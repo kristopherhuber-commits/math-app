@@ -143,6 +143,43 @@ describe('export and import (R-PAR-6, R-DATA-1)', () => {
     expect(r.data.errors).toEqual([]);
   });
 
+  it('a v4 file is renumbered to the four levels, as the database upgrade does', () => {
+    const r = parseImport(
+      JSON.stringify({
+        app: 'turtle-penguin-math',
+        schemaVersion: 4,
+        settings: [{ profileId: 'default', pinHash: 'h', levelBounds: { EQ: { min: 3, max: 6 } } }],
+        topicStates: [
+          {
+            profileId: 'default',
+            topic: 'EQ',
+            level: 5,
+            window: [{ attemptId: 'x', clean: true, needsDemote: false }],
+            freeBest: 6,
+          },
+        ],
+        assignments: [
+          {
+            id: 'a',
+            profileId: 'default',
+            items: [{ topic: 'RD', count: 3, levelLock: 4 }],
+            status: 'active',
+            createdAt: 'x',
+            position: 0,
+            seed: 7,
+          },
+        ],
+        attempts: [{ id: 't', topic: 'FDP', level: 2, seed: 1, tries: [], stars: 2 }],
+      }),
+    );
+    if (!r.ok) throw new Error('unreadable');
+    expect(r.fromVersion).toBe(4);
+    expect(r.data.settings[0]!.levelBounds).toEqual({ EQ: { min: 2, max: 4 } });
+    expect(r.data.topicStates).toEqual([{ profileId: 'default', topic: 'EQ', level: 4, window: [] }]);
+    expect(r.data.assignments[0]!.items).toEqual([{ topic: 'RD', count: 3, levelLock: 3 }]);
+    expect(r.data.attempts[0]).toMatchObject({ level: 1, stars: 2 });
+  });
+
   it('a newer file is refused with its version', () => {
     expect(
       parseImport(JSON.stringify({ app: 'turtle-penguin-math', schemaVersion: SCHEMA_VERSION + 1 })),

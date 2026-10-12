@@ -516,6 +516,36 @@
   }
 }
 
+/* "How stars work" pop-up, left of the streak (R-RWD-1). */
+.stars-info {
+  position: relative;
+  display: inline-flex;
+}
+.stars-info-btn {
+  min-width: 0;
+  min-height: 48px;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.stars-info-btn:hover {
+  border-color: var(--primary);
+}
+.stars-info-pop {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 10;
+  width: min(340px, calc(100vw - 2 * var(--space-4)));
+  box-shadow: var(--shadow-lift);
+}
+.stars-info-pop ul {
+  margin: var(--space-3) 0;
+  padding-left: var(--space-5);
+  display: grid;
+  gap: var(--space-2);
+}
+
 /* Free-practice level picker (parent decision, 2026-09-25): Adaptive first, then the levels. */
 .level-picker {
   margin-top: var(--space-5);
@@ -768,4 +798,243 @@
   margin: 0;
   color: var(--ink-muted);
   font-weight: 700;
+}
+
+/* ---------- Shelly and Pip at play (Home beach and Dress up): idle breathing and blinking, a
+   reaction per tap, hearts and stars, and an accessory that drops into place. Subtle by design;
+   all of it stops with reduced motion (R-NF-3; the parent's setting ends it via tokens.css). ---------- */
+.mascot-play {
+  position: absolute;
+  min-width: var(--target-min);
+  min-height: var(--target-min);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.dress-stage .mascot-play {
+  position: relative;
+}
+.mascot-body {
+  display: inline-block;
+  transform-origin: 50% 100%;
+}
+.mascot-body svg {
+  display: block;
+  overflow: visible;
+}
+/* Idle: a slow breath (the two out of step), a blink now and then, a look around. */
+.mascot-penguin .mascot-body {
+  animation: mascot-breathe 3.2s ease-in-out infinite;
+}
+.mascot-turtle .mascot-body {
+  animation: mascot-breathe 4.4s ease-in-out 0.8s infinite;
+}
+.mascot-play .mascot-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: mascot-blink 5.3s infinite;
+}
+.mascot-turtle .mascot-eyes {
+  animation-duration: 6.7s;
+  animation-delay: 1.9s;
+}
+.mascot-penguin .penguin-head {
+  transform-box: fill-box;
+  transform-origin: 50% 85%;
+  animation: penguin-tilt 11s ease-in-out 3s infinite;
+}
+.mascot-turtle .turtle-head {
+  animation: turtle-look 9s ease-in-out 2s infinite;
+}
+.mascot-play:hover .mascot-body {
+  animation-duration: 1.6s;
+}
+@keyframes mascot-breathe {
+  50% {
+    transform: scale(1.015, 1.035);
+  }
+}
+@keyframes mascot-blink {
+  0%,
+  93%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes penguin-tilt {
+  0%,
+  78%,
+  100% {
+    transform: rotate(0);
+  }
+  83%,
+  91% {
+    transform: rotate(-9deg);
+  }
+}
+@keyframes turtle-look {
+  0%,
+  70%,
+  100% {
+    transform: translateX(0);
+  }
+  76%,
+  88% {
+    transform: translateX(-3px);
+  }
+}
+
+/* A reaction per tap; the body is re-keyed, so each one plays from the start. */
+.mascot-play[data-react='hop'] .mascot-body {
+  animation: mascot-hop 720ms var(--ease-pop);
+}
+.mascot-play[data-react='twirl'] .mascot-body {
+  transform-origin: 50% 60%;
+  animation: mascot-twirl 760ms var(--ease-standard);
+}
+.mascot-play[data-react='bounce'] .mascot-body {
+  animation: mascot-bounce 800ms var(--ease-standard);
+}
+.mascot-play[data-react='bob'] .mascot-body {
+  animation: mascot-bob 900ms var(--ease-standard);
+}
+.mascot-play[data-react='wiggle'] .mascot-body {
+  animation: mascot-wiggle 640ms var(--ease-standard);
+}
+.mascot-play[data-react='peek'] .turtle-head {
+  animation: turtle-peek 1100ms var(--ease-standard);
+}
+@keyframes mascot-hop {
+  0% {
+    transform: scale(1.06, 0.92);
+  }
+  40% {
+    transform: translateY(-22px) scale(0.96, 1.05);
+  }
+  75% {
+    transform: translateY(0) scale(1.05, 0.95);
+  }
+}
+@keyframes mascot-twirl {
+  50% {
+    transform: scaleX(-1) translateY(-6px);
+  }
+}
+@keyframes mascot-bounce {
+  25%,
+  65% {
+    transform: translateY(-8px);
+  }
+  45%,
+  85% {
+    transform: translateY(0) scale(1.03, 0.97);
+  }
+}
+@keyframes mascot-bob {
+  30% {
+    transform: translateY(-6px) rotate(-3deg);
+  }
+  65% {
+    transform: translateY(-2px) rotate(2deg);
+  }
+}
+@keyframes mascot-wiggle {
+  20% {
+    transform: rotate(-5deg);
+  }
+  45% {
+    transform: rotate(4deg);
+  }
+  70% {
+    transform: rotate(-2deg);
+  }
+}
+/* Shelly ducks into her shell and peeks out again. */
+@keyframes turtle-peek {
+  25%,
+  55% {
+    transform: translateX(22px) scale(0.85);
+  }
+  70% {
+    transform: translateX(-4px);
+  }
+}
+
+/* Hearts and stars float up and fade. */
+.mascot-sparks {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  pointer-events: none;
+}
+.mascot-spark {
+  position: absolute;
+  left: -9px;
+  opacity: 0;
+  animation: spark-float 900ms var(--ease-standard) calc(var(--i) * 90ms) both;
+}
+.spark-heart path {
+  fill: var(--coral);
+}
+.spark-star path {
+  fill: var(--star);
+}
+@keyframes spark-float {
+  15% {
+    opacity: 1;
+    transform: translate(calc(var(--dx) * 0.3), -8px) scale(0.8);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--dx), -54px) scale(1.1);
+  }
+}
+
+/* An accessory just put on drops into place with a little settle. */
+.mascot-play .accessory-new {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: accessory-drop 560ms var(--ease-pop) 120ms both;
+}
+@keyframes accessory-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.08);
+  }
+}
+
+/* Dress up shows both mascots above the buttons, to try things on. */
+.dress-stage {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--space-6);
+  min-height: 112px;
+  margin-bottom: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  border-radius: var(--radius-md);
+  background: linear-gradient(to bottom, var(--primary-soft) 70%, var(--turtle-belly) 70%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-play .mascot-body,
+  .mascot-play .mascot-eyes,
+  .mascot-play .penguin-head,
+  .mascot-play .turtle-head,
+  .mascot-play .accessory-new {
+    animation: none;
+  }
+  .mascot-sparks {
+    display: none;
+  }
 }

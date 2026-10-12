@@ -3,6 +3,7 @@
 // v2 (M4): Attempt.wrongTries / itemIndex / countedAt, Assignment.activatedAt / seed.
 // v3 (M5): the `errors` store (R-NF-5) and Attempt.fixed.
 // v4 (M6): Rewards.spent, Settings.shopItems and the `redemptions` store (the rewards shop).
+// v5 (2026-10-11): four levels per topic; stored levels, level ranges, level locks and attempts renumbered.
 import Dexie, { type EntityTable } from 'dexie';
 import type { TopicId } from '../engine/config';
 import type { AttemptSummary } from '../engine/adaptive';
@@ -13,7 +14,7 @@ import { unlockedAt } from '../engine/rewards';
 
 export type { TopicId, AttemptSummary, AssignmentItem };
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 /** The single learner profile in v1 (requirements §9.1). */
 export const PROFILE_ID = 'default';
@@ -63,7 +64,7 @@ export interface TopicState {
   level: number;
   /** R-ADP-2…4: the last attempts at `level`, oldest first. */
   window: AttemptSummary[];
-  /** M7: the highest level adaptive free practice has promoted the learner to (R-RWD-1 current level). */
+  /** M7 to v4 only: the highest level adaptive free practice reached. Removed in v5 (no below-level rule). */
   freeBest?: number;
 }
 
@@ -108,7 +109,7 @@ export interface Attempt {
   finishedAt?: string;
   tries: TryRecord[];
   maxHint: 0 | 1 | 2 | 3;
-  /** R-RWD-1: 1–3 before M7; 0–8 since (by level, tries and hints). */
+  /** R-RWD-1: 1–3 before M7; 0–8 since (by level, tries and hints; 2 × level since v5). */
   stars?: number;
   clean: boolean;
   /** v2: wrong tries (EQ: two rejections on a step = one), for stars and R-ADP-3. */
@@ -201,6 +202,40 @@ export function upgradeRewardsToV4(r: Rewards): Rewards {
   };
 }
 
+/**
+ * v4 → v5 (parent decision 2026-10-11): five levels (six in Equations) became four. Old levels 1–2
+ * are the new level 1; 3 → 2, 4 → 3, and 5 (and Equations 6) → 4.
+ */
+export const levelToV5 = (level: number): number => (level <= 2 ? 1 : Math.min(level - 1, 4));
+
+export function upgradeTopicStateToV5(ts: TopicState): TopicState {
+  // The adaptive window was counted at the old level; it starts again. freeBest is no longer read.
+  const rest = { ...ts };
+  delete rest.freeBest;
+  return { ...rest, level: levelToV5(ts.level), window: [] };
+}
+
+export function upgradeSettingsToV5(s: Settings): Settings {
+  // An older row may have no level ranges (the defaults are filled in on load).
+  if (!s.levelBounds) return s;
+  const levelBounds = Object.fromEntries(
+    Object.entries(s.levelBounds).map(([t, b]) => [t, { min: levelToV5(b.min), max: levelToV5(b.max) }]),
+  ) as Settings['levelBounds'];
+  return { ...s, levelBounds };
+}
+
+export function upgradeAssignmentToV5(a: Assignment): Assignment {
+  return {
+    ...a,
+    items: a.items.map((it) =>
+      it.levelLock === undefined ? it : { ...it, levelLock: levelToV5(it.levelLock) },
+    ),
+  };
+}
+
+/** Old attempts keep their stars; their level is renumbered so the dashboard groups them. */
+export const upgradeAttemptToV5 = (a: Attempt): Attempt => ({ ...a, level: levelToV5(a.level) });
+
 export class MathDb extends Dexie {
   profiles!: EntityTable<Profile, 'id'>;
   settings!: EntityTable<Settings, 'profileId'>;
@@ -251,6 +286,25 @@ export class MathDb extends Dexie {
             if (!s.shopItems) s.shopItems = defaultShopItems();
           });
         await tx.table('meta').put({ key: 'schemaVersion', value: 4 });
+      });
+    this.version(5)
+      .stores(STORES_V4)
+      .upgrade(async (tx) => {
+        const each = <T extends object>(name: string, up: (row: T) => T) =>
+          tx
+            .table<T>(name)
+            .toCollection()
+            .modify((row) => {
+              Object.assign(row, up(row));
+            });
+        await each<TopicState>('topicStates', (ts) => {
+          delete ts.freeBest;
+          return upgradeTopicStateToV5(ts);
+        });
+        await each<Settings>('settings', upgradeSettingsToV5);
+        await each<Assignment>('assignments', upgradeAssignmentToV5);
+        await each<Attempt>('attempts', upgradeAttemptToV5);
+        await tx.table('meta').put({ key: 'schemaVersion', value: 5 });
       });
     this.on('populate', (tx) => {
       void tx.table('meta').put({ key: 'schemaVersion', value: SCHEMA_VERSION });

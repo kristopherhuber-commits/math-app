@@ -27,8 +27,8 @@ describe('settings (R-PAR-5)', () => {
     expect(s).toEqual(defaultSettings());
     expect(s.freePractice).toBe('always');
     expect(s.order).toBe('grouped');
-    expect(s.levelBounds.EQ).toEqual({ min: 1, max: 6 });
-    expect(s.levelBounds.NC).toEqual({ min: 1, max: 5 });
+    expect(s.levelBounds.EQ).toEqual({ min: 1, max: 4 });
+    expect(s.levelBounds.NC).toEqual({ min: 1, max: 4 });
     expect(s.allowSkipping).toBe(false);
     expect(s.sound).toBe(false);
     expect(s.mascotNames).toEqual({ turtle: 'Shelly', penguin: 'Pip' });
@@ -41,7 +41,7 @@ describe('settings (R-PAR-5)', () => {
     const s = await loadSettings();
     expect(s.freePractice).toBe('never');
     expect(s.levelBounds.PC).toEqual({ min: 2, max: 4 });
-    expect(s.levelBounds.EQ).toEqual({ min: 1, max: 6 });
+    expect(s.levelBounds.EQ).toEqual({ min: 1, max: 4 });
     expect((await practiceSettings()).freePractice).toBe('never');
     expect(await fullBalanceAnimSetting()).toBe(true);
   });
@@ -50,11 +50,11 @@ describe('settings (R-PAR-5)', () => {
     await db.settings.put({
       profileId: 'default',
       pinHash: '',
-      levelBounds: { EQ: { min: 3, max: 6 } },
+      levelBounds: { EQ: { min: 2, max: 3 } },
     } as never);
     const s = await loadSettings();
-    expect(s.levelBounds.EQ).toEqual({ min: 3, max: 6 });
-    expect(s.levelBounds.RD).toEqual({ min: 1, max: 5 });
+    expect(s.levelBounds.EQ).toEqual({ min: 2, max: 3 });
+    expect(s.levelBounds.RD).toEqual({ min: 1, max: 4 });
     expect(s.currency).toBe('$');
     expect(s.mascotNames.penguin).toBe('Pip');
   });

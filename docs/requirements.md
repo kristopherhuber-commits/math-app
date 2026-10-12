@@ -87,12 +87,12 @@ tests/ ...
 - **R-SES-4** The parent chooses the question order per assignment: **grouped** (all EQ, then all PC) or **mixed** (interleaved) *(default: grouped; the default is a setting)*. The order is fixed once the assignment has started.
 - **R-SES-5** The learner can leave mid-assignment and resume later with nothing lost. Progress is saved after every answer.
 - **R-SES-6** **Free practice**: the learner can practice any topic. A parent setting controls when: `always | after assignment | never` *(default: **always**, parent decision M5)*.
-- **R-SES-8** *(added 2026-09-25)* Choosing a topic for free practice asks **how hard**: **Adaptive** (first) or a fixed **Level 1…N** (number topics 1–5, Equations 1–6), limited to the parent's level range (R-ADP-5). A picked level stays fixed for that session. Adaptive follows R-ADP-7.
+- **R-SES-8** *(added 2026-09-25)* Choosing a topic for free practice asks **how hard**: **Adaptive** (first) or a fixed **Level 1…4** (1 Basic, 2 General, 3 Advanced, 4 Challenge; every topic), limited to the parent's level range (R-ADP-5). A picked level stays fixed for that session. Adaptive follows R-ADP-7.
 - **R-SES-7** A finished assignment gets a summary screen: stars earned and a penguin celebration. No percentages.
 
 ### 4.1 Adaptive levels (per topic)
 
-Each topic has levels 1…N (defined per topic in §6–7). A learner has one current level per topic, used by **assignments**. R-ADP-1…6 apply to assignments; free practice has its own rule (R-ADP-7) and does not move the stored level. *(Start levels: Equations 3, the other topics 1.)*
+Each topic has four levels *(parent decision 2026-10-11)*: **1 Basic** (the concept on its own), **2 General** (one or two things to do), **3 Advanced** (two or three things, maybe a trick or an observation) and **4 Challenge** (three or more steps, slightly harder numbers, fractions or a trick). Each level is harder than the one before, with no mixed-review levels (§6–7). A learner has one current level per topic, used by **assignments**. R-ADP-1…6 apply to assignments; free practice has its own rule (R-ADP-7) and does not move the stored level. *(Start levels: Equations 2, the other topics 1.)*
 
 - **R-ADP-1** Define a **clean solve** as correct on the first try, with no hint tier above H1.
 - **R-ADP-2** **Promote** by one level when at least 4 of the learner's last 5 attempts at the current level are clean solves *(default: window 5, threshold 4)*, and there are at least 5 attempts at that level.
@@ -100,7 +100,7 @@ Each topic has levels 1…N (defined per topic in §6–7). A learner has one cu
 - **R-ADP-4** The attempt window resets on any level change.
 - **R-ADP-5** The parent can set a per-topic **min/max level**. Adaptation stays within those bounds.
 - **R-ADP-6** A level change MUST be shown gently. Promotion: the penguin says "Level up!" Demotion is **silent**; the questions just get easier. There are no "level down" messages.
-- **R-ADP-7** *(added 2026-09-25)* **Adaptive free practice** starts at **level 3** every time (within the parent's range), goes **up one level after 3 right in a row**, and **down one level when 2 of the last 3 questions had a mistake or needed help**. "Right" means correct on the first try with no hint at all. Any change starts a new window of 3. After a walkthrough the next question stays at the same level (R-HELP-6); the change applies after that.
+- **R-ADP-7** *(added 2026-09-25)* **Adaptive free practice** starts at **level 2** every time (within the parent's range), goes **up one level after 3 right in a row**, and **down one level when 2 of the last 3 questions had a mistake or needed help**. "Right" means correct on the first try with no hint at all. Any change starts a new window of 3. After a walkthrough the next question stays at the same level (R-HELP-6); the change applies after that.
 
 ---
 
@@ -112,20 +112,20 @@ Each topic has levels 1…N (defined per topic in §6–7). A learner has one cu
 - **R-ANS-2** Distractors MUST be generated from explicit **misconception models** (listed per topic). Random-number fillers are allowed only when the misconception models produce fewer than 4 distinct candidates.
 - **R-ANS-3** **No distractor may be numerically equal to the correct answer.** For example, 420/99 must never be offered as wrong when 140/33 is right. All 5 options MUST be distinct in value and in displayed text.
 - **R-ANS-4** Option order is shuffled with the question's seeded PRNG.
-- **R-ANS-5** EQ uses the **tile builder** (levels 1–2) or the **typed-step keypad** (levels 3+), as described in §7.
+- **R-ANS-5** EQ uses the **tile builder** (level 1) or the **typed-step keypad** (levels 2–4), as described in §7.
 
 ### 5.2 Wrong answers and help
 
 - **R-HELP-1** **Wrong answer, first time:** a gentle "Not quite, try again", with a short shake animation on the chosen option, and that option greyed out. The learner tries again.
 - **R-HELP-1a** Each distractor carries its misconception code (e.g. `PC-M4`). The first-wrong feedback MAY add one short line specific to that code ("That's the same as the start price."). The line MUST NOT reveal the correct answer. The copy lives in `strings.ts`; examples are in design.md §9.
-- **R-HELP-2** **Wrong answer, second time:** the turtle appears and offers help, opening the hint ladder at the next tier they haven't seen. They can decline and keep trying. Each later wrong try advances one hint tier.
+- **R-HELP-2** *(changed 2026-10-11)* **Wrong answer, second time:** the **Help** button pulses to offer help. A hint opens only when the learner asks for it, because hints cost stars (R-RWD-1). They can keep trying. After H2, a wrong try also highlights "Show me step by step".
 - **R-HELP-3** A **Help** button is always visible. The learner can open the hint ladder at any time, before any attempt.
 - **R-HELP-4** **Hint ladder**, identical in structure for every topic:
   - **H1 Nudge**: points the learner at the relevant idea without doing any computation. ("Which terms have the letter *a* in them?")
   - **H2 Next move**: states the specific next step for *this* problem without its result. ("Move the *a* from the right side to the left side. What happens to its sign?")
   - **H3 Walkthrough**: a step-by-step worked solution of *this* problem, which the learner advances by tapping **Next**. Some steps ask a small inline question (e.g. "What is 100 × 4.2424…?", with 3 options) before revealing the result.
 - **R-HELP-5** Hints MUST be generated from the actual problem data (the real numbers, variable letter and terms), not from generic text.
-- **R-HELP-6** After a walkthrough, the question counts as done (0 stars, §8), and the next question is from the same topic and level.
+- **R-HELP-6** After a walkthrough, the question counts as done (0 stars, §8), and the next question is from the same topic and level. The walkthrough also starts by itself when the stars left for the question reach 0 (R-RWD-1).
 - **R-HELP-7** The turtle presents all help. The penguin presents all celebration. Neither ever mocks or shows disappointment.
 
 ### 5.3 Display conventions
@@ -134,7 +134,7 @@ Each topic has levels 1…N (defined per topic in §6–7). A learner has one cu
 - **R-DISP-2** Fractions display stacked. Mixed numbers display as whole + stacked fraction (2¼).
 - **R-DISP-3** **Repeating decimals**:
   - Levels where the ellipsis is used: show the repeating block **at least 3 full times**, then "…", e.g. `4.242424…` or `0.546546546…`.
-  - From the level where bar notation is introduced, show **both**: `4.2424… = 4.\overline{24}`. At higher levels, bar notation alone MAY be used. Bar notation is introduced at RD level 3 and FDP level 4.
+  - From the level where bar notation is introduced, show **both**: `4.2424… = 4.\overline{24}`. At higher levels, bar notation alone MAY be used. Bar notation is introduced at RD level 2 and FDP level 3.
   - Mathematically, an ellipsis alone is ambiguous, because a finite prefix doesn't determine a decimal. Every ellipsis-only display MUST be accompanied by the caption "the block *24* repeats forever" the first time it appears in a question.
 - **R-DISP-4** Irrational patterned decimals (NC) MUST carry a caption that states the rule, e.g. "0.1010010001… (one more 0 each time, forever)".
 - **R-DISP-5** Money is displayed as `$` with exactly 2 decimals: `$48.00`, `$60.50`.
@@ -163,11 +163,10 @@ Examples: 7 → Natural; 0 → Whole; −3 → Integer; 3/4 → Rational; 0.1010
 
 | Level | Numbers shown | Examples |
 |---|---|---|
-| 1 | Positive integers, 0, simple positive fractions, terminating decimals | 7, 0, 3/4, 0.25 |
-| 2 | Negative integers, negative fractions and decimals, repeating decimals | −12, −5/8, −0.4, 0.333… |
-| 3 | **Disguised** forms: fractions and decimals that are integers | 12/4, 6/3, −8/−2 (display as \(\frac{-8}{-2}\)), 3.0, −0/5, 15/5 |
-| 4 | **Irrational** patterned decimals, mixed with all of the above | 0.1010010001…, 0.123456789101112…, 2.020020002… |
-| 5 (challenge) | Mixed, including 0.999… (= 1, so natural, whole, integer, rational) | 0.999…, 4.24242…, −3.000 |
+| 1 Basic | Positive integers, 0, simple positive fractions, terminating decimals | 7, 0, 3/4, 0.25 |
+| 2 General | Negative integers, negative fractions and decimals, repeating decimals | −12, −5/8, −0.4, 0.333… |
+| 3 Advanced | **Disguised** forms: fractions and decimals that are integers | 12/4, 6/3, −8/−2 (display as \(\frac{-8}{-2}\)), 3.0, −0/5, 15/5 |
+| 4 Challenge | **Irrational** patterned decimals (half), or numbers that look irrational but aren't: 0.999… (= 1, so natural, whole, integer, rational) and long repeating decimals with a whole part | 0.1010010001…, 0.123456789101112…, 0.999…, 4.142857142857… |
 
 - **R-NC-1** The checker computes the correct set membership from the number's exact value (a `Rational`, or a tagged `IrrationalPattern`). Disguised forms are reduced first.
 - **R-NC-2** *(changed 2026-09-27)* The correct answer is the **smallest** set the number belongs to (its innermost box on the sets map). Every other card is not quite, including larger sets that also contain the number.
@@ -191,11 +190,10 @@ Two question directions:
 
 | Level | Direction | Cases | Examples (answer) |
 |---|---|---|---|
-| 1 | D→F | Pure repeat, block length 1, no whole part | 0.333… (1/3), 0.777… (7/9), 0.666… (2/3) |
-| 2 | D→F | Pure repeat, block length 2–3, no whole part | 0.4545… (5/11), 0.546546… (182/333), 0.2727… (3/11) |
-| 3 | D→F + F→D | Pure repeat **with whole part**; bar notation introduced; F→D with denominators 3, 9, 11 | 4.2424… (140/33); 2/11 → 0.1818… |
-| 4 | D→F + F→D | **Delayed repeat** (non-repeating part length 1–2, block length 1–2); F→D with denominators 6, 12, 15, 22 | 0.1666… (1/6), 0.8333… (5/6), 0.41666… (5/12), 2.31818… (51/22) |
-| 5 | Mixed | All of the above, including F→D for 7 (block length 6) | 1/7 → 0.142857142857… |
+| 1 Basic | D→F | Pure repeat, block length 1–3, no whole part | 0.333… (1/3), 0.4545… (5/11), 0.546546… (182/333) |
+| 2 General | D→F + F→D | Pure repeat **with whole part**; bar notation introduced; F→D with denominators 3, 9, 11 | 4.2424… (140/33); 2/11 → 0.1818… |
+| 3 Advanced | D→F + F→D | **Delayed repeat** (non-repeating part length 1–2, block length 1–2); F→D with denominators 6, 12, 15, 22 | 0.1666… (1/6), 0.8333… (5/6), 0.41666… (5/12), 2.31818… (51/22) |
+| 4 Challenge | D→F + F→D | Delayed repeat **with whole part** 1–9 (non-repeating part 1–2, block 2–3); F→D for 7 and 14 (block length 6; 14ths are delayed) | 3.12454545… (3437/1100); 1/7 → 0.142857142857…; 1/14 → 0.0714285714285… |
 
 - **R-RD-1** The correct D→F answer is the fraction **in lowest terms**, improper if the value > 1 (140/33, not 4 8/33). The walkthrough always shows the unsimplified fraction first, then the simplification step.
 - **R-RD-2** The generator MUST build the question from `(wholePart, nonRepeatingDigits, repeatingBlock)` and compute the exact value as
@@ -242,15 +240,14 @@ Six directions: F→D, F→P, D→F, D→P, P→F, P→D. The prompt names the t
 
 | Level | Values | Examples |
 |---|---|---|
-| 1 | Benchmarks: halves, quarters, fifths, tenths | 1/2 = 0.5 = 50%, 3/4, 2/5, 7/10 |
-| 2 | Denominators 8, 20, 25, 50, 100; decimals to 3 places | 3/8 = 0.375 = 37.5%, 7/20 = 0.35 |
-| 3 | **Mixed numbers and > 100%; < 1%** | 2¼ = 2.25 = 225%; 0.4% = 0.004 = 1/250 |
-| 4 | **Repeating results**; bar notation introduced | 1/3 = 0.333… = 33.3…%; 5/6 = 0.8333… = 83.3…%; 1/9, 2/11, 5/12 |
-| 5 | Mixed review of 1–4 | |
+| 1 Basic | Benchmarks (halves, quarters, fifths, tenths), or denominators 8, 20, 25, 50, 100 with decimals to 3 places, half each | 1/2 = 0.5 = 50%, 3/8 = 0.375 = 37.5%, 7/20 = 0.35 |
+| 2 General | **Mixed numbers and > 100%; < 1%** | 2¼ = 2.25 = 225%; 0.4% = 0.004 = 1/250 |
+| 3 Advanced | **Repeating results**; bar notation introduced | 1/3 = 0.333… = 33.3…%; 5/6 = 0.8333… = 83.3…%; 1/9, 2/11, 5/12 |
+| 4 Challenge | **Repeating results above 1**: whole part 1–5 plus a fraction over 3, 6, 9, 11 or 12 | 2⅙ = 2.1666… = 216.666…% |
 
 - **R-FDP-1** Fraction answers MUST be in **lowest terms**.
 - **R-FDP-2** When the value is > 1, the prompt specifies the target form: "as a mixed number" or "as an improper fraction". Both appear, split 50/50. The options use only the requested form.
-- **R-FDP-3** Repeating percents display like decimals, with the block shown three times per R-DISP-3: `33.333…%`, and from level 4 also `33.\overline{3}%`. Mixed-number percents such as 33⅓% are **not** used in v1. *(Parent decision M3: R-DISP-3 wins over the shorter `33.3…%`.)*
+- **R-FDP-3** Repeating percents display like decimals, with the block shown three times per R-DISP-3: `33.333…%`, and from level 3 also `33.\overline{3}%`. Mixed-number percents such as 33⅓% are **not** used in v1. *(Parent decision M3: R-DISP-3 wins over the shorter `33.3…%`.)*
 - **R-FDP-4** Help teaches: F→D by division; D→P by multiplying by 100 (the decimal point moves 2 places right); P→D by dividing by 100; D→F by writing over a power of ten and simplifying with the gcd; P→F by writing over 100 and simplifying.
 
 **Distractors:**
@@ -268,17 +265,16 @@ Six directions: F→D, F→P, D→F, D→P, P→F, P→D. The prompt names the t
 
 | Level | Question type | Examples |
 |---|---|---|
-| 1 | Single change, "nice" percents (10, 20, 25, 50) and whole-dollar prices | $40 up 10% → $44.00; $80 down 25% → $60.00 |
-| 2 | Single change, any whole percent 1–90, prices with cents; results exact to the cent (generator guarantees no rounding) | $36.50 up 12% → $40.88 |
-| 3 | **Successive changes** (two steps) | $50 up 20% then down 20% → $48.00 |
-| 4 | **Reverse: find the original** | "After a 25% discount it costs $60. Original?" → $80.00; "After a 10% increase it costs $66. Original?" → $60.00 |
-| 5 | Mixed 1–4 | |
+| 1 Basic | Single change: "nice" percents (10, 20, 25, 50) and whole-dollar prices, or any whole percent 1–90 and prices with cents, half each; results exact to the cent (generator guarantees no rounding) | $40 up 10% → $44.00; $36.50 up 12% → $40.88 |
+| 2 General | **Successive changes** (two steps) | $50 up 20% then down 20% → $48.00 |
+| 3 Advanced | **Reverse: find the original** | "After a 25% discount it costs $60. Original?" → $80.00; "After a 10% increase it costs $66. Original?" → $60.00 |
+| 4 Challenge | **Reverse of two changes**: find the original after two successive changes; every price shown, and the one in between, is exact to the cent; never two changes that cancel exactly | "After a 20% increase and then a 10% discount it costs $54.00. Original?" → $50.00 |
 
 - **R-PC-1** Answers are exact to the cent. The generator MUST guarantee exact results (check with rational arithmetic). No rounding appears in v1.
 - **R-PC-2** Help teaches **two methods** and shows both in the walkthrough:
   - *Find the part*: 10% of $40 = $4, so $40 + $4 = $44.
   - *Multiplier*: up 10% → × 1.10, down 25% → × 0.75. For successive changes, multiply the multipliers: 1.20 × 0.80 = 0.96. For the reverse case, divide by the multiplier: $60 ÷ 0.75 = $80.
-- **R-PC-3** At level 3, the walkthrough MUST explicitly point out that "up 20% then down 20%" does **not** return to the original, and why: the second 20% is taken of a bigger number.
+- **R-PC-3** At level 2, the walkthrough MUST explicitly point out that "up 20% then down 20%" does **not** return to the original, and why: the second 20% is taken of a bigger number.
 - **R-PC-4** Currency symbol is `$` *(default; parent setting)*.
 
 **Distractors:**
@@ -308,7 +304,7 @@ The method follows the parent's description:
 
 Pedagogy for moving terms (**balance first, then the shortcut**):
 
-- **R-EQ-PED-1** At EQ levels 1–2, every move in the tile builder is animated on a **balance scale**: "subtract *a* from both sides". The result is then shown as the shortcut: "−*a* appears on the left, and the *a* on the right is gone."
+- **R-EQ-PED-1** At EQ level 1, every move in the tile builder is animated on a **balance scale**: "subtract *a* from both sides". The result is then shown as the shortcut: "−*a* appears on the left, and the *a* on the right is gone."
 - **R-EQ-PED-2** After the learner has done 10 correct sign choices in the tile builder *(default)*, the balance animation shortens to a quick flip of the tile's sign, with the caption "Moving a term across = flips its sign (that's the balance, done in one step)." The parent can re-enable the full animation.
 - **R-EQ-PED-3** H1/H2 hints for Separate always refer to both views: "Subtract *a* from both sides, which is the same as moving *a* across and flipping its sign."
 
@@ -316,25 +312,23 @@ Pedagogy for moving terms (**balance first, then the shortcut**):
 
 | Level | Input mode | Equation forms | Examples (solution) |
 |---|---|---|---|
-| 1 | Tiles | `ax + b = c`, a > 1, positive integers, positive integer solution | 3x + 4 = 19 (5) |
-| 2 | Tiles | Negatives; variable on both sides; integer solutions | 7 − 3z = 13 (−2); 3a + 3 = a + 23 (10) |
-| 3 | Typed | Variable on both sides with negatives; integer solutions | 5n − 7 = 2n + 8 (5); 4 − 2k = 3k − 11 (3) |
-| 4 | Typed | **Parentheses** (one side, then both) | 2(x + 4) = 18 (5); 3(y − 2) = y + 8 (7); 2(m − 3) = −(m + 12) (−2) |
-| 5 | Typed | **Fraction answers and fraction coefficients** | 3x + 1 = 8 (7/3); x/4 + 1 = 3 (8); 2p/3 − 1 = p/6 + 2 (6) |
-| 6 | Typed | Mixed review of 3–5, including negative fraction solutions | 4(w + 1) = 7w + 9 (−5/3) |
+| 1 Basic | Tiles | `ax + b = c` (a > 1, positive integers, positive integer solution), or negatives and the variable on both sides with integer solutions, half each | 3x + 4 = 19 (5); 7 − 3z = 13 (−2); 3a + 3 = a + 23 (10) |
+| 2 General | Typed | Variable on both sides with negatives; integer solutions | 5n − 7 = 2n + 8 (5); 4 − 2k = 3k − 11 (3) |
+| 3 Advanced | Typed | **Parentheses** (one side, then both) | 2(x + 4) = 18 (5); 3(y − 2) = y + 8 (7); 2(m − 3) = −(m + 12) (−2) |
+| 4 Challenge | Typed | **Fraction answers and fraction coefficients**; one in four is parentheses with a fraction answer, often negative | 3x + 1 = 8 (7/3); x/4 + 1 = 3 (8); 2p/3 − 1 = p/6 + 2 (6); 4(w + 1) = 7w + 9 (−5/3) |
 
 Generator invariants (**R-EQ-GEN**):
 - 1: The solution is unique. The collected variable coefficient α ≠ 0.
-- 2: All coefficients and constants shown have |value| ≤ 30 (levels 1–3) or ≤ 50 (levels 4–6). Solutions have |value| ≤ 20. Fraction solutions have denominator ≤ 9.
+- 2: All coefficients and constants shown have |value| ≤ 30 (levels 1–2) or ≤ 50 (levels 3–4). Solutions have |value| ≤ 20. Fraction solutions have denominator ≤ 9.
 - 3: No term has coefficient 0. Coefficient ±1 is displayed as `a` / `−a`, never `1a`.
-- 4: Levels 1–2 never contain parentheses. Levels 1–4 never contain fractions.
+- 4: Levels 1–2 never contain parentheses. Levels 1–3 never contain fractions.
 - 5: A side never has the same term twice as generated (no `3a + 2a` in the prompt).
 - 6: Separate must be a meaningful step. The generated equation MUST NOT already be in separated form (e.g. `5x = 20` is never generated).
 - 7: Constants must not cancel to make the knowns side trivially empty in a confusing way. If both sides' constants are equal, regenerate.
 
 ### 7.3 Input modes
 
-**Tile builder (levels 1–2): R-EQ-TILE**
+**Tile builder (level 1): R-EQ-TILE**
 - 1: The equation is shown as tiles on a two-pan board (left side | = | right side). Each term is one tile: `3a`, `+3`, `a`, `+23`.
 - 2: **Separate phase.** Two drop zones are labelled "unknowns" and "knowns". The learner chooses which side is which; the default proposal is unknowns on the left, and they may flip it. They drag each tile that is on the wrong side across the `=`. When a tile crosses, it lands showing **"?"** in place of its sign, and they must tap **+** or **−**. A correct choice locks the tile. A wrong choice triggers the turtle's balance-scale explanation (H2-level) and they choose again.
 - 3: Tiles already on the correct side stay put. When all tiles are placed, the equation they have built is shown in text form (`3a − a = 23 − 3`) and read back to them as the recorded Separate step.
@@ -342,7 +336,7 @@ Generator invariants (**R-EQ-GEN**):
 - 5: **Solve phase.** The prompt is "2a = 20. Divide both sides by …?" The learner enters the divisor, then the answer `a = 10`.
 - 6: Tiles MUST be draggable by touch and mouse, and for keyboard users each tile is focusable, with Enter to pick up, arrow keys to move, and Enter to drop.
 
-**Typed-step keypad (levels 3–6): R-EQ-TYPE**
+**Typed-step keypad (levels 2–4): R-EQ-TYPE**
 - 1: The learner writes one equation per line, each a new step. The previous lines stay visible above as a growing worked solution.
 - 2: On-screen keypad: digits 0–9, the current variable letter (only that letter), `+ − × ÷ / ( ) =`, fraction key, backspace, clear, **Check step**. On desktop, the physical keyboard also works (`*` → ×, `-` → −).
 - 3: The parser accepts implicit multiplication (`3a`, `2(x+4)`, `-(m+12)`), `a/4` and `(2p)/3` as coefficient 1/4 or 2/3, unary minus, and spaces. Exactly one `=` is required.
@@ -370,8 +364,8 @@ Additional rules:
 - **R-EQ-CHK-3 Skipping steps.** If N satisfies SIMPLIFY or SOLVE conditions directly from an unseparated P (e.g. `2a = 20` straight from `3a + 3 = a + 23`), and N is equivalent (D(N) proportional to D(P)), then:
   - if the parent setting `allowSkipping` is **off** (*default*), respond "That's right, but show the moving step first: write the equation with the *a* terms on one side and numbers on the other." Do not append.
   - if it is **on**, accept and append with the label "Moved + simplified ✔".
-  - The Solve step can never be skipped at levels 3–4. At levels 5–6, when `allowSkipping` is on, `c·v = d → v = q` can be merged with Simplify.
-  - *As built (approved rule, 2026-09-23):* at **level 6** a correct final answer `v = q` entered on any line ends the question ("Solved ✓ (straight to the answer)"); how q is written is still checked (R-EQ-CHK-5, R-EQ-CHK-6). Levels 1–5 still require every step.
+  - The Solve step can never be skipped at levels 1–3. At level 4, when `allowSkipping` is on, `c·v = d → v = q` can be merged with Simplify.
+  - Every level requires every step. *(The 2026-09-23 rule that let the old level 6 accept a final answer from any line went with that level on 2026-10-11.)*
 - **R-EQ-CHK-4 Coefficient ±1.** If SIMPLIFY yields `a = 20` (c = 1), it counts as both SIMPLIFY and SOLVE. If it yields `−a = −20`, a SOLVE step is still required.
 - **R-EQ-CHK-5 Not lowest terms.** A SOLVE with the right value but not in lowest terms (`x = 14/6`): "Right value! Can you simplify 14/6?" Not appended.
 - **R-EQ-CHK-6 Decimals.** A SOLVE with an inexact decimal (`x = 2.33`) is not accepted: "Keep it exact, use a fraction." An exact terminating decimal (`x = 2.5` for 5/2) is accepted with a note that 5/2 is also fine.
@@ -437,11 +431,13 @@ EQ uses no multiple choice. Every step is produced by the learner, either throug
 
 ## 8. Rewards (learner-visible, light)
 
-- **R-RWD-1** *(changed 2026-09-27 and 2026-09-28, parent decisions)* **Stars per question** depend on the question's level and how it was answered, so harder work pays more and guessing pays less:
-  - **Full stars** by level *(default)*: level 1 = 1, 2 = 2, 3 = 4, 4 = 6, 5 = 8. An **EQ level 6** question (mixed review of 3–5, §7.2) pays the full stars of the level it reviews: 4, 6 or 8. The below-level rule still compares level 6.
-  - **How it was answered:** correct on the first try with no hint or H1 only → full stars; correct on the second try, or after H2 → 1 ★; three or more tries, or the walkthrough (H3) → 0 ★. The question still counts as done.
-  - **Levels below the learner's current level** in that topic: one level below pays at most 1 ★; two or more below pay 0. The **current level** is the higher of the stored level (R-ADP, moved by assignments) and the highest level adaptive free practice has promoted the learner to (R-ADP-7). An assignment item the parent level-locked (R-SES-3) pays normally.
-  - Fixed-level links (`?topic=&level=`) show stars without the below-level rule and earn no shells.
+- **R-RWD-1** *(changed 2026-09-27, 2026-09-28 and 2026-10-11, parent decisions)* **Stars per question** show how hard the question was and how it was answered:
+  - **Full stars** = **2 × the level**: Basic 2, General 4, Advanced 6, Challenge 8.
+  - **Hints:** asking for H1 costs 1 ★; asking for H2 costs 2 ★ more (3 in all). Each tier costs once per question, even though the EQ ladder restarts on each step. H3 (the walkthrough) pays 0 ★.
+  - **Mistakes:** each wrong try costs 2 ★ (EQ: two rejected lines on a step, or two wrong sign picks, are one wrong try; multiple choice and NC: each Check that is not right).
+  - Stars never go below 0. When the stars left for a question reach 0, the walkthrough is shown as if the learner had asked for H3 (R-HELP-6); the question counts as done with 0 ★.
+  - Every question pays by its own level; there is no reduction for levels below the learner's current level. Fixed-level links (`?topic=&level=`) show stars and earn no shells.
+  - Home has a **How stars work** button left of the streak. It opens a short pop-up with these rules.
 - **R-RWD-2** **Streak:** the number of consecutive days on which the learner completed at least one assigned question set, or finished the active assignment *(default: ≥ 1 assignment question answered on a day that had an active assignment)*. Days with **no active assignment do not break** the streak.
 - **R-RWD-3** **Badges** (small, one-time): first question solved; first perfect assignment (every answer on the first try, with no hint above H1); 10 EQ questions without H3; first delayed repeating decimal; first successive-change problem; 7-day streak; 30-day streak; each topic's max level reached.
 - **R-RWD-4** **Shells** *(parent decisions M6, 2026-09-25 and 2026-09-27)*. Each answer earns **as many shells as stars** (R-RWD-1). There are two counts:
@@ -464,9 +460,9 @@ EQ uses no multiple choice. Every step is produced by the learner, either throug
 - **R-PAR-6** **Data:** export all data to a JSON file; import a JSON file (with a confirmation step and a schema-version check; older files are migrated, newer ones refused); reset all progress (with a confirmation step; it clears answers, levels, shells, streak, badges, cosmetics, shop requests and all assignments, and keeps the PIN, names, settings and the error list). The in-app error list (R-NF-5) is on this page.
 - **R-PAR-7** *(added M6)* **Rewards:** shop requests to **mark given** or **cancel and refund**; the history; shells to spend and lifetime shells; set the learner's **shells to spend** (the lifetime total and its cosmetics stay as earned); each item's **price**; and an optional **picture** per item, kept on the device only (never uploaded).
 
-### 9.1 Data model (Dexie; built as schema v4)
+### 9.1 Data model (Dexie; built as schema v5)
 
-The model below is the original v1. As built (see `src/data/db.ts`): v2 adds `Attempt.wrongTries / itemIndex / countedAt` and `Assignment.activatedAt / seed / order`; v3 adds the `errors` store and `Attempt.fixed`; v4 adds `Rewards.spent`, `Settings.shopItems` and the `redemptions` store. Optional fields added later without a schema bump: `ShopItem.note / image`, `Attempt.shellsEarned`, `TopicState.freeBest` (M7: the highest level adaptive free practice promoted to). Since M7 `Attempt.stars` is 0–10 (R-RWD-1), and `Settings.shellsPerStars` and `Settings.naturalIncludesZero` are no longer read.
+The model below is the original v1. As built (see `src/data/db.ts`): v2 adds `Attempt.wrongTries / itemIndex / countedAt` and `Assignment.activatedAt / seed / order`; v3 adds the `errors` store and `Attempt.fixed`; v4 adds `Rewards.spent`, `Settings.shopItems` and the `redemptions` store; v5 renumbers stored levels, level ranges, level locks and attempts for the four levels (old 1–2 → 1, 3 → 2, 4 → 3, 5 and EQ 6 → 4), resets the adaptive windows and drops `TopicState.freeBest`. Optional fields added later without a schema bump: `ShopItem.note / image`, `Attempt.shellsEarned`, `TopicState.freeBest` (M7 to v4 only). Since M7 `Attempt.stars` is 0–10, and 0–8 since v5 (R-RWD-1), and `Settings.shellsPerStars` and `Settings.naturalIncludesZero` are no longer read.
 
 ```ts
 type TopicId = 'NC' | 'RD' | 'FDP' | 'PC' | 'EQ';
@@ -546,8 +542,8 @@ interface Meta         { key: 'schemaVersion'; value: number; }
 4. Step skipping in EQ is off by default.
 5. Currency is `$`; no rounding problems in v1.
 6. Streak counts only days that had an active assignment.
-7. Mixed-number percents (33⅓%) are not used; repeating percents show the block three times (`33.333…%`) and bar notation from FDP level 4.
-8. EQ levels 1–2 use tiles, levels 3–6 use typed steps. The parent can override with `levelLock`.
+7. Mixed-number percents (33⅓%) are not used; repeating percents show the block three times (`33.333…%`) and bar notation from FDP level 3.
+8. EQ level 1 uses tiles, levels 2–4 use typed steps. The parent can override with `levelLock`.
 9. Free practice is always open by default; sounds are off by default.
 
 ## 14. Glossary
@@ -577,3 +573,5 @@ Everything below is written into the requirements above; `progress.md` §4 has t
 | 2026-09-27 (M7) | R-RWD-1, R-RWD-3/4/5, R-HELP-6, R-PAR-7 | Stars by level (1, 2, 4, 6, 8, 10), cut by tries and hints, less below the current level; shells = stars; prices 200 / 2,000; walkthrough 0 ★. |
 | 2026-09-27 (M7) | §6.1, R-NC-2…4, R-ANS-1, R-PAR-5 | One answer: the smallest set; natural numbers start at 1 with no setting. |
 | 2026-09-28 | R-RWD-1 | EQ level 6 no longer pays 10 ★: a review question pays the stars of the level it comes from (3–5 → 4, 6, 8). |
+| 2026-10-11 | §4.1, §6, §7.2, R-SES-8, R-ADP-7, R-ANS-5, R-EQ-CHK-3, R-DISP-3, R-FDP-3, R-PC-3 | Four levels in every topic: Basic, General, Advanced, Challenge (old 1–2 → 1, 3 → 2, 4 → 3, 5 → 4); no mixed levels, EQ level 6 removed with its any-line rule; new Challenge content in NC, RD, FDP and PC; start levels Equations 2, Adaptive 2. |
+| 2026-10-11 | R-RWD-1, R-HELP-2, R-HELP-6 | Stars = 2 × level, −1 for H1, −2 more for H2, −2 per wrong try, never below 0; at 0 the walkthrough is shown; no below-level rule; a wrong try only makes Help pulse; "How stars work" pop-up on Home. |

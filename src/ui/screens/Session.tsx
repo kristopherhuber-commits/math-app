@@ -45,8 +45,6 @@ interface Current {
   itemIndex?: number;
   adaptive: boolean;
   rewarded: boolean;
-  /** A parent's level lock (R-SES-3): pays without the below-level rule (R-RWD-1). */
-  locked: boolean;
   progress: TopBarProgress;
   key: number;
 }
@@ -101,7 +99,6 @@ export function Session({ kind, currency, onHome, onSummary }: Props) {
         itemIndex: q.itemIndex,
         adaptive: q.adaptive,
         rewarded: true,
-        locked: !q.adaptive,
         progress,
         key: n,
       };
@@ -115,7 +112,6 @@ export function Session({ kind, currency, onHome, onSummary }: Props) {
         // The stored (assignment) level only moves in assignments; free practice keeps its own.
         adaptive: false,
         rewarded: true,
-        locked: false,
         progress: { n },
         key: n,
       };
@@ -127,7 +123,6 @@ export function Session({ kind, currency, onHome, onSummary }: Props) {
       seed,
       adaptive: false,
       rewarded: false,
-      locked: false,
       progress: { n },
       key: n,
     };
@@ -185,13 +180,11 @@ export function Session({ kind, currency, onHome, onSummary }: Props) {
           if (r.change === 'promote') levelUp = r.level;
         }
       }
-      const quality = answerQuality({ wrongTries: a.wrongTries ?? 0, maxHint: a.maxHint });
+      const quality = answerQuality({ level: a.level, wrongTries: a.wrongTries ?? 0, maxHint: a.maxHint });
       const fallback: FinishEvents = { stars: 0, quality, shells, badges: [] };
       pending.current = finishAttempt(tag(a), {
         adaptive: cur.adaptive,
         rewarded: cur.rewarded,
-        locked: cur.locked,
-        ...(levelUp !== undefined ? { freePromotedTo: levelUp } : {}),
       }).catch((e: unknown) => {
         // R-NF-5: never surface storage errors to the learner.
         void logError('finishAttempt', e);

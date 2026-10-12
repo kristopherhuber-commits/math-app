@@ -5,54 +5,41 @@ import { config, TOPICS, type TopicId } from './config';
 // ---------------------------------------------------------------------------------------------
 // Stars (R-RWD-1)
 
-/**
- * How a question was answered (R-RWD-1, M7): `full` = first try with no hint above H1 (a clean
- * solve, R-ADP-1); `one` = the second try, or after H2; `none` = three or more tries, or the
- * walkthrough.
- */
-export type Quality = 'full' | 'one' | 'none';
-
-export function answerQuality(o: { wrongTries: number; maxHint: number }): Quality {
-  if (o.maxHint >= 3 || o.wrongTries >= 2) return 'none';
-  if (o.wrongTries === 1 || o.maxHint === 2) return 'one';
-  return 'full';
-}
-
-/** Full stars for a question at this level (R-RWD-1 default: 1, 2, 4, 6, 8). */
-export function fullStars(level: number): number {
-  const t = config.stars.fullByLevel;
-  return t[Math.min(Math.max(level, 1), t.length) - 1]!;
-}
-
 export interface StarsInput {
   level: number;
-  /** The level whose full stars it pays, when not its own: EQ L6 pays the level it reviews (3–5). */
-  paysAs?: number;
   wrongTries: number;
   maxHint: number;
-  /**
-   * The learner's current level in the topic: the higher of the stored level and the highest level
-   * adaptive free practice promoted to. Absent (fixed-level links) or `locked` (a parent's level
-   * lock): the below-level rule doesn't apply.
-   */
-  currentLevel?: number;
-  locked?: boolean;
+}
+
+/** Full stars for a question at this level (R-RWD-1: 2 × level, so 2, 4, 6, 8). */
+export function fullStars(level: number): number {
+  return config.stars.perLevel * level;
+}
+
+/** What the hints used so far cost: hint 1, then hint 2 on top, each once per question. */
+function hintCost(maxHint: number): number {
+  const s = config.stars;
+  return (maxHint >= 1 ? s.hint1 : 0) + (maxHint >= 2 ? s.hint2 : 0);
 }
 
 /**
- * Stars for a finished question (R-RWD-1, M7): full stars by level (an EQ L6 review question
- * pays its source level), 1 for a second try or H2, 0 for
- * three or more tries or the walkthrough. One level below the current level pays at most 1; two or
- * more below pay 0. Shells equal stars (R-RWD-4).
+ * Stars a question pays (R-RWD-1, parent decision 2026-10-11): full stars for its level, less each
+ * hint used and each wrong try, never below 0. The walkthrough (H3) pays 0. During a question this
+ * is what is still left to earn; when it reaches 0 the walkthrough is shown. Shells equal stars
+ * (R-RWD-4).
  */
 export function starsFor(o: StarsInput): number {
-  const q = answerQuality(o);
-  const base = q === 'full' ? fullStars(o.paysAs ?? o.level) : q === 'one' ? 1 : 0;
-  if (o.currentLevel === undefined || o.locked) return base;
-  const below = o.currentLevel - o.level;
-  if (below >= 2) return 0;
-  if (below === 1) return Math.min(base, 1);
-  return base;
+  if (o.maxHint >= 3) return 0;
+  const left = fullStars(o.level) - hintCost(o.maxHint) - config.stars.wrongTry * o.wrongTries;
+  return Math.max(0, left);
+}
+
+/** How a question was answered, for the celebration: all its stars, some, or none. */
+export type Quality = 'full' | 'some' | 'none';
+
+export function answerQuality(o: StarsInput): Quality {
+  const stars = starsFor(o);
+  return stars === 0 ? 'none' : stars === fullStars(o.level) ? 'full' : 'some';
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -155,8 +142,10 @@ export function isDelayedRd(a: FinishedFacts): boolean {
   return a.topic === 'RD' && (shape === 'delayed' || shape === 'f2dB');
 }
 
+/** Two changes in a row: successive, or the Challenge's reverse of two changes. */
 export function isSuccessivePc(a: FinishedFacts): boolean {
-  return a.topic === 'PC' && (a.params as { kind?: unknown } | null)?.kind === 'successive';
+  const kind = (a.params as { kind?: unknown } | null)?.kind;
+  return a.topic === 'PC' && (kind === 'successive' || kind === 'reverseSuccessive');
 }
 
 /** Finished EQ attempts in a row without a walkthrough, counting back from the latest. */

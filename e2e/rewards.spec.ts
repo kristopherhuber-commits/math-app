@@ -62,7 +62,7 @@ test('the shop: buy the treat, it waits for a grown-up, the parent marks it give
   hasTouch,
 }) => {
   await openHome(page, { rewards: [rewardsRow(250, { badges: [{ id: 'first-solve', at: 'x' }] })] });
-  await expect(page.locator('.home-counter').nth(1)).toContainText('250');
+  await expect(page.locator('.home-counter').nth(2)).toContainText('250');
   await expect(page.locator('.beach-shell')).toHaveCount(12);
   await expect(page.getByRole('heading', { name: 'Badges: 1 of 12' })).toBeVisible();
 
@@ -192,18 +192,54 @@ test("the parent sets the learner's shells; the page explains shells = stars; th
   await press(card.locator('form').first().getByRole('button', { name: 'Save' }), hasTouch);
   await expect(page.getByText('Shells to spend: 140 · earned in all: 30')).toBeVisible();
 
-  // M7 (R-RWD-1/4): no per-star table any more; the rule is explained instead.
-  await expect(card).toContainText('An answer earns as many shells as stars.');
+  // R-RWD-1/4: no per-star table; the rule is explained instead (2 × level, less hints and mistakes).
+  await expect(card).toContainText('An answer earns as many shells as stars: 2 × its level');
   await expect(card.getByLabel('3 stars')).toHaveCount(0);
 
   await press(page.getByRole('button', { name: '‹ Back to learner' }), hasTouch);
-  await expect(page.locator('.home-counter').nth(1)).toContainText('140');
+  await expect(page.locator('.home-counter').nth(2)).toContainText('140');
   await press(page.getByRole('button', { name: 'Price changes', exact: true }), hasTouch);
   await press(page.getByRole('button', { name: /^Level 1/ }), hasTouch);
   const { level, seed } = await current(page);
   const q = generatePc(level, seed, '$');
   await press(page.locator('.mc-option').nth(q.options.findIndex((o) => o.code === 'correct')), hasTouch);
   await press(page.getByRole('button', { name: 'Check' }), hasTouch);
-  await expect(page.getByText('+1 shell')).toBeVisible(); // level 1, first try: 1 ★ = 1 shell
-  await expect(page.getByRole('status', { name: /141 shells/ })).toBeVisible();
+  await expect(page.getByText('+2 shells')).toBeVisible(); // level 1, first try: 2 ★ = 2 shells
+  await expect(page.getByRole('status', { name: /142 shells/ })).toBeVisible();
+});
+
+test('"How stars work" opens left of the streak and explains the rules; Got it and Esc close it (R-RWD-1)', async ({
+  page,
+  hasTouch,
+}) => {
+  await openHome(page);
+  const counters = page.locator('.home-counters > *');
+  const button = page.getByRole('button', { name: 'How stars work' });
+  // Left of the streak: the first of the counters.
+  await expect(counters.first()).toContainText('How stars work');
+  await expect(counters.nth(1)).toContainText('streak');
+  await expect(button).toHaveAttribute('aria-expanded', 'false');
+
+  // Mouse (or touch on the tablet project): open, read, Got it.
+  await press(button, hasTouch);
+  const pop = page.getByRole('dialog', { name: 'How stars work' });
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+  await expect(pop.getByRole('listitem')).toHaveText([
+    'Basic 2 ★ · General 4 ★ · Advanced 6 ★ · Challenge 8 ★',
+    'Hint 1: −1 ★. Hint 2: −2 ★ more.',
+    'Each “not quite”: −2 ★.',
+    'At 0 ★, Shelly shows you the answer step by step.',
+    'Every star is a shell.',
+  ]);
+  await press(pop.getByRole('button', { name: 'Got it' }), hasTouch);
+  await expect(pop).toHaveCount(0);
+  await expect(button).toBeFocused();
+
+  // Keyboard: Enter opens, Escape closes, focus goes back to the button.
+  await page.keyboard.press('Enter');
+  await expect(pop).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(pop).toHaveCount(0);
+  await expect(button).toBeFocused();
+  await expect(button).toHaveAttribute('aria-expanded', 'false');
 });

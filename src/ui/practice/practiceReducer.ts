@@ -16,6 +16,7 @@ import {
   onWalkBack,
   onWalkNext,
   onWalkStart,
+  walkDue,
   type HelpFields,
 } from './help';
 
@@ -74,7 +75,6 @@ export function startPractice(
       params: {
         level,
         form: question.form,
-        starsLevel: question.starsLevel,
         solution: formatRational(question.solution),
         mode: 'typed',
       },
@@ -82,7 +82,15 @@ export function startPractice(
   };
 }
 
+/**
+ * One action, then the walkthrough starts by itself if the stars left reached 0 (R-RWD-1).
+ */
 export function practiceReducer(s: PracticeState, action: PracticeAction): PracticeState {
+  const next = step(s, action);
+  return walkDue(next) ? step(next, { type: 'walkStart' }) : next;
+}
+
+function step(s: PracticeState, action: PracticeAction): PracticeState {
   switch (action.type) {
     case 'input':
       return s.solved || s.walk ? s : { ...s, input: normalizeInput(action.value) };

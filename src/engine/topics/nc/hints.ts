@@ -66,7 +66,7 @@ const ninesRow = (label: string, w: bigint, sign: '' | '−' = ''): ColumnRow =>
 });
 
 /**
- * The x-method for ±w.999… (the level 5 challenge), as in the RD walkthrough (§6.2): x = w.999…,
+ * The x-method for ±w.999… (the level 4 challenge), as in the RD walkthrough (§6.2): x = w.999…,
  * 10x = (10w + 9).999…, subtract, 9x = 9w + 9, x = w + 1. Built from digits, because the value
  * v = ±(w + 1) can't show its own nines. A minus sign is set aside first and put back at the end.
  */

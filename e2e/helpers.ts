@@ -4,15 +4,22 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { expect, type Page } from '@playwright/test';
 import type { TopicId } from '../src/engine/config';
-import { fullStars } from '../src/engine/scoring';
+import { answerQuality, starsFor } from '../src/engine/scoring';
+import { rewardStrings } from '../src/ui/strings';
 
 export const PIN = '2468';
 
-/** The celebration headline for a first-try answer at this level (R-RWD-1, M7: 1, 2, 4, 6, 8, 10 ★). */
-export function fullStarsText(level: number): string {
-  const n = fullStars(level);
-  return `${n} ${n === 1 ? 'star' : 'stars'}! Brilliant!`;
+/**
+ * The celebration headline for an answer at this level (R-RWD-1: 2 × level, less 1 for H1, 2 more
+ * for H2 and 2 per wrong try).
+ */
+export function starsText(level: number, wrongTries = 0, maxHint = 0): string {
+  const o = { level, wrongTries, maxHint };
+  return rewardStrings.celebrate.headline(starsFor(o), answerQuality(o));
 }
+
+/** The celebration headline for a first-try answer with no hint at this level (2, 4, 6, 8 ★). */
+export const fullStarsText = (level: number): string => starsText(level);
 
 /** The app's stored form (R-DATA-2): `sha256$<salt>$<sha256(salt:pin)>`. */
 export function pinHash(pin: string = PIN): string {

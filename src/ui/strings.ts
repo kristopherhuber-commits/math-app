@@ -5,6 +5,12 @@ import type { HintContent } from '../engine/topics/eq/hints';
 
 type P = Record<string, string>;
 
+/** The four levels of every topic (parent decision 2026-10-11). */
+export const LEVEL_NAMES: readonly string[] = ['Basic', 'General', 'Advanced', 'Challenge'];
+export const levelName = (n: number): string => LEVEL_NAMES[n - 1] ?? '';
+/** "Level 2 · General". */
+export const levelLabel = (n: number): string => `Level ${n} · ${levelName(n)}`;
+
 export const strings = {
   appName: 'Turtle & Penguin Math',
   home: {
@@ -13,11 +19,9 @@ export const strings = {
     /** An example per EQ level (for the parent's level lock in M5). */
     levelExamples: {
       1: '$3x + 4 = 19$',
-      2: '$7 − 3z = 13$',
-      3: '$5n − 7 = 2n + 8$',
-      4: '$3(y − 2) = y + 8$',
-      5: '$x/4 + 1 = 3$',
-      6: 'Mixed review',
+      2: '$5n − 7 = 2n + 8$',
+      3: '$3(y − 2) = y + 8$',
+      4: '$x/4 + 1 = 3$',
     } as Record<number, string>,
   },
   topBar: {
@@ -26,7 +30,7 @@ export const strings = {
     question: (n: number) => `Question ${n}`,
   },
   practice: {
-    chip: (level: number) => `Equations · Level ${level}`,
+    chip: (level: number) => `Equations · ${levelLabel(level)}`,
     prompt: (v: string) => `Solve for $${v}$ and show each step.`,
     steps: 'Steps',
     currentLine: 'Your next line',
@@ -286,31 +290,28 @@ export const topicStrings = {
     PC: '\\text{\\$40} \\to \\text{\\$44}',
     EQ: '3x + 4 = 19',
   } satisfies Record<TopicKey, string>,
-  chip: (topic: TopicKey, level: number) => `${topicStrings.name[topic]} · Level ${level}`,
+  chip: (topic: TopicKey, level: number) => `${topicStrings.name[topic]} · ${levelLabel(level)}`,
   /** Home level cards: an example per level (§6 tables); §…§ is LaTeX. */
   levelExamples: {
     NC: [
       '§7,\\ 0,\\ \\tfrac{3}{4},\\ 0.25§',
       '§-12,\\ -\\tfrac{5}{8},\\ 0.333\\text{…}§',
       '§\\tfrac{12}{4},\\ 3.0§',
-      '§0.1010010001\\text{…}§',
-      'Challenge mix',
+      '§0.1010010001\\text{…},\\ 0.999\\text{…}§',
     ],
     RD: [
-      '§0.333\\text{…}§',
-      '§0.454545\\text{…}§',
+      '§0.333\\text{…},\\ 0.4545\\text{…}§',
       '§4.242424\\text{…}§',
       '§0.41666\\text{…}§',
-      'Mixed review',
+      '§\\tfrac{1}{7} = 0.142857\\text{…}§',
     ],
     FDP: [
-      '§\\tfrac{1}{2} = 0.5 = 50\\%§',
-      '§\\tfrac{3}{8} = 0.375§',
+      '§\\tfrac{3}{8} = 0.375 = 37.5\\%§',
       '§2\\tfrac{1}{4} = 225\\%§',
       '§\\tfrac{1}{3} = 33.\\overline{3}\\%§',
-      'Mixed review',
+      '§2\\tfrac{1}{6} = 216.\\overline{6}\\%§',
     ],
-    PC: ['$40 up 10%', '$36.50 up 12%', 'Up 20%, then down 20%', 'Find the original price', 'Mixed review'],
+    PC: ['$40 up 10%', 'Up 20%, then down 20%', 'Find the original price', 'Two changes: find the original'],
   } as Record<string, string[]>,
 };
 
@@ -396,7 +397,7 @@ export function misconceptionLine(code: string, kind = ''): string | null {
     case 'PC-M1':
       return 'A percent isn’t a number of dollars. Find the percent of the price.';
     case 'PC-M2':
-      return kind === 'reverse'
+      return kind === 'reverse' || kind === 'reverseSuccessive'
         ? 'That’s how much it changed. What was the price before?'
         : 'That’s how much it changed. What’s the new price?';
     case 'PC-M3':
@@ -461,6 +462,12 @@ export function numText(h: HintContent): string {
       return `${p.price} → ${upDown(p.dir)} ${p.pct}% → ${upDown(p.dir2)} ${p.pct2}% → ?`;
     case 'pc.hero.reverse':
       return p.dir === 'up' ? `? → up ${p.pct}% → ${p.price}` : `? → ${p.pct}% off → ${p.price}`;
+    case 'pc.prompt.reverseSuccessive': {
+      const change = (dir?: string, pct?: string) => `a ${pct}% ${dir === 'up' ? 'increase' : 'discount'}`;
+      return `After ${change(p.dir, p.pct)} and then ${change(p.dir2, p.pct2)}, it costs ${p.price}. What was the original price?`;
+    }
+    case 'pc.hero.reverseSuccessive':
+      return `? → ${upDown(p.dir)} ${p.pct}% → ${upDown(p.dir2)} ${p.pct2}% → ${p.price}`;
 
     // RD hints
     case 'rd.d2f.h1':
@@ -593,6 +600,10 @@ export function numText(h: HintContent): string {
       return `The ${p.pct}% was taken of the original price, not of ${p.price}. What was the original multiplied by?`;
     case 'pc.reverse.h2':
       return `original × ${p.mult} = ${p.price}. So divide ${p.price} by ${p.mult}.`;
+    case 'pc.reverseSuccessive.h1':
+      return `Work backwards: undo the last change first. The ${p.pct2}% was taken of the price after the first change, not of ${p.price}.`;
+    case 'pc.reverseSuccessive.h2':
+      return `original × ${p.m1} × ${p.m2} = ${p.price}. So divide ${p.price} by ${p.m2}, then by ${p.m1}. (Or divide once by ${p.m1} × ${p.m2} = ${p.both}.)`;
 
     // PC walkthrough (R-PC-2/3)
     case 'pc.walk.part':
@@ -621,6 +632,16 @@ export function numText(h: HintContent): string {
       return `What is ${p.price} ÷ ${p.mult}?`;
     case 'pc.walk.reverse.check':
       return `Check with the part method: ${p.pct}% of ${p.price}.`;
+    case 'pc.walk.reverse2.setup':
+      return `The original price went ${upDown(p.dir)} ${p.pct}% (× ${p.m1}), then ${upDown(p.dir2)} ${p.pct2}% (× ${p.m2}).`;
+    case 'pc.walk.reverse2.undoSecond':
+      return `Work backwards. Undo the second change first: divide by ${p.mult}.`;
+    case 'pc.walk.reverse2.undoFirst':
+      return `Now undo the first change: divide by ${p.mult}.`;
+    case 'pc.walk.reverse2.combined':
+      return `Or multiply the multipliers first: ${p.m1} × ${p.m2} = ${p.both}. Then divide once.`;
+    case 'pc.walk.reverse2.check':
+      return `Check forwards from ${p.price}.`;
 
     // NC hints
     case 'nc.h1':
@@ -713,13 +734,12 @@ export const rewardStrings = {
     shells: (n: number) => `${n} ${n === 1 ? 'shell' : 'shells'}`,
   },
   celebrate: {
-    /** R-RWD-1 (M7): by how it was answered; `capped` = a level below the learner's own paid less. */
-    headline: (stars: number, quality: 'full' | 'one' | 'none', capped: boolean): string => {
-      if (capped)
-        return stars === 0 ? 'Done! A harder level earns stars.' : '1 star. A harder level earns more!';
-      if (quality === 'full') return `${stars} ${stars === 1 ? 'star' : 'stars'}! Brilliant!`;
-      if (quality === 'one') return '1 star. Nice work!';
-      return 'You finished it! First-try answers earn stars.';
+    /** R-RWD-1: by how it was answered: all its stars, some, or none. */
+    headline: (stars: number, quality: 'full' | 'some' | 'none'): string => {
+      const n = `${stars} ${stars === 1 ? 'star' : 'stars'}`;
+      if (quality === 'full') return `${n}! Brilliant!`;
+      if (quality === 'some') return `${n}. Nice work!`;
+      return 'You finished it! Fewer hints and mistakes earn more stars.';
     },
     shells: (n: number) => `+${n} ${n === 1 ? 'shell' : 'shells'}`,
     levelUp: 'Level up!',
@@ -762,6 +782,16 @@ export const rewardStrings = {
     itemDone: 'done',
     streak: (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`,
     streakLabel: 'streak',
+    /** The stars pop-up, left of the streak (R-RWD-1, parent request 2026-10-11). */
+    starsInfo: 'How stars work',
+    starsInfoLines: (shelly: string): string[] => [
+      'Basic 2 ★ · General 4 ★ · Advanced 6 ★ · Challenge 8 ★',
+      'Hint 1: −1 ★. Hint 2: −2 ★ more.',
+      'Each “not quite”: −2 ★.',
+      `At 0 ★, ${shelly} shows you the answer step by step.`,
+      'Every star is a shell.',
+    ],
+    starsInfoClose: 'Got it',
     shellsLabel: 'shells',
     pipToday: (pip: string, topic: string) => `${pip}: ${topic} today? Let's go!`,
     pipStreak: (pip: string, n: number) => `${pip}: ${n}-day streak! Keep it up!`,
@@ -774,13 +804,15 @@ export const rewardStrings = {
     locked: (topic: string) => `${topic}, locked`,
     pickLevel: (topic: string) => `${topic}: how hard?`,
     adaptive: 'Adaptive',
-    adaptiveSub: 'Starts at level 3 and changes as you go',
-    level: (n: number) => `Level ${n}`,
+    adaptiveSub: 'Starts at level 2 (General) and changes as you go',
+    level: (n: number) => levelLabel(n),
     pickClose: 'Close',
     shop: 'Shop',
     waiting: (n: number) =>
       n === 1 ? '1 reward waiting for a grown-up' : `${n} rewards waiting for a grown-up`,
     dressUp: 'Dress up',
+    /** Tapping a mascot on Home makes it react. */
+    sayHi: (name: string) => `Say hi to ${name}`,
     dressUpNone: 'Keep earning shells: something fun unlocks soon!',
     accessoryFor: (who: string, what: string) => `${what} for ${who}`,
     nextAccessory: (what: string) => `Next to unlock: ${what}`,
@@ -862,10 +894,10 @@ export const parentStrings = {
     addTopic: '+ Add topic',
     addWhich: 'Which topic?',
     adaptive: 'Adaptive',
-    locked: (n: number) => `Level ${n} (locked)`,
+    locked: (n: number) => `${levelLabel(n)} (locked)`,
     lockTitle: (topic: string) => `${topic}: level`,
     lockAdaptive: 'Adaptive: the app picks the level',
-    lockLevel: (n: number) => `Level ${n}`,
+    lockLevel: (n: number) => levelLabel(n),
     count: (topic: string) => `${topic}: number of questions`,
     fewer: (topic: string) => `Fewer ${topic} questions`,
     more: (topic: string) => `More ${topic} questions`,
@@ -906,7 +938,7 @@ export const parentStrings = {
     sub: (days: number) => `Last ${days} days`,
     minutes: 'Minutes per day',
     minutesDay: (day: string, m: number) => `${day}: ${m} min`,
-    level: (n: number, of: number) => `Level ${n} of ${of}`,
+    level: (n: number, of: number) => `Level ${n} of ${of} (${levelName(n)})`,
     clean: 'clean solves',
     noData: 'No answers yet',
     attempts: (n: number) => `${n} ${n === 1 ? 'question' : 'questions'}`,
@@ -946,7 +978,7 @@ export const parentStrings = {
     anyCode: 'Any',
     none: 'No missed questions for this filter.',
     count: (n: number) => `${n} ${n === 1 ? 'question' : 'questions'}`,
-    row: (topic: string, level: number) => `${topic} · Level ${level}`,
+    row: (topic: string, level: number) => `${topic} · ${levelLabel(level)}`,
     tries: (n: number) => `${n} wrong ${n === 1 ? 'try' : 'tries'}`,
     hint: (h: number) => (h === 3 ? 'walkthrough' : h === 0 ? 'no hints' : `up to H${h}`),
     filters: 'Filters',
@@ -989,7 +1021,7 @@ export const parentStrings = {
     saved: 'Saved.',
     perAnswer: 'Shells per answer',
     perAnswerSub:
-      'An answer earns as many shells as stars. First try (at most hint 1): level 1 = 1, 2 = 2, 3 = 4, 4 = 6, 5 = 8; equations level 6 (review) pays the level each question comes from. Second try or hint 2: 1. More tries or the walkthrough: 0. One level below the learner’s own: at most 1; two or more below: 0 (not for levels you lock in an assignment).',
+      'An answer earns as many shells as stars: 2 × its level (Basic 2, General 4, Advanced 6, Challenge 8), minus 1 for hint 1, 2 more for hint 2, and 2 for each mistake. Never below 0; at 0 the walkthrough is shown, as for hint 3.',
     pictures: 'Pictures',
     picturesSub:
       'The shop shows a drawing of each reward. You can use your own picture instead; it stays on this device (and in exports) and is never uploaded.',

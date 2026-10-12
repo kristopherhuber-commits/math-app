@@ -53,6 +53,31 @@ export function pcModels(spec: PcSpec, prices: bigint[], currency: string): McCa
       out.push({ c: original > after ? original - after : after - original, code: 'PC-M2' });
       break;
     }
+    case 'reverseSuccessive': {
+      const s2 = spec.steps[1]!;
+      const after = spec.price;
+      const original = prices[0]!;
+      const net = signed(s1.up, s1.pct) + signed(s2.up, s2.pct);
+      // PC-M4: the changes cancel (up 20% then down 20% → the price shown).
+      if (s1.up !== s2.up && s1.pct === s2.pct) out.push({ c: after, code: 'PC-M4' });
+      // PC-M5: the percents added, then undone as one change (up 20%, down 10% → ÷ 1.10).
+      else if (net > -100 && net !== 0)
+        out.push({ c: cents(mul(rat(after), rat(100, 100 + net))), code: 'PC-M5' });
+      // PC-M6 / PC-M7: each percent taken of the price shown and undone, coded by the last change.
+      const a = scaled(after, 100 + signed(!s2.up, s2.pct));
+      out.push({
+        c: a === null ? null : scaled(a, 100 + signed(!s1.up, s1.pct)),
+        code: s2.up ? 'PC-M7' : 'PC-M6',
+      });
+      // PC-M3: the changes applied again to the price shown, instead of undone.
+      const f = scaled(after, 100 + signed(s1.up, s1.pct));
+      out.push({ c: f === null ? null : scaled(f, 100 + signed(s2.up, s2.pct)), code: 'PC-M3' });
+      // PC-M1: the percents added (or taken) as dollars.
+      out.push({ c: after - BigInt(net) * 100n, code: 'PC-M1' });
+      // PC-M2: the change, not the original price.
+      out.push({ c: original > after ? original - after : after - original, code: 'PC-M2' });
+      break;
+    }
   }
   return out
     .filter((o): o is { c: bigint; code: string } => o.c !== null && o.c > 0n)

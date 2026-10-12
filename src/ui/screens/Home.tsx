@@ -9,9 +9,8 @@ import { LevelExample } from '../components/LevelExample';
 import { BadgeShelf, BeachShells, DressUp } from '../components/HomeExtras';
 import { unlockedAt } from '../../engine/rewards';
 import { MathText } from '../components/Math';
-import { ShellIcon } from '../components/TopBar';
-import { Penguin } from '../mascots/Penguin';
-import { Turtle } from '../mascots/Turtle';
+import { ShellIcon, StarIcon } from '../components/TopBar';
+import { MascotPlay, useMascot } from '../components/MascotPlay';
 import { useSettings } from '../settings';
 import { rewardStrings, strings, topicStrings } from '../strings';
 
@@ -31,6 +30,52 @@ function LockIcon() {
       <path className="lock-shackle" d="M5 12V8a6 6 0 0 1 12 0v4" />
       <rect x="2" y="11" width="18" height="14" rx="3" />
     </svg>
+  );
+}
+
+/** "How stars work": a small pop-up left of the streak (R-RWD-1). Esc or "Got it" closes it. */
+function StarsInfo() {
+  const shelly = useSettings().mascotNames.turtle;
+  const [open, setOpen] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
+  const close = () => {
+    setOpen(false);
+    button.current?.focus();
+  };
+  return (
+    <span
+      className="stars-info"
+      onKeyDown={(e) => {
+        if (e.key === 'Escape' && open) close();
+      }}
+    >
+      <button
+        ref={button}
+        type="button"
+        className="home-counter stars-info-btn"
+        aria-expanded={open}
+        aria-controls="stars-info-pop"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <StarIcon size={32} />
+        <span className="label">{h.starsInfo}</span>
+      </button>
+      {open && (
+        <div id="stars-info-pop" className="card stars-info-pop" role="dialog" aria-label={h.starsInfo}>
+          <p className="title">{h.starsInfo}</p>
+          <ul>
+            {h.starsInfoLines(shelly).map((l) => (
+              <li key={l}>{l}</li>
+            ))}
+          </ul>
+          <div className="actions end">
+            <button type="button" className="btn btn-primary btn-small" onClick={close} autoFocus>
+              {h.starsInfoClose}
+            </button>
+          </div>
+        </div>
+      )}
+    </span>
   );
 }
 
@@ -140,6 +185,8 @@ function AssignmentCard({ snap, onStart }: { snap: HomeSnapshot; onStart: (id: s
 
 function Beach({ snap }: { snap: HomeSnapshot }) {
   const names = useSettings().mascotNames;
+  const turtle = useMascot('turtle');
+  const penguin = useMascot('penguin');
   const a = snap.assignment;
   const next =
     a && snap.progress ? a.items.find((it, i) => (snap.progress!.done[i] ?? 0) < it.count) : undefined;
@@ -156,8 +203,22 @@ function Beach({ snap }: { snap: HomeSnapshot }) {
       </div>
       <span className="sand" aria-hidden="true" />
       <BeachShells count={snap.shells} />
-      <Turtle size={150} className="beach-turtle" />
-      <Penguin size={110} className="beach-penguin" />
+      <MascotPlay
+        mascot="turtle"
+        size={150}
+        className="beach-turtle"
+        label={h.sayHi(names.turtle)}
+        state={turtle.state}
+        onPoke={turtle.poke}
+      />
+      <MascotPlay
+        mascot="penguin"
+        size={110}
+        className="beach-penguin"
+        label={h.sayHi(names.penguin)}
+        state={penguin.state}
+        onPoke={penguin.poke}
+      />
     </section>
   );
 }
@@ -203,6 +264,7 @@ export function Home({
           <p className="home-intro">{strings.home.intro}</p>
         </div>
         <div className="home-counters">
+          <StarsInfo />
           <span className="home-counter">
             <StreakIcon />
             <span>

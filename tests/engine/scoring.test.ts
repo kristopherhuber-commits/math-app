@@ -16,78 +16,79 @@ import {
   type BadgeFacts,
 } from '../../src/engine/scoring';
 
-describe('stars (R-RWD-1, M7)', () => {
-  it('full stars by level: 1, 2, 4, 6, 8', () => {
-    expect([1, 2, 3, 4, 5].map(fullStars)).toEqual([1, 2, 4, 6, 8]);
+describe('stars (R-RWD-1, parent decision 2026-10-11)', () => {
+  it('full stars: 2 × level, so 2, 4, 6, 8', () => {
+    expect([1, 2, 3, 4].map(fullStars)).toEqual([2, 4, 6, 8]);
   });
 
-  it.each([
-    // [paysAs, currentLevel, wrongTries, maxHint, stars]: an EQ L6 review question
-    [3, undefined, 0, 0, 4], // reviews level 3: full = 4
-    [4, undefined, 0, 1, 6], // reviews level 4, H1: 6
-    [5, undefined, 0, 0, 8], // reviews level 5: 8
-    [5, undefined, 1, 0, 1], // second try: 1
-    [5, undefined, 0, 3, 0], // walkthrough: 0
-    [3, 6, 0, 0, 4], // at current level 6: the below-level rule compares 6, not 3
-    [3, 7, 0, 0, 1], // hypothetically one below: at most 1
-  ] as const)(
-    'EQ L6 pays as level %s (current %s, %i wrong, H%i) → %i ★',
-    (paysAs, currentLevel, wrongTries, maxHint, stars) => {
-      expect(
-        starsFor({ level: 6, paysAs, wrongTries, maxHint, ...(currentLevel ? { currentLevel } : {}) }),
-      ).toBe(stars);
-    },
-  );
+  // Every level × wrong tries 0…4 × hint tier 0…3. Expected values are written out by hand from the
+  // rule: 2 × level, −1 for hint 1, −2 more for hint 2, −2 per wrong try, never below 0; H3 → 0.
+  const table: Record<number, number[][]> = {
+    // rows: wrongTries 0…4; columns: maxHint 0, 1, 2, 3
+    1: [
+      [2, 1, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ],
+    2: [
+      [4, 3, 1, 0],
+      [2, 1, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ],
+    3: [
+      [6, 5, 3, 0],
+      [4, 3, 1, 0],
+      [2, 1, 0, 0],
+      [0, 0, 0, 0],
+      [0, 0, 0, 0],
+    ],
+    4: [
+      [8, 7, 5, 0],
+      [6, 5, 3, 0],
+      [4, 3, 1, 0],
+      [2, 1, 0, 0],
+      [0, 0, 0, 0],
+    ],
+  };
+  for (const level of [1, 2, 3, 4])
+    table[level]!.forEach((row, wrongTries) =>
+      row.forEach((stars, maxHint) => {
+        const q = stars === 0 ? 'none' : stars === 2 * level ? 'full' : 'some';
+        it(`level ${level}, ${wrongTries} wrong, H${maxHint} → ${stars} ★ (${q})`, () => {
+          expect(starsFor({ level, wrongTries, maxHint })).toBe(stars);
+          expect(answerQuality({ level, wrongTries, maxHint })).toBe(q);
+        });
+      }),
+    );
 
-  // rows: wrongTries 0…3; columns: maxHint 0…3. F = full, 1 = one star, 0 = none.
-  const quality = [
-    ['full', 'full', 'one', 'none'],
-    ['one', 'one', 'one', 'none'],
-    ['none', 'none', 'none', 'none'],
-    ['none', 'none', 'none', 'none'],
-  ] as const;
-  for (let wrongTries = 0; wrongTries <= 3; wrongTries++)
-    for (let maxHint = 0; maxHint <= 3; maxHint++) {
-      const q = quality[wrongTries]![maxHint]!;
-      it(`${wrongTries} wrong tries, H${maxHint} → ${q}`, () => {
-        expect(answerQuality({ wrongTries, maxHint })).toBe(q);
-        for (let level = 1; level <= 5; level++)
-          expect(starsFor({ level, wrongTries, maxHint })).toBe(
-            q === 'full' ? fullStars(level) : q === 'one' ? 1 : 0,
-          );
-      });
-    }
-
-  it.each([
-    // [level, currentLevel, locked, wrongTries, maxHint, stars]
-    [4, 4, false, 0, 0, 6], // at the current level: full
-    [5, 4, false, 0, 0, 8], // above it: full for that level
-    [3, 4, false, 0, 0, 1], // one below: at most 1
-    [3, 4, false, 1, 0, 1], // one below, second try: 1
-    [3, 4, false, 2, 0, 0], // one below, third try: 0
-    [2, 4, false, 0, 0, 0], // two below: 0
-    [1, 4, false, 0, 0, 0],
-    [2, 4, true, 0, 0, 2], // a parent's level lock pays normally
-    [4, 4, false, 0, 3, 0], // walkthrough: 0
-    [4, 4, false, 0, 1, 6], // H1 still full
-    [4, 4, false, 0, 2, 1], // H2: 1
-  ])(
-    'level %i, current %i, locked %s, %i wrong, H%i → %i ★',
-    (level, currentLevel, locked, wrongTries, maxHint, stars) => {
-      expect(starsFor({ level, currentLevel, locked, wrongTries, maxHint })).toBe(stars);
-    },
-  );
-
-  it('fixed-level links (no current level) skip the below-level rule', () => {
-    expect(starsFor({ level: 1, wrongTries: 0, maxHint: 0 })).toBe(1);
+  it('the examples the parent gave', () => {
+    expect(starsFor({ level: 2, wrongTries: 0, maxHint: 0 })).toBe(4);
+    expect(starsFor({ level: 4, wrongTries: 0, maxHint: 0 })).toBe(8);
+    // Two hints and then right: 3 stars lost.
+    expect(starsFor({ level: 4, wrongTries: 0, maxHint: 2 })).toBe(8 - 3);
   });
 
-  it('blind guessing at level 5 pays less than honest first tries at level 2', () => {
-    // 5 options: right on the first try 1 in 5, on the second 1 in 5; after that 0.
-    const guess =
-      0.2 * starsFor({ level: 5, wrongTries: 0, maxHint: 0 }) +
-      0.2 * starsFor({ level: 5, wrongTries: 1, maxHint: 0 });
-    expect(guess).toBeLessThan(starsFor({ level: 2, wrongTries: 0, maxHint: 0 }));
+  it('never negative, for any level, tries and hints', () => {
+    for (let level = 1; level <= 4; level++)
+      for (let wrongTries = 0; wrongTries <= 20; wrongTries++)
+        for (let maxHint = 0; maxHint <= 3; maxHint++)
+          expect(starsFor({ level, wrongTries, maxHint })).toBeGreaterThanOrEqual(0);
+  });
+
+  it('blind guessing at the Challenge level pays no more than an honest first try at level 2', () => {
+    // 5 options, each equally likely to be right on try 1…5. Sum over the 5 cases (exact integers)
+    // against 5 × the honest stars: guessing 20 vs level 2 honest 20, level 3 honest 30.
+    const guessTotal = [0, 1, 2, 3, 4].reduce(
+      (sum, w) => sum + starsFor({ level: 4, wrongTries: w, maxHint: 0 }),
+      0,
+    );
+    expect(guessTotal).toBe(8 + 6 + 4 + 2 + 0);
+    expect(guessTotal).toBeLessThanOrEqual(5 * starsFor({ level: 2, wrongTries: 0, maxHint: 0 }));
+    expect(guessTotal).toBeLessThan(5 * starsFor({ level: 3, wrongTries: 0, maxHint: 0 }));
   });
 });
 
@@ -184,7 +185,7 @@ describe('streak (R-RWD-2)', () => {
 });
 
 describe('badges (R-RWD-3)', () => {
-  const levels = { NC: 1, RD: 1, FDP: 1, PC: 1, EQ: 3 };
+  const levels = { NC: 1, RD: 1, FDP: 1, PC: 1, EQ: 2 };
   const base: BadgeFacts = {
     have: [],
     attempt: { topic: 'NC', maxHint: 0, params: {} },
@@ -228,6 +229,13 @@ describe('badges (R-RWD-3)', () => {
     expect(earned({ attempt: { topic: 'FDP', maxHint: 0, params: { shape: 'delayed' } } })).toEqual([]);
   });
 
+  it('the Challenge reverse of two changes also counts as a successive-change problem', () => {
+    expect(earned({ attempt: { topic: 'PC', maxHint: 0, params: { kind: 'reverseSuccessive' } } })).toEqual([
+      'first-successive-pc',
+    ]);
+    expect(earned({ attempt: { topic: 'PC', maxHint: 0, params: { kind: 'reverse' } } })).toEqual([]);
+  });
+
   it('first successive-change problem', () => {
     expect(earned({ attempt: { topic: 'PC', maxHint: 0, params: { kind: 'successive' } } })).toEqual([
       'first-successive-pc',
@@ -242,9 +250,9 @@ describe('badges (R-RWD-3)', () => {
   });
 
   it("each topic's max level", () => {
-    expect(earned({ levels: { ...levels, EQ: 6 } })).toEqual(['max-level-EQ']);
-    expect(earned({ levels: { ...levels, NC: 5, PC: 5 } })).toEqual(['max-level-NC', 'max-level-PC']);
-    expect(earned({ levels: { ...levels, EQ: 5 } })).toEqual([]);
+    expect(earned({ levels: { ...levels, EQ: 4 } })).toEqual(['max-level-EQ']);
+    expect(earned({ levels: { ...levels, NC: 4, PC: 4 } })).toEqual(['max-level-NC', 'max-level-PC']);
+    expect(earned({ levels: { ...levels, EQ: 3 } })).toEqual([]);
   });
 
   it('never twice', () => {
@@ -253,7 +261,7 @@ describe('badges (R-RWD-3)', () => {
       attempt: { topic: 'PC', maxHint: 0, params: { kind: 'successive' } },
       eqRun: 10,
       streak: 30,
-      levels: { NC: 5, RD: 5, FDP: 5, PC: 5, EQ: 6 },
+      levels: { NC: 4, RD: 4, FDP: 4, PC: 4, EQ: 4 },
       assignmentDone: { perfect: true },
     };
     const first = newBadges(all);

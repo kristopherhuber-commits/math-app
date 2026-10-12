@@ -2,18 +2,21 @@
 // §6.1/§6.3). Pure functions over the fields all the reducers carry. `W` is the walkthrough step
 // type: EQ's balance-scale steps, or the number topics' steps.
 import { config } from '../../engine/config';
+import { starsFor } from '../../engine/scoring';
 import { eqWalkthrough, type WalkStep } from '../../engine/topics/eq/hints';
 import type { Attempt } from '../../data/db';
 import { withTry } from '../../data/attempts';
 
 export interface HelpFields<W = WalkStep> {
+  /** The question's level: its stars (R-RWD-1) set when the walkthrough starts by itself. */
+  level: number;
   /** Rejections on the current step. Two count as one wrong try (design.md §6.3). */
   rejectionsThisStep: number;
   wrongTries: number;
   /** Hint tier shown for the current step: 0 = none yet. H3 is the walkthrough. */
   hintTier: 0 | 1 | 2;
   hintOpen: boolean;
-  /** Help pulses after a wrong try (R-HELP-2). */
+  /** Help pulses after a wrong try (R-HELP-2); a hint opens only when the learner asks. */
   helpPulse: boolean;
   /** A wrong try at H2 highlights "Show me step by step"; it is never started for the learner. */
   walkOffered: boolean;
@@ -33,22 +36,29 @@ export const freshHelp = {
   helpPulse: false,
   walkOffered: false,
   walk: null,
-} as const satisfies Omit<HelpFields, 'solved' | 'attempt'>;
+} as const satisfies Omit<HelpFields, 'level' | 'solved' | 'attempt'>;
 
 const maxHint = (a: Attempt, tier: number): Attempt =>
   tier > a.maxHint ? { ...a, maxHint: tier as Attempt['maxHint'] } : a;
 
-/** Open help at the next tier not yet seen; later wrong tries advance a tier (R-HELP-2). */
-function offerNextTier<S extends AnyHelp>(s: S): S {
-  const hintTier = Math.min(2, s.hintTier + 1) as 1 | 2;
-  return {
-    ...s,
-    hintTier,
-    hintOpen: true,
-    helpPulse: true,
-    walkOffered: s.walkOffered || s.hintTier === 2,
-    attempt: maxHint(s.attempt, hintTier),
-  };
+/**
+ * A wrong try makes Help pulse (R-HELP-2). Hints cost stars (R-RWD-1, 2026-10-11), so one opens only
+ * when the learner asks; after H2 the pulse also highlights "Show me step by step".
+ */
+function offerHelp<S extends AnyHelp>(s: S): S {
+  return { ...s, helpPulse: true, walkOffered: s.walkOffered || s.hintTier === 2 };
+}
+
+/**
+ * The stars still left to earn have run out (R-RWD-1): the walkthrough is shown as if the learner
+ * had asked for H3. Each reducer starts its own walkthrough when this is true.
+ */
+export function walkDue(s: AnyHelp): boolean {
+  return (
+    !s.solved &&
+    s.walk === null &&
+    starsFor({ level: s.level, wrongTries: s.wrongTries, maxHint: s.attempt.maxHint }) === 0
+  );
 }
 
 /** EQ: a rejected answer on the current step. Every second one is a wrong try (design.md §6.3). */
@@ -56,16 +66,16 @@ export function onRejection<S extends AnyHelp>(s: S): S {
   const rejections = s.rejectionsThisStep + 1;
   const wrongTry = rejections % config.eq.rejectionsPerWrongTry === 0;
   if (!wrongTry) return { ...s, rejectionsThisStep: rejections };
-  return offerNextTier({ ...s, rejectionsThisStep: rejections, wrongTries: s.wrongTries + 1 });
+  return offerHelp({ ...s, rejectionsThisStep: rejections, wrongTries: s.wrongTries + 1 });
 }
 
 /**
  * Multiple choice and select-all: every wrong Check is a wrong try. The first gets "Not quite"
- * only (R-HELP-1); from the second, the turtle offers the next hint tier (R-HELP-2).
+ * only (R-HELP-1); from the second, Help pulses (R-HELP-2).
  */
 export function onWrongTry<S extends AnyHelp>(s: S): S {
   const next = { ...s, wrongTries: s.wrongTries + 1 };
-  return next.wrongTries < config.mc.wrongTriesBeforeHint ? next : offerNextTier(next);
+  return next.wrongTries < config.mc.wrongTriesBeforeHint ? next : offerHelp(next);
 }
 
 /** An accepted step: the ladder restarts at H1 for the next step. */

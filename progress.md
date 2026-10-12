@@ -2,7 +2,7 @@
 
 **Project checkpoint.** With `docs/requirements.md` (the contract), `docs/design.md` (visual design) and this file, a new session has everything it needs to continue. This file holds the status, every decision the parent has made, the questions asked and their answers, the assumptions in force, and what comes next.
 
-Last updated: 2026-09-28 · Current state: **v1 finished (M0–M6, 2026-09-25); M7 (stars by level; the smallest number set) built and deployed 2026-09-27; EQ level 6 stars changed 2026-09-28. Future work: `docs/roadmap.md`.**
+Last updated: 2026-10-11 · Current state: **v1 finished (M0–M6, 2026-09-25); M7 built 2026-09-27; M8 (four levels; stars by hints and mistakes; stars pop-up; mascot animations) built and deployed 2026-10-11. Open: merging Repeating decimals into Fractions, decimals and percents (waiting on the parent's answers, §10). Future work: `docs/roadmap.md`.**
 
 ---
 
@@ -51,6 +51,7 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-25 | **M6 Polish, shop, cosmetics** | Done. Lifetime shells unlock 8 cosmetics (worn at once); shells to spend buy real rewards in a shop the parent fulfils (Parent › Rewards); badge shelf; shells on the beach; synthesised sounds; motion audit; axe on every screen in both themes (R-TEST-6); offline question (R-TEST-7); cold load ~0.5 s at 4× CPU (R-NF-1); bundle check in the build (R-NF-2); Dexie schema v4. 594 unit/property tests, 116 e2e (+12 on-demand skipped), engine 97.3 % lines, 244.5 KB gz JS. Report: `docs/milestones/M6-report.md`. |
 | 2026-09-25 | **After M6** | Sounds off by default; the treat renamed; cartoon shop pictures; the parent sets shells and shells per star; `requirements.md`, `design.md` and `CLAUDE.md` brought up to date. **v1 finished.** |
 | 2026-09-27 | **M7 Stars by level; the smallest set** | Done. Stars by level (1, 2, 4, 6, 8, 10), 1 for a second try or H2, 0 after that or for the walkthrough; less below the current level (stored level or free-practice best, `TopicState.freeBest`); shells = stars; prices 200 / 2,000. Number sets: one answer, the smallest set; natural numbers from 1, no setting. 618 unit/property tests, 120 e2e (+12 on-demand skipped), engine 97.4 % lines, 247.1 KB gz JS. Report: `docs/milestones/M7-report.md`. |
+| 2026-10-11 | **M8 Four levels; stars by hints and mistakes** | Done. Every topic: 1 Basic, 2 General, 3 Advanced, 4 Challenge, no mixed levels, new Challenge content in NC, RD, FDP, PC; stars 2 × level, −1 / −2 for hints, −2 per mistake, walkthrough at 0; a mistake only pulses Help; "How stars work" pop-up; mascot idle and tap animations; Dexie v5. 679 unit/property tests, 126 e2e (+12 on-demand skipped), engine 97.0 % lines, 249.3 KB gz JS. Report: `docs/milestones/M8-report.md`. |
 
 ## 4. Parent decisions, questions and answers
 
@@ -108,7 +109,13 @@ $env:LIVE_URL='https://kristopherhuber-commits.github.io/math-app/'; npx playwri
 | 2026-09-28 | EQ level 6 stars | **No 10 ★ level.** A level 6 (mixed review) question pays the full stars of the level it reviews (3 → 4, 4 → 6, 5 → 8). The try/hint cuts and the below-level rule stay. Built 2026-09-28 (requirements R-RWD-1, §15). |
 | 2026-09-27 | M7: process | **Build now**: update requirements and design, build RM-1 and RM-2 as M7, commit and push. |
 | 2026-09-27 | Handoff | The project documents (requirements, design, progress, roadmap) are the handoff for any tool; project information is not kept in agent files. |
-| 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. |
+| 2026-09-25 | After trying M5: free-practice difficulty | **Each topic tile offers Adaptive or a level** (number topics 1–5, Equations 1–6), within the parent's level range. **Adaptive starts at level 3 every time**, goes **up one after 3 right in a row** (first try, no hint), and **down one when 2 of the last 3 had a mistake or needed help**. A picked level stays put. **Free practice only**: assignments keep R-ADP-2/3 and their stored level, which free practice no longer moves. After a walkthrough the next question stays at the same level (R-HELP-6). Config: `config.freeAdaptive`. *(Since 2026-10-11: levels 1–4 and Adaptive starts at 2.)* |
+| 2026-10-11 | M8: levels | **Four levels in every topic: 1 Basic, 2 General, 3 Advanced, 4 Challenge.** Old 1 + 2 → 1, 3 → 2, 4 → 3, 5 → 4; EQ level 6 (mixed review) removed. **No mixed levels**: difficulty must rise clearly with the level (Basic = the concept; General = one or two things to do; Advanced = two or three, maybe a trick; Challenge = three or more steps, slightly harder numbers, fractions or a trick). The plan per topic was approved as proposed: NC L4 irrational patterns vs look-alikes (0.999…, long repeating decimals with a whole part); RD L4 7ths and 14ths → decimal and delayed repeats with a whole part; FDP L4 repeating values above 1; PC L4 the original price after two changes; EQ L4 fractions, with parentheses and a fraction answer. |
+| 2026-10-11 | M8: stars | **Stars = 2 × level** (2, 4, 6, 8). **H1 −1, H2 −2 more, each mistake −2, never below 0. At 0 the walkthrough is shown, as if H3 was asked** — confirmed even though one mistake at level 1 does that. **Hints cost once per question**, and **a mistake only makes Help pulse** (no hint opens by itself). **The below-level rule is dropped.** Stars = shells, unchanged. |
+| 2026-10-11 | M8: stars pop-up | A **"How stars work"** button left of the streak on Home opens a small pop-up with the rules; as simple as possible. |
+| 2026-10-11 | M8: mascot animations | "A little more advanced and interesting" turtle and penguin animation, subtle and tasteful, also in Dress up. Built: idle breathing and blinks, a different reaction on each tap, Dress up reactions; off with reduced motion (`components/MascotPlay.tsx`). |
+| 2026-10-11 | Open: one topic for Repeating decimals and FDP | Asked: make Repeating decimals part of "Fractions, decimals and percents". **Waiting on:** how the four levels combine (recommended: half from each at every level), how stored RD data and levels merge, the two "Top level" badges, the name. |
+| 2026-10-11 | M8: docs | Update `requirements.md` and `design.md` to match (approved). The 2026-09-23 level-6 final-answer rule goes with level 6. |
 
 ## 5. Assumptions in force (spec silent; reversible)
 
@@ -209,7 +216,17 @@ From M7 (details in `docs/milestones/M7-report.md` §3):
 80. A device whose stored shop price equals the old default (150, 1,500) gets the new one (200, 2,000); any other price is the parent's and stays.
 81. New celebration copy for 0 stars and for below-level answers ("A harder level earns stars/more").
 82. NC feedback codes `NC-CONTAINS` / `NC-NOT-IN`; H2 hints for integers and 0 reworded so they don't give the answer.
-83. *(2026-09-28)* An EQ L6 question's source level is stored in the attempt's `params.starsLevel`; the below-level rule compares the practised level (6), not the source level, so an L6 review question from level 3 is not "below level".
+83. *(2026-09-28)* An EQ L6 question's source level is stored in the attempt's `params.starsLevel`; the below-level rule compares the practised level (6), not the source level, so an L6 review question from level 3 is not "below level". *(Gone with level 6 and the below-level rule, M8.)*
+
+From M8, four levels and the new stars (details in `docs/milestones/M8-report.md` §3):
+84. A "mistake" (−2 ★) is a wrong try as before: EQ two rejected lines on a step, or two wrong sign picks; multiple choice and NC each Check that is not right.
+85. Start levels: Equations 2 and Adaptive free practice 2 (both the old level 3).
+86. Where a level joins two old kinds (EQ, FDP and PC level 1; FDP level 2), each question picks one, half each. EQ level 4 is parentheses with a fraction answer one time in four.
+87. Stored data migrates (Dexie v5): old 1–2 → 1, 3 → 2, 4 → 3, 5 and EQ 6 → 4, in topic levels, the parent's level ranges, level locks and attempts; adaptive windows restart; `freeBest` is dropped. Older export files are migrated the same way on import.
+88. Generator ids are now `v2`. Questions answered before M8 can't be replayed in Missed questions ("can't be regenerated"); their stars and shells stay.
+89. RD level 4 F→D answers show both the "…" and the bar forms (bar notation starts at RD level 2). PC level 4 never uses two changes that cancel exactly (e.g. +25% then −20%).
+90. The "first two-step price change" badge also counts PC level 4.
+91. The Help button and hint panel don't show what a hint costs; the Home pop-up explains it.
 
 ## 6. Spec conflicts found and how they were resolved
 
@@ -234,7 +251,7 @@ From M7 (details in `docs/milestones/M7-report.md` §3):
 
 ## 7. Approved deviations and rules in force
 
-**Deviations: none** since 2026-09-23. **Approved rules** (they override the spec): EQ-D4 detection (M1), the level-6 final-answer rule (2026-09-23), no Real checkbox (2026-09-25), and the free-practice level picker with its Adaptive rule (2026-09-25), all in §4. These rules are now also written into `requirements.md` (§15). `CLAUDE.md` points here for status. **This file is the authority for status.**
+**Deviations: none** since 2026-09-23. **Approved rules** (they override the spec): EQ-D4 detection (M1), the level-6 final-answer rule (2026-09-23; retired with level 6 in M8), no Real checkbox (2026-09-25), and the free-practice level picker with its Adaptive rule (2026-09-25), all in §4. These rules are now also written into `requirements.md` (§15). `CLAUDE.md` points here for status. **This file is the authority for status.**
 
 ## 8. Code map
 
