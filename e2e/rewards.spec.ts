@@ -225,9 +225,13 @@ test('"How stars work" opens left of the streak and explains the rules; Got it a
   const pop = page.getByRole('dialog', { name: 'How stars work' });
   await expect(button).toHaveAttribute('aria-expanded', 'true');
   await expect(pop.getByRole('listitem')).toHaveText([
-    'Basic 2 ★ · General 4 ★ · Advanced 6 ★ · Challenge 8 ★',
-    'Hint 1: −1 ★. Hint 2: −2 ★ more.',
-    'Each “not quite”: −2 ★.',
+    'Basic = 2 ★',
+    'General = 4 ★',
+    'Advanced = 6 ★',
+    'Challenge = 8 ★',
+    'Hint 1 = −1 ★',
+    'Hint 2 = −2 ★',
+    'Each “not quite” = −2 ★',
     'At 0 ★, Shelly shows you the answer step by step.',
     'Every star is a shell.',
   ]);

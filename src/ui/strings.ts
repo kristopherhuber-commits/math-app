@@ -785,9 +785,13 @@ export const rewardStrings = {
     /** The stars pop-up, left of the streak (R-RWD-1, parent request 2026-10-11). */
     starsInfo: 'How stars work',
     starsInfoLines: (shelly: string): string[] => [
-      'Basic 2 ★ · General 4 ★ · Advanced 6 ★ · Challenge 8 ★',
-      'Hint 1: −1 ★. Hint 2: −2 ★ more.',
-      'Each “not quite”: −2 ★.',
+      'Basic = 2 ★',
+      'General = 4 ★',
+      'Advanced = 6 ★',
+      'Challenge = 8 ★',
+      'Hint 1 = −1 ★',
+      'Hint 2 = −2 ★',
+      'Each “not quite” = −2 ★',
       `At 0 ★, ${shelly} shows you the answer step by step.`,
       'Every star is a shell.',
     ],
